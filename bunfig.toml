@@ -1,0 +1,4 @@
+telemetry = false
+
+[test]
+coverage = true

@@ -1,0 +1,17 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [
+    "import",
+    "oxc",
+    "typescript",
+    "unicorn"
+  ],
+  "env": {
+    "builtin": true
+  },
+  "ignorePatterns": ["src/grammar.ohm-bundle.*"],
+  "rules": {
+    "typescript/no-floating-promises": "error",
+    "typescript/no-misused-promises": "error"
+  }
+}

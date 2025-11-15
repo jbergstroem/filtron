@@ -1,0 +1,58 @@
+Filtron {
+  Query = OrExpression
+
+  OrExpression = AndExpression (or AndExpression)*
+
+  AndExpression = NotExpression (and NotExpression)*
+
+  NotExpression = not NotExpression -- negation
+                | PrimaryExpression
+
+  PrimaryExpression = "(" OrExpression ")" -- parens
+                    | FieldExpression
+
+  FieldExpression = FieldName "?" -- existsQuestion
+                  | FieldName exists -- existsKeyword
+                  | FieldName notOneOfOp "[" NonemptyListOf<Value, ","> "]" -- notOneOf
+                  | FieldName oneOfOp "[" NonemptyListOf<Value, ","> "]" -- oneOf
+                  | FieldName ComparisonOp Value -- comparison
+                  | FieldName -- booleanField
+
+  FieldName = ident ("." ident)*
+
+  oneOfOp = ":"
+  notOneOfOp = "!:"
+  ComparisonOp = "!=" | ">=" | "<=" | "=" | "~" | ">" | "<" | ":"
+
+  Value = stringLiteral
+        | numberLiteral
+        | booleanLiteral
+        | ident ("." ident)* -- dottedIdent
+        | ident -- simpleIdent
+
+  stringLiteral = "\"" stringChar* "\""
+  stringChar = ~("\"" | "\\") any -- nonEscaped
+             | "\\" any -- escaped
+
+  numberLiteral = "-"? digit+ "." digit+ -- float
+                | "-"? digit+ -- int
+
+  booleanLiteral = true | false
+
+  ident = ~keyword identStart identPart*
+  identStart = letter | "_"
+  identPart = alnum | "_"
+
+  // Keywords (case-insensitive)
+  keyword = or | and | not | exists | true | false
+  or = caseInsensitive<"or"> ~identPart
+  and = caseInsensitive<"and"> ~identPart
+  not = caseInsensitive<"not"> ~identPart
+  exists = caseInsensitive<"exists"> ~identPart
+  true = caseInsensitive<"true"> ~identPart
+  false = caseInsensitive<"false"> ~identPart
+
+  // Whitespace
+  space += comment
+  comment = "//" (~"\n" any)*
+}

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "elysia-sqlite-example",
+  "version": "1.0.0",
+  "description": "Example API using Elysia, SQLite, and Filtron for dynamic filtering",
+  "type": "module",
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "dev": "bun --watch run src/index.ts",
+    "seed": "bun run src/seed.ts",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@faker-js/faker": "10.1.0",
+    "@filtron/core": "workspace:*",
+    "@filtron/sql": "workspace:*",
+    "@sinclair/typebox": "0.34.41",
+    "elysia": "1.4.16"
+  },
+  "devDependencies": {
+    "@types/bun": "catalog:",
+    "typescript": "catalog:"
+  },
+  "engines": {
+    "bun": ">=1.1.0"
+  }
+}

@@ -19,7 +19,7 @@ bun dev
 
 ## Example queries
 
-As the dev-server is running, send a few queries to showcase how it works.
+As the dev server is running, send a few queries to showcase how it works.
 
 > **Note:** Filter queries contain special characters (spaces, `>`, `<`, quotes, brackets) that must be URL-encoded. These examples use `curl --get --data-urlencode` which automatically handles the encoding. Alternatively, you can manually encode the URL (e.g., `age > 30` becomes `age%20%3E%2030`).
 

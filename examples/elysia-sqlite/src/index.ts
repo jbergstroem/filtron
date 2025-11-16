@@ -6,12 +6,7 @@
 import { Elysia } from "elysia";
 import { parse } from "@filtron/core";
 import { toSQL } from "@filtron/sql";
-import {
-	db,
-	getAllUsers,
-	getFilteredUsers,
-	countUsers,
-} from "./db";
+import { db, getAllUsers, getFilteredUsers, countUsers } from "./db";
 import { seedDatabase } from "./seed";
 
 /**
@@ -81,4 +76,5 @@ export const app = new Elysia()
 				message: error instanceof Error ? error.message : String(error),
 			};
 		}
-	}).listen(3000);
+	})
+	.listen(3000);

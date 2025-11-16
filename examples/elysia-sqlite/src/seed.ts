@@ -3,8 +3,8 @@
  * Uses Faker.js with a constant seed for reproducible data
  */
 
-import { faker } from "@faker-js/faker";
 import { Database } from "bun:sqlite";
+import { faker } from "@faker-js/faker";
 
 const SEED = 12345;
 

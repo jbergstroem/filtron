@@ -3,8 +3,8 @@
  */
 
 import { describe, test, expect, beforeAll, afterAll } from "bun:test";
-import { app } from "./index";
 import { db } from "./db";
+import { app } from "./index";
 import { seedDatabase } from "./seed";
 
 const BASE_URL = `http://localhost:3000`;
@@ -17,9 +17,9 @@ beforeAll(async () => {
 	await new Promise((resolve) => setTimeout(resolve, 100));
 });
 
-afterAll(() => {
+afterAll(async () => {
 	if (server) {
-		server.stop();
+		await server.stop();
 	}
 });
 
@@ -93,9 +93,7 @@ describe("E2E Filtering Tests", () => {
 		expect(response.status).toBe(200);
 		expect(data.success).toBe(true);
 		expect(
-			data.data.every(
-				(u: any) => u.role === "admin" || u.role === "moderator",
-			),
+			data.data.every((u: any) => u.role === "admin" || u.role === "moderator"),
 		).toBe(true);
 	});
 
@@ -119,9 +117,7 @@ describe("E2E Filtering Tests", () => {
 		expect(response.status).toBe(200);
 		expect(data.success).toBe(true);
 		expect(
-			data.data.every(
-				(u: any) => u.role === "admin" || u.role === "moderator",
-			),
+			data.data.every((u: any) => u.role === "admin" || u.role === "moderator"),
 		).toBe(true);
 	});
 

@@ -28,7 +28,7 @@ As the dev server is running, send a few queries to showcase how it works.
 curl "http://localhost:3000/users"
 
 # Get users over 30
-curl --get --data-urlencode "filter=age > 30" "http://localhost:3000/users"
+curl --get --data-urlencode 'filter=age > 30' "http://localhost:3000/users"
 
 # Get active verified users
 curl --get --data-urlencode 'filter=status = "active" AND verified' "http://localhost:3000/users"

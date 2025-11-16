@@ -76,5 +76,9 @@ export const app = new Elysia()
 				message: error instanceof Error ? error.message : String(error),
 			};
 		}
-	})
-	.listen(3000);
+	});
+
+if (import.meta.main) {
+	app.listen(3000);
+	console.log("Server running on http://localhost:3000");
+}

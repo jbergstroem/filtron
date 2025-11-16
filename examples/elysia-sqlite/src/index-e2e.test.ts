@@ -13,7 +13,7 @@ let server: ReturnType<typeof app.listen>;
 
 beforeAll(async () => {
 	seedDatabase(db, 500);
-	server = app;
+	server = app.listen(3000);;
 	await new Promise((resolve) => setTimeout(resolve, 100));
 });
 

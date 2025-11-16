@@ -38,7 +38,7 @@ export function getAllUsers(): User[] {
  */
 export function getFilteredUsers(sqlResult: SQLResult): User[] {
 	const sql = `SELECT * FROM users WHERE ${sqlResult.sql} ORDER BY id`;
-	const query = db.query<User, unknown[]>(sql);
+	const query = db.query<User, any[]>(sql);
 	return query.all(...sqlResult.params);
 }
 

@@ -79,12 +79,3 @@ export function countUsers(): number {
 	);
 	return query.get()?.count ?? 0;
 }
-
-/**
- * Count users with Filtron filtering
- */
-export function countFilteredUsers(sqlResult: SQLResult): number {
-	const sql = `SELECT COUNT(*) as count FROM users WHERE ${sqlResult.sql}`;
-	const query = db.query<{ count: number }, unknown[]>(sql);
-	return query.get(...sqlResult.params)?.count ?? 0;
-}

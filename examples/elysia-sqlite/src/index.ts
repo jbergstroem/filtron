@@ -11,7 +11,6 @@ import {
 	getAllUsers,
 	getFilteredUsers,
 	countUsers,
-	countFilteredUsers,
 } from "./db";
 import { seedDatabase } from "./seed";
 

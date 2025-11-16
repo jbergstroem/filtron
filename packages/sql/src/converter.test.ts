@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import type { ASTNode } from "@filtron/core";
 import { toSQL } from "./converter";
 
-describe("SQL Converter", () => {
+describe("SQL", () => {
 	describe("Comparison Expressions", () => {
 		test("equals operator", () => {
 			const ast: ASTNode = {

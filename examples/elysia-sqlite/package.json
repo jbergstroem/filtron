@@ -7,7 +7,6 @@
   "scripts": {
     "start": "bun run src/index.ts",
     "dev": "bun --watch run src/index.ts",
-    "seed": "bun run src/seed.ts",
     "test": "bun test"
   },
   "dependencies": {

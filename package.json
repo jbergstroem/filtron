@@ -29,7 +29,7 @@
     "build": "bun run --filter '@filtron/*' build",
     "test": "bun test",
     "lint": "oxlint --type-aware && oxfmt",
-    "bench": "bun run --filter '@filtron/core' bench"
+    "bench": "cd packages/core && bun run bench"
   },
   "devDependencies": {
     "oxfmt": "0.13.0",

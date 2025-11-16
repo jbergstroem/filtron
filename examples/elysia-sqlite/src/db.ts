@@ -54,13 +54,6 @@ export function initDatabase(): void {
 }
 
 /**
- * Clear all data from the database
- */
-export function clearDatabase(): void {
-	db.exec("DELETE FROM users");
-}
-
-/**
  * Get all users without filtering
  */
 export function getAllUsers(): User[] {
@@ -94,99 +87,4 @@ export function countFilteredUsers(sqlResult: SQLResult): number {
 	const sql = `SELECT COUNT(*) as count FROM users WHERE ${sqlResult.sql}`;
 	const query = db.query<{ count: number }, unknown[]>(sql);
 	return query.get(...sqlResult.params)?.count ?? 0;
-}
-
-/**
- * Insert a new user
- */
-export function insertUser(
-	user: Omit<User, "id" | "created_at">,
-): User | null {
-	const query = db.query<
-		User,
-		[string, string, number, string, string, number]
-	>(`
-    INSERT INTO users (name, email, age, status, role, verified)
-    VALUES (?, ?, ?, ?, ?, ?)
-    RETURNING *
-  `);
-
-	return query.get(
-		user.name,
-		user.email,
-		user.age,
-		user.status,
-		user.role,
-		user.verified ? 1 : 0,
-	);
-}
-
-/**
- * Get user by ID
- */
-export function getUserById(id: number): User | null {
-	const query = db.query<User, [number]>("SELECT * FROM users WHERE id = ?");
-	return query.get(id);
-}
-
-/**
- * Update user
- */
-export function updateUser(
-	id: number,
-	updates: Partial<Omit<User, "id" | "created_at">>,
-): User | null {
-	const fields: string[] = [];
-	const values: unknown[] = [];
-
-	if (updates.name !== undefined) {
-		fields.push("name = ?");
-		values.push(updates.name);
-	}
-	if (updates.email !== undefined) {
-		fields.push("email = ?");
-		values.push(updates.email);
-	}
-	if (updates.age !== undefined) {
-		fields.push("age = ?");
-		values.push(updates.age);
-	}
-	if (updates.status !== undefined) {
-		fields.push("status = ?");
-		values.push(updates.status);
-	}
-	if (updates.role !== undefined) {
-		fields.push("role = ?");
-		values.push(updates.role);
-	}
-	if (updates.verified !== undefined) {
-		fields.push("verified = ?");
-		values.push(updates.verified ? 1 : 0);
-	}
-
-	if (fields.length === 0) {
-		return getUserById(id);
-	}
-
-	values.push(id);
-
-	const sql = `UPDATE users SET ${fields.join(", ")} WHERE id = ? RETURNING *`;
-	const query = db.query<User, unknown[]>(sql);
-	return query.get(...values);
-}
-
-/**
- * Delete user
- */
-export function deleteUser(id: number): boolean {
-	const query = db.query<never, [number]>("DELETE FROM users WHERE id = ?");
-	query.run(id);
-	return db.changes > 0;
-}
-
-/**
- * Close the database connection
- */
-export function closeDatabase(): void {
-	db.close();
 }

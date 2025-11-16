@@ -11,5 +11,5 @@
       "order": "asc",
       "ignoreCase": true
     },
-  "ignorePatterns": ["src/grammar.ohm-bundle.*"]
+  "ignorePatterns": ["packages/core/src/grammar.ohm-bundle.*"]
 }

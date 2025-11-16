@@ -16,7 +16,7 @@ export interface User {
 	age: number;
 	status: string;
 	role: string;
-	verified: boolean;
+	verified: number;
 	created_at: string;
 }
 

@@ -25,7 +25,7 @@ function generateUsers(count: number) {
 			i < count * 0.6 ? "active" : faker.helpers.arrayElement(statuses);
 		const role =
 			i < 3 ? "admin" : i < 6 ? "moderator" : faker.helpers.arrayElement(roles);
-		const verified = faker.datatype.boolean({ probability: 0.7 });
+		const verified = faker.datatype.boolean({ probability: 0.7 }) ? 1 : 0;
 
 		users.push({
 			name: faker.person.fullName(),
@@ -85,7 +85,7 @@ export function seedDatabase(db: Database, count: number = 500): void {
 			user.age,
 			user.status,
 			user.role,
-			user.verified ? 1 : 0,
+			user.verified,
 		);
 	}
 }

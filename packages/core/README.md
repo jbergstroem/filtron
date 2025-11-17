@@ -7,10 +7,9 @@ Fast, type-safe query language parser for filtering data in real-time APIs. Buil
 
 ## Features
 
-- **Fast**: ~50μs parse time, 18K+ parses/sec
+- **Fast**: ~50μs parse time, 18K+ parses/sec (benchmarked on M2 Max)
 - **Small**: 15 KB minified, 56 KB installed
 - **Type-safe**: Full TypeScript support with discriminated union AST
-- **Snack-sized dependencies**: Only `ohm-js` runtime required
 
 ## Installation
 
@@ -189,13 +188,3 @@ Run benchmarks: `bun run bench`
 ## Inspiration
 
 The Filtron query language syntax was strongly inspired by [dumbql](https://github.com/tomakado/dumbql).
-
-## License
-
-MIT - See [LICENSE](./LICENSE)
-
-## Links
-
-- **GitHub**: https://github.com/jbergstroem/filtron
-- **npm**: https://www.npmjs.com/package/@filtron/core
-- **Issues**: https://github.com/jbergstroem/filtron/issues

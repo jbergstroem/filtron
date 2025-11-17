@@ -7,10 +7,9 @@ Convert Filtron query language AST to safe, parameterized SQL WHERE clauses that
 ## Features
 
 - **Safe**: Parameterized queries prevent SQL injection
-- **Flexible**: Support for PostgreSQL/DuckDB ($1), MySQL/SQLite/DuckDB (?) parameter styles
+- **Flexible**: Support for PostgreSQL/DuckDB (`$1`), MySQL/SQLite (`?`) parameter styles
 - **Type-safe**: Full TypeScript support
 - **Customizable**: Map field names to table columns
-- **Zero dependencies**: Only requires `filtron` peer dependency
 
 ## Installation
 
@@ -59,9 +58,9 @@ Converts a Filtron AST node to a parameterized SQL WHERE clause.
 
 ## Parameter Styles
 
-### PostgreSQL/DuckDB Style (Default)
-
-Uses numbered placeholders: `$1`, `$2`, `$3`, etc.
+`@filtron/sql` defaults to numbered placeholders: `$1`, `$2`, `$3`, etc. This
+is suitable for PostgreSQL, DuckDB and others. You can alternatively switch to
+question mark placeholders if you are using MySQL or SQLite:
 
 ```typescript
 const { sql, params } = toSQL(ast);
@@ -70,14 +69,9 @@ const { sql, params } = toSQL(ast);
 
 // PostgreSQL
 await client.query(`SELECT * FROM users WHERE ${sql}`, params);
-
-// DuckDB
-await db.all(`SELECT * FROM users WHERE ${sql}`, ...params);
 ```
 
-### MySQL/SQLite/DuckDB Style
-
-Uses question mark placeholders: `?`, `?`, `?`, etc.
+vs:
 
 ```typescript
 const { sql, params } = toSQL(ast, {
@@ -86,14 +80,8 @@ const { sql, params } = toSQL(ast, {
 // sql: "age > ? AND status = ?"
 // params: [18, "active"]
 
-// MySQL
-await connection.query(`SELECT * FROM users WHERE ${sql}`, params);
-
 // SQLite
 db.all(`SELECT * FROM users WHERE ${sql}`, params, callback);
-
-// DuckDB (also supports this style)
-await db.all(`SELECT * FROM users WHERE ${sql}`, ...params);
 ```
 
 ## Field Mapping
@@ -143,72 +131,6 @@ const query2 = toSQL(ast2, {
 
 const sql = `${query1.sql} OR ${query2.sql}`;
 const params = [...query1.params, ...query2.params];
-```
-
-## Operator Mapping
-
-| Filtron Operator | SQL Operator |
-| ---------------- | ------------ |
-| `=`, `:`         | `=`          |
-| `!=`             | `!=`         |
-| `>`              | `>`          |
-| `>=`             | `>=`         |
-| `<`              | `<`          |
-| `<=`             | `<=`         |
-| `~`              | `LIKE`       |
-
-## Expression Types
-
-### Comparison
-
-```typescript
-// Filtron: age > 18
-// SQL: age > $1
-// Params: [18]
-```
-
-### Boolean Logic
-
-```typescript
-// Filtron: age > 18 AND status = "active"
-// SQL: (age > $1 AND status = $2)
-// Params: [18, "active"]
-
-// Filtron: role = "admin" OR role = "mod"
-// SQL: (role = $1 OR role = $2)
-// Params: ["admin", "mod"]
-
-// Filtron: NOT suspended
-// SQL: NOT (suspended = $1)
-// Params: [true]
-```
-
-### One-of (IN clause)
-
-```typescript
-// Filtron: status : ["pending", "approved", "active"]
-// SQL: status IN ($1, $2, $3)
-// Params: ["pending", "approved", "active"]
-
-// Filtron: role !: ["guest", "banned"]
-// SQL: role NOT IN ($1, $2)
-// Params: ["guest", "banned"]
-```
-
-### Field Exists
-
-```typescript
-// Filtron: email?
-// SQL: email IS NOT NULL
-// Params: []
-```
-
-### Boolean Field
-
-```typescript
-// Filtron: verified
-// SQL: verified = $1
-// Params: [true]
 ```
 
 ## Real-world Examples
@@ -266,103 +188,20 @@ const hasAccess = await db.get(
 return hasAccess.count > 0;
 ```
 
-### DuckDB - Analytical Queries
-
-```typescript
-import { parseOrThrow } from "@filtron/core";
-import { toSQL } from "@filtron/sql";
-
-// Query Parquet files directly
-const query = 'region : ["US", "EU"] AND revenue > 10000';
-const ast = parseOrThrow(query);
-
-const { sql, params } = toSQL(ast, {
-  parameterStyle: "numbered", // DuckDB supports both $1 and ?
-});
-
-// DuckDB excels at analytical queries
-const results = await db.all(
-  `
-  SELECT 
-    region, 
-    SUM(revenue) as total_revenue,
-    COUNT(*) as transaction_count
-  FROM read_parquet('sales_*.parquet')
-  WHERE ${sql}
-  GROUP BY region
-  ORDER BY total_revenue DESC
-`,
-  ...params,
-);
-```
-
-### DuckDB - Time Series Filtering
-
-```typescript
-const query = 'sensor_type = "temperature" AND value > 25';
-const ast = parseOrThrow(query);
-
-const { sql, params } = toSQL(ast, {
-  parameterStyle: "numbered",
-  fieldMapper: (field) => `"${field}"`, // Quote field names
-});
-
-// Time-series aggregation
-const timeSeries = await db.all(
-  `
-  SELECT 
-    time_bucket('1 hour', timestamp) as hour,
-    AVG(value) as avg_value,
-    MAX(value) as max_value
-  FROM sensor_data
-  WHERE ${sql}
-  GROUP BY hour
-  ORDER BY hour
-`,
-  ...params,
-);
-```
-
 ## Performance
 
 **SQL conversion adds minimal overhead to query parsing.**
 
-### Running Benchmarks
-
-Comprehensive benchmark suite with detailed metrics:
-
 ```bash
+# Run this while developing to maintain the performance baseline
 bun run bench
-```
-
-Quick summary showing overhead analysis:
-
-```bash
+# Quick summary showing overhead analysis of using query -> AST -> SQL
 bun run overhead.ts
 ```
-
-### Key Metrics
-
-- **SQL Conversion Overhead**: ~0.1-0.2μs per query
-- **Impact**: Less than 1% of parse time
-- **Throughput**: 11,000+ queries/sec (parse + SQL generation)
-- **Memory**: Minimal allocations, efficient GC pressure
-
-### Benchmark Results
-
-```
-Simple queries:      26-33 μs  (parse + SQL)
-Complex queries:     60-130 μs (parse + SQL)
-SQL conversion only: 30-200 ns (isolated)
-```
-
-The overhead of SQL conversion is negligible compared to parsing, making it suitable for real-time API usage where every request may involve parsing and converting user filters.
 
 ## Security
 
 **This library generates parameterized queries to prevent SQL injection.**
-
-✅ **Safe** - Values are passed as parameters:
 
 ```typescript
 const { sql, params } = toSQL(ast);
@@ -371,7 +210,7 @@ db.query(`SELECT * FROM users WHERE ${sql}`, params);
 // Params: ["admin' OR '1'='1"]
 ```
 
-❌ **Unsafe** - Never concatenate values directly:
+**Never concatenate values directly**:
 
 ```typescript
 // DON'T DO THIS!
@@ -397,13 +236,3 @@ const result: SQLResult = toSQL(ast, options);
 // result.sql: string
 // result.params: unknown[]
 ```
-
-## License
-
-MIT - See [LICENSE](../../LICENSE)
-
-## Links
-
-- **Filtron**: https://github.com/jbergstroem/filtron
-- **GitHub**: https://github.com/jbergstroem/filtron/tree/main/packages/sql
-- **npm**: https://www.npmjs.com/package/@filtron/sql

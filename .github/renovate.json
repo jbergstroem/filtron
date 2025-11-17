@@ -23,7 +23,7 @@
       "matchPackageNames": ["/actionlint/"]
     },
     {
-      "depTypeList": ["peerDependencies"],
+      "depTypeList": ["engines", "peerDependencies"],
       "enabled": false
     }
   ],

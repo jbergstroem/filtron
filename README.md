@@ -185,17 +185,6 @@ if (result.success) {
 
 See the [@filtron/sql README](./packages/sql/README.md) for full documentation.
 
-## Performance
-
-```
-Parse Time:       ~50μs per query
-Throughput:       18,755 parses/sec
-Startup:          <1ms with pre-compiled grammar
-Memory:           Efficient GC, minimal allocation
-```
-
-Run benchmarks: `bun run bench`
-
 ## Contributing
 
 See the [Contributing Guide](./CONTRIBUTING.md) for development setup and workflow guidelines.
@@ -207,9 +196,3 @@ The Filtron query language syntax was strongly inspired by [dumbql](https://gith
 ## License
 
 MIT - See [LICENSE](./LICENSE)
-
-## Links
-
-- **GitHub**: https://github.com/jbergstroem/filtron
-- **npm**: https://www.npmjs.com/package/@filtron/core
-- **Issues**: https://github.com/jbergstroem/filtron/issues

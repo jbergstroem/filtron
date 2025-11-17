@@ -1,36 +1,53 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "baseBranchPatterns": ["main"],
+  "baseBranchPatterns": [
+    "main"
+  ],
   "timezone": "Europe/Lisbon",
-  "schedule": ["before 9pm on sunday"],
+  "schedule": [
+    "before 9pm on sunday"
+  ],
   "extends": [
     ":dependencyDashboard",
     ":disableRateLimiting",
     ":semanticCommits"
   ],
   "rangeStrategy": "pin",
-  "enabledManagers": ["github-actions", "custom.regex", "npm"],
+  "enabledManagers": [
+    "github-actions",
+    "custom.regex",
+    "npm"
+  ],
   "commitMessageAction": "",
   "commitMessageTopic": "{{depName}}",
   "commitMessageExtra": "{{#if isPinDigest}}{{{newDigestShort}}}{{else}}{{#if isMajor}}{{prettyNewMajor}}{{else}}{{#if isSingleVersion}}{{prettyNewVersion}}{{else}}{{#if newValue}}{{{newValue}}}{{else}}{{{newDigestShort}}}{{/if}}{{/if}}{{/if}}{{/if}}",
   "packageRules": [
     {
-      "matchManagers": ["github-actions"],
+      "matchManagers": [
+        "github-actions"
+      ],
       "commitMessageTopic": "{{depName}}"
     },
     {
       "commitMessageTopic": "actionlint",
-      "matchPackageNames": ["/actionlint/"]
+      "matchPackageNames": [
+        "/actionlint/"
+      ]
     },
     {
-      "depTypeList": ["engines", "peerDependencies"],
+      "matchDepTypes": [
+        "engines",
+        "peerDependencies"
+      ],
       "enabled": false
     }
   ],
   "customManagers": [
     {
       "customType": "regex",
-      "managerFilePatterns": ["/^\\.github/workflows/[^/]+\\.yml$/"],
+      "managerFilePatterns": [
+        "/^\\.github/workflows/[^/]+\\.yml$/"
+      ],
       "matchStrings": [
         "version: \"(?<currentValue>.*?)\"\\s+run: curl -Ls( -o \\w+)? \"https://github.com/(?<depName>.*?)/releases/download.*",
         "https://github\\.com/(?<depName>.*?)/archive/refs/tags/v(?<currentValue>.*?)\\.tar\\.gz"
@@ -40,7 +57,9 @@
     }
   ],
   "rebaseWhen": "never",
-  "labels": ["Dependencies"],
+  "labels": [
+    "Dependencies"
+  ],
   "prBodyTemplate": "{{{header}}}{{{table}}}{{{notes}}}{{{changelogs}}}{{{controls}}}{{{footer}}}",
   "prHeader": "",
   "prFooter": ""

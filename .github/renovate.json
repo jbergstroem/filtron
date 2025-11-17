@@ -21,6 +21,10 @@
     {
       "commitMessageTopic": "actionlint",
       "matchPackageNames": ["/actionlint/"]
+    },
+    {
+      "depTypeList": ["peerDependencies"],
+      "enabled": false
     }
   ],
   "customManagers": [

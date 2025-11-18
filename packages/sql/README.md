@@ -117,7 +117,7 @@ await db.query(`SELECT * FROM users WHERE ${sql}`, params);
 
 ## Field Mapping
 
-Field mapping is useful when you wwant to map fields
+Field mapping is useful when you want to map fields
 to database column names or handle field values in a
 specific way.
 

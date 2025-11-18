@@ -21,5 +21,11 @@
  * ```
  */
 
-export { toSQL } from "./src/converter.js";
+export {
+	toSQL,
+	escapeLike,
+	contains,
+	prefix,
+	suffix,
+} from "./src/converter.js";
 export type { SQLResult, SQLOptions } from "./src/converter.js";

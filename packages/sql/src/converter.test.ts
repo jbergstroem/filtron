@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { ASTNode } from "@filtron/core";
-import { toSQL } from "./converter";
+import { toSQL, contains, prefix, suffix } from "./converter";
 
 describe("SQL", () => {
 	describe("Comparison Expressions", () => {
@@ -485,6 +485,113 @@ describe("SQL", () => {
 
 			expect(result.sql).toBe("(t.age > $1 AND t.status IN ($2, $3))");
 			expect(result.params).toEqual([18, "active", "pending"]);
+		});
+	});
+
+	describe("LIKE Value Mapping", () => {
+		test("valueMapper is applied to LIKE operator", () => {
+			const ast: ASTNode = {
+				type: "comparison",
+				field: "description",
+				operator: "~",
+				value: { type: "string", value: "50% off" },
+			};
+
+			const result = toSQL(ast, {
+				valueMapper: contains,
+			});
+
+			expect(result.sql).toBe("description LIKE $1");
+			expect(result.params).toEqual(["%50\\% off%"]);
+		});
+
+		test("valueMapper is NOT applied to equals operator", () => {
+			const ast: ASTNode = {
+				type: "comparison",
+				field: "name",
+				operator: "=",
+				value: { type: "string", value: "john" },
+			};
+
+			const result = toSQL(ast, {
+				valueMapper: (value) => `%${value}%`,
+			});
+
+			expect(result.sql).toBe("name = $1");
+			expect(result.params).toEqual(["john"]);
+		});
+
+		test("using contains helper", () => {
+			const ast: ASTNode = {
+				type: "comparison",
+				field: "name",
+				operator: "~",
+				value: { type: "string", value: "john" },
+			};
+
+			const result = toSQL(ast, {
+				valueMapper: contains,
+			});
+
+			expect(result.sql).toBe("name LIKE $1");
+			expect(result.params).toEqual(["%john%"]);
+		});
+
+		test("using prefix helper", () => {
+			const ast: ASTNode = {
+				type: "comparison",
+				field: "username",
+				operator: "~",
+				value: { type: "string", value: "admin" },
+			};
+
+			const result = toSQL(ast, {
+				valueMapper: prefix,
+			});
+
+			expect(result.sql).toBe("username LIKE $1");
+			expect(result.params).toEqual(["admin%"]);
+		});
+
+		test("using suffix helper", () => {
+			const ast: ASTNode = {
+				type: "comparison",
+				field: "filename",
+				operator: "~",
+				value: { type: "string", value: ".pdf" },
+			};
+
+			const result = toSQL(ast, {
+				valueMapper: suffix,
+			});
+
+			expect(result.sql).toBe("filename LIKE $1");
+			expect(result.params).toEqual(["%.pdf"]);
+		});
+
+		test("valueMapper with multiple LIKE conditions", () => {
+			const ast: ASTNode = {
+				type: "and",
+				left: {
+					type: "comparison",
+					field: "firstName",
+					operator: "~",
+					value: { type: "string", value: "john" },
+				},
+				right: {
+					type: "comparison",
+					field: "lastName",
+					operator: "~",
+					value: { type: "string", value: "doe" },
+				},
+			};
+
+			const result = toSQL(ast, {
+				valueMapper: contains,
+			});
+
+			expect(result.sql).toBe("(firstName LIKE $1 AND lastName LIKE $2)");
+			expect(result.params).toEqual(["%john%", "%doe%"]);
 		});
 	});
 

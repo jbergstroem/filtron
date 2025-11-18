@@ -47,6 +47,22 @@ export interface SQLOptions {
 	fieldMapper?: (field: string) => string;
 
 	/**
+	 * Value mapper for LIKE operator (~)
+	 * Allows adding wildcards or escaping special characters
+	 * Applied to the value before parameterization
+	 * @default (value) => value
+	 *
+	 * @example
+	 * ```typescript
+	 * // Auto-wrap LIKE values with wildcards for "contains" search
+	 * toSQL(ast, {
+	 *   valueMapper: (value) => `%${escapeLike(String(value))}%`
+	 * })
+	 * ```
+	 */
+	valueMapper?: (value: string | number | boolean) => string | number | boolean;
+
+	/**
 	 * Starting parameter index (for numbered parameters)
 	 * @default 1
 	 */
@@ -60,6 +76,7 @@ interface GeneratorState {
 	params: unknown[];
 	parameterStyle: "numbered" | "question";
 	fieldMapper: (field: string) => string;
+	valueMapper: (value: string | number | boolean) => string | number | boolean;
 	paramIndex: number;
 }
 
@@ -88,6 +105,7 @@ export function toSQL(ast: ASTNode, options: SQLOptions = {}): SQLResult {
 		params: [],
 		parameterStyle: options.parameterStyle ?? "numbered",
 		fieldMapper: options.fieldMapper ?? ((field) => field),
+		valueMapper: options.valueMapper ?? ((value) => value),
 		paramIndex: options.startIndex ?? 1,
 	};
 
@@ -162,7 +180,14 @@ function generateComparison(
 ): string {
 	const field = state.fieldMapper(node.field);
 	const operator = mapComparisonOperator(node.operator);
-	const param = addParameter(extractValue(node.value), state);
+
+	// Apply valueMapper for LIKE operator
+	let value = extractValue(node.value);
+	if (node.operator === "~") {
+		value = state.valueMapper(value);
+	}
+
+	const param = addParameter(value, state);
 
 	return `${field} ${operator} ${param}`;
 }
@@ -281,4 +306,75 @@ function addParameter(value: unknown, state: GeneratorState): string {
 	}
 
 	return "?";
+}
+
+/**
+ * Escapes special LIKE characters (%, _, \) in a string value
+ * Use this to prevent LIKE injection when user input is used in LIKE patterns
+ *
+ * @param value - The value to escape
+ * @returns Escaped string safe for use in LIKE patterns
+ *
+ * @example
+ * ```typescript
+ * escapeLike("admin%") // "admin%"
+ * escapeLike("test_user") // "test_user"
+ * ```
+ */
+export function escapeLike(value: string): string {
+	return value
+		.replace(/\\/g, "\\\\") // Escape backslashes first
+		.replace(/%/g, "\\%") // Escape % wildcard
+		.replace(/_/g, "\\_"); // Escape _ single-char wildcard
+}
+
+/**
+ * Wraps a value with wildcards for "contains" matching
+ * Automatically escapes special LIKE characters
+ *
+ * @param value - The value to wrap
+ * @returns Value wrapped with % wildcards
+ *
+ * @example
+ * ```typescript
+ * toSQL(ast, { valueMapper: contains })
+ * // "foo" becomes "%foo%"
+ * ```
+ */
+export function contains(value: string | number | boolean): string {
+	return `%${escapeLike(String(value))}%`;
+}
+
+/**
+ * Adds prefix wildcard for "starts with" matching
+ * Automatically escapes special LIKE characters
+ *
+ * @param value - The value to wrap
+ * @returns Value with % wildcard at the end
+ *
+ * @example
+ * ```typescript
+ * toSQL(ast, { valueMapper: prefix })
+ * // "admin" becomes "admin%"
+ * ```
+ */
+export function prefix(value: string | number | boolean): string {
+	return `${escapeLike(String(value))}%`;
+}
+
+/**
+ * Adds suffix wildcard for "ends with" matching
+ * Automatically escapes special LIKE characters
+ *
+ * @param value - The value to wrap
+ * @returns Value with % wildcard at the beginning
+ *
+ * @example
+ * ```typescript
+ * toSQL(ast, { valueMapper: suffix })
+ * // ".pdf" becomes "%.pdf"
+ * ```
+ */
+export function suffix(value: string | number | boolean): string {
+	return `%${escapeLike(String(value))}`;
 }

@@ -4,7 +4,7 @@
  */
 
 import { parse, parseOrThrow } from "@filtron/core";
-import { toSQL } from "../index.js";
+import { toSQL, contains } from "../index.js";
 
 // ANSI color codes for pretty output
 const colors = {
@@ -101,14 +101,30 @@ printSQL("SQL", result5.sql);
 info("Params", JSON.stringify(result5.params));
 console.log();
 
-// Example 6: LIKE operator
-section(6, "LIKE Operator");
+// Example 6: LIKE operator with valueMapper
+section(6, "LIKE Operator (with automatic wildcards)");
 const query6 = 'name ~ "john" AND age >= 18';
 const ast6 = parseOrThrow(query6);
-const result6 = toSQL(ast6);
+const result6 = toSQL(ast6, { valueMapper: contains });
 info("Query", query6);
 printSQL("SQL", result6.sql);
 info("Params", JSON.stringify(result6.params));
+console.log(
+	`${colors.dim}Using valueMapper: contains() automatically adds wildcards${colors.reset}`,
+);
+console.log();
+
+// Example 6b: LIKE operator with manual wildcards
+section("6b", "LIKE Operator (manual wildcards)");
+const query6b = 'name ~ "%john%" AND age >= 18';
+const ast6b = parseOrThrow(query6b);
+const result6b = toSQL(ast6b);
+info("Query", query6b);
+printSQL("SQL", result6b.sql);
+info("Params", JSON.stringify(result6b.params));
+console.log(
+	`${colors.dim}Manual approach: wildcards included in query string${colors.reset}`,
+);
 console.log();
 
 // Example 7: Real-world scenario - User search

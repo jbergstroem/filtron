@@ -4,7 +4,7 @@
  */
 
 import { parse, parseOrThrow } from "@filtron/core";
-import { toSQL } from "../index.js";
+import { toSQL, contains } from "../index.js";
 
 // Simulated database interface (represents postgres, mysql, sqlite, etc.)
 interface Database {
@@ -54,6 +54,36 @@ async function getUsersEndpoint(filterQuery: string) {
 
 const result1 = await getUsersEndpoint("age > 18 AND verified");
 console.log(`  Result: ${JSON.stringify(result1.success)}\n`);
+
+// Example 1b: User Search with LIKE and valueMapper
+console.log("1b. User Search with LIKE (using valueMapper):");
+console.log("    Simulating: GET /users?search=john\n");
+
+async function handleUserSearch(searchTerm: string) {
+	try {
+		// Simple query - valueMapper handles wildcards and escaping
+		const query = `name ~ "${searchTerm}"`;
+		const ast = parseOrThrow(query);
+
+		// Convert with valueMapper for automatic wildcard handling
+		const { sql, params } = toSQL(ast, {
+			valueMapper: contains,
+			fieldMapper: (field) => `users.${field}`,
+			parameterStyle: "numbered",
+		});
+
+		const users = await mockDb.query(sql, params);
+		return { success: true, data: users };
+	} catch (error) {
+		return {
+			success: false,
+			error: error instanceof Error ? error.message : "Unknown error",
+		};
+	}
+}
+
+const searchResult = await handleUserSearch("john");
+console.log(`  Result: ${JSON.stringify(searchResult.success)}\n`);
 
 // Example 2: Multi-database support (PostgreSQL vs MySQL)
 console.log("2. Multi-Database Support:\n");

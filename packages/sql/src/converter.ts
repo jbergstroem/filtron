@@ -317,8 +317,8 @@ function addParameter(value: unknown, state: GeneratorState): string {
  *
  * @example
  * ```typescript
- * escapeLike("admin%") // "admin%"
- * escapeLike("test_user") // "test_user"
+ * escapeLike("admin%") // "admin\\%"
+ * escapeLike("test_user") // "test\\_user"
  * ```
  */
 export function escapeLike(value: string): string {

@@ -363,7 +363,7 @@ export function prefix(value: string | number | boolean): string {
 }
 
 /**
- * Adds suffix wildcard for "ends with" matching
+ * Adds leading wildcard for "ends with" matching
  * Automatically escapes special LIKE characters
  *
  * @param value - The value to wrap

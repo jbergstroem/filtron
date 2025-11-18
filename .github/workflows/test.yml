@@ -1,0 +1,28 @@
+name: Test
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  unit:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - run: bun install
+      - run: bun test --reporter=junit --coverage --coverage-reporter=lcov --coverage-dir=coverage
+      - uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage/lcov.info
+          disable_search: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+      - uses: codecov/test-results-action@v1
+        if: ${{ !cancelled() }}
+        with:
+          file: ./junit.xml
+          disable_search: true
+          token: ${{ secrets.CODECOV_TOKEN }}

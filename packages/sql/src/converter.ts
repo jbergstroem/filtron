@@ -346,7 +346,7 @@ export function contains(value: string | number | boolean): string {
 }
 
 /**
- * Adds prefix wildcard for "starts with" matching
+ * Adds trailing wildcard for "starts with" matching
  * Automatically escapes special LIKE characters
  *
  * @param value - The value to wrap

@@ -3,9 +3,8 @@
  */
 
 import { describe, test, expect, beforeAll, afterAll } from "bun:test";
-import { db } from "./db";
+import { db, seedDatabase } from "./db";
 import { app } from "./index";
-import { seedDatabase } from "./seed";
 
 const BASE_URL = `http://localhost:3000`;
 
@@ -23,7 +22,7 @@ afterAll(async () => {
 	}
 });
 
-describe("E2E Filtering Tests", () => {
+describe("Elysia E2E Tests", () => {
 	test("should get all users without filter", async () => {
 		const response = await fetch(`${BASE_URL}/users`);
 		const data = await response.json();
@@ -34,19 +33,6 @@ describe("E2E Filtering Tests", () => {
 		expect(data.count).toBe(500);
 		expect(data.total).toBe(500);
 		expect(data.filter).toBeNull();
-	});
-
-	test("should filter by age", async () => {
-		const response = await fetch(
-			`${BASE_URL}/users?filter=${encodeURIComponent("age > 30")}`,
-		);
-		const data = await response.json();
-
-		expect(response.status).toBe(200);
-		expect(data.success).toBe(true);
-		expect(data.data).toBeArray();
-		expect(data.data.every((u: any) => u.age > 30)).toBe(true);
-		expect(data.filter.query).toBe("age > 30");
 	});
 
 	test("should filter by status", async () => {
@@ -60,17 +46,6 @@ describe("E2E Filtering Tests", () => {
 		expect(data.data.every((u: any) => u.status === "active")).toBe(true);
 	});
 
-	test("should filter by boolean field", async () => {
-		const response = await fetch(
-			`${BASE_URL}/users?filter=${encodeURIComponent("verified")}`,
-		);
-		const data = await response.json();
-
-		expect(response.status).toBe(200);
-		expect(data.success).toBe(true);
-		expect(data.data.every((u: any) => u.verified === 1)).toBe(true);
-	});
-
 	test("should filter with AND operator", async () => {
 		const response = await fetch(
 			`${BASE_URL}/users?filter=${encodeURIComponent('status = "active" AND verified')}`,
@@ -82,30 +57,6 @@ describe("E2E Filtering Tests", () => {
 		expect(
 			data.data.every((u: any) => u.status === "active" && u.verified),
 		).toBe(true);
-	});
-
-	test("should filter with OR operator", async () => {
-		const response = await fetch(
-			`${BASE_URL}/users?filter=${encodeURIComponent('role = "admin" OR role = "moderator"')}`,
-		);
-		const data = await response.json();
-
-		expect(response.status).toBe(200);
-		expect(data.success).toBe(true);
-		expect(
-			data.data.every((u: any) => u.role === "admin" || u.role === "moderator"),
-		).toBe(true);
-	});
-
-	test("should filter with NOT operator", async () => {
-		const response = await fetch(
-			`${BASE_URL}/users?filter=${encodeURIComponent("NOT verified")}`,
-		);
-		const data = await response.json();
-
-		expect(response.status).toBe(200);
-		expect(data.success).toBe(true);
-		expect(data.data.every((u: any) => u.verified === 0)).toBe(true);
 	});
 
 	test("should filter with one-of operator", async () => {

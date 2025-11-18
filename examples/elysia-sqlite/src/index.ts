@@ -6,8 +6,13 @@
 import { Elysia } from "elysia";
 import { parse } from "@filtron/core";
 import { toSQL } from "@filtron/sql";
-import { db, getAllUsers, getFilteredUsers, countUsers } from "./db";
-import { seedDatabase } from "./seed";
+import {
+	db,
+	getAllUsers,
+	getFilteredUsers,
+	countUsers,
+	seedDatabase,
+} from "./db";
 
 /**
  * Initialize database and seed on startup if empty

@@ -50,43 +50,76 @@ Converts a Filtron AST node to a parameterized SQL WHERE clause.
 
 - `ast` (ASTNode): The Filtron AST to convert
 - `options` (SQLOptions, optional): Generation options
+  - `parameterStyle`: `'numbered'` (default) or `'question'` - Parameter placeholder style
+  - `fieldMapper`: `(field: string) => string` - Field transformation
+  - `valueMapper`: `(value: string | number | boolean) => string | number | boolean` - Value transformation
+  - `startIndex`: `number` (default: 1) - Starting parameter index for numbered parameters
 
 **Returns:** `SQLResult`
 
 - `sql` (string): SQL WHERE clause (without the WHERE keyword)
 - `params` (unknown[]): Array of parameter values in order
 
+### Helper Functions
+
+A set of common functions that can be used in conjunction with `fieldMapper` and `valueMapper`
+
+#### `contains(value)`
+Wraps a value with `%` wildcards for substring matching. Automatically escapes special LIKE characters.
+
+```typescript
+toSQL(ast, { valueMapper: contains })
+// "foo" → "%foo%"
+```
+
+#### `escapeLike(value)`
+Escapes LIKE special characters (`%`, `_`, `\`) in a string value. Use this to prevent LIKE injection.
+
+The `contains`, `prefix`, and `suffix` helpers use this internally. You'll typically use `escapeLike` when building custom `valueMapper` functions.
+
+```typescript
+escapeLike("foo%bar")
+// "foo\\%bar"
+```
+
+#### `prefix(value)`
+Adds trailing `%` wildcard for "starts with" matching. Automatically escapes special LIKE characters.
+
+```typescript
+toSQL(ast, { valueMapper: prefix })
+// "admin" → "admin%"
+```
+
+#### `suffix(value)`
+Adds leading `%` wildcard for "ends with" matching. Automatically escapes special LIKE characters.
+
+```typescript
+toSQL(ast, { valueMapper: suffix })
+// ".pdf" → "%.pdf"
+```
+
 ## Parameter Styles
 
 `@filtron/sql` defaults to numbered placeholders: `$1`, `$2`, `$3`, etc. This
 is suitable for PostgreSQL, DuckDB and others. You can alternatively switch to
-question mark placeholders if you are using MySQL or SQLite:
-
-```typescript
-const { sql, params } = toSQL(ast);
-// sql: "age > $1 AND status = $2"
-// params: [18, "active"]
-
-// PostgreSQL
-await client.query(`SELECT * FROM users WHERE ${sql}`, params);
-```
-
-vs:
+question mark placeholders if you are using MySQL or SQLite.
 
 ```typescript
 const { sql, params } = toSQL(ast, {
-  parameterStyle: "question",
+  // use this for SQLite/MySQL
+  // parameterStyle: "question"
 });
-// sql: "age > ? AND status = ?"
+// sql: "age > $1 AND status = $2"
 // params: [18, "active"]
 
-// SQLite
-db.all(`SELECT * FROM users WHERE ${sql}`, params, callback);
+await db.query(`SELECT * FROM users WHERE ${sql}`, params);
 ```
 
 ## Field Mapping
 
-Map Filtron field names to database column names:
+Field mapping is useful when you want to map fields
+to database column names or handle field values in a
+specific way.
 
 ```typescript
 const { sql, params } = toSQL(ast, {
@@ -94,26 +127,6 @@ const { sql, params } = toSQL(ast, {
 });
 // Input:  age > 18
 // Output: users.age > $1
-```
-
-### Escaping Field Names
-
-```typescript
-const { sql, params } = toSQL(ast, {
-  fieldMapper: (field) => `"${field}"`,
-});
-// Input:  user-name = "john"
-// Output: "user-name" = $1
-```
-
-### Table Aliases
-
-```typescript
-const { sql, params } = toSQL(ast, {
-  fieldMapper: (field) => `u.${field}`,
-});
-// Input:  status = "active" AND verified
-// Output: (u.status = $1 AND u.verified = $2)
 ```
 
 ## Custom Start Index
@@ -216,8 +229,6 @@ db.query(`SELECT * FROM users WHERE ${sql}`, params);
 // DON'T DO THIS!
 const unsafeSQL = `SELECT * FROM users WHERE name = '${userInput}'`;
 ```
-
-**Note:** Field names from the `fieldMapper` are **not** parameterized. Ensure field names come from trusted sources or validate them before use.
 
 ## TypeScript
 

@@ -36,7 +36,7 @@ jobs:
         with:
           bun-version-file: package.json
       - run: bun install
-      - run: bun run oxlint --type-aware
+      - run: bun oxlint --type-aware
 
   format:
     runs-on: ubuntu-24.04
@@ -46,4 +46,4 @@ jobs:
         with:
           bun-version-file: package.json
       - run: bun install
-      - run: bun run oxfmt --check
+      - run: bun oxfmt --check

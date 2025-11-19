@@ -147,8 +147,6 @@ const result1 = toSQL(ast1, { valueMapper: contains });
 // params: ["%john%"]
 ```
 
-`
-
 ### Custom Value Mapping
 
 ````typescript

@@ -149,13 +149,14 @@ const result1 = toSQL(ast1, { valueMapper: contains });
 
 ### Custom Value Mapping
 
-````typescript
+```typescript
 // Custom mapper: uppercase all string values
 const { sql, params } = toSQL(ast, {
   valueMapper: (value) => {
     return typeof value === 'string' ? value.toUpperCase() : value;
   }
 });
+```
 
 ## Custom Start Index
 
@@ -172,7 +173,7 @@ const query2 = toSQL(ast2, {
 
 const sql = `${query1.sql} OR ${query2.sql}`;
 const params = [...query1.params, ...query2.params];
-````
+```
 
 ## Real-world Examples
 

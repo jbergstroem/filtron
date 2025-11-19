@@ -27,7 +27,7 @@
     }
   },
   "scripts": {
-    "build": "bun run --filter '@filtron/core' build && bun run --filter '@filtron/sql' build",
+    "build": "bun run --filter '@filtron/core' build && bun run --filter '!@filtron/core' build",
     "test": "bun test",
     "lint": "oxlint --type-aware && oxfmt",
     "bench": "cd packages/core && bun run bench"

@@ -138,10 +138,10 @@ const { sql, params } = toSQL(ast, {
 The `valueMapper` option allows you to transform values before they're added to the parameter list. This is particularly useful with the LIKE operator (`~`) to add wildcards or escape special characters.
 
 ```typescript
+import { parse } from "@filtron/core";
 import { toSQL, contains } from "@filtron/sql";
 
-// Contains: Adds %wildcards% for substring matching
-const ast1 = parseOrThrow('name ~ "john"');
+const ast1 = parse('name ~ "john"');
 const result1 = toSQL(ast1, { valueMapper: contains });
 // sql: "name LIKE $1"
 // params: ["%john%"]

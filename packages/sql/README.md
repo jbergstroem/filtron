@@ -62,39 +62,43 @@ Converts a Filtron AST node to a parameterized SQL WHERE clause.
 
 ### Helper Functions
 
-A set of common functions that can be used in conjunction with `fieldMapper` and `valueMapper`
+A set of common functions that can be used in conjunction with `fieldMapper` and `valueMapper`.
 
 #### `contains(value)`
+
 Wraps a value with `%` wildcards for substring matching. Automatically escapes special LIKE characters.
 
 ```typescript
-toSQL(ast, { valueMapper: contains })
+toSQL(ast, { valueMapper: contains });
 // "foo" → "%foo%"
 ```
 
 #### `escapeLike(value)`
+
 Escapes LIKE special characters (`%`, `_`, `\`) in a string value. Use this to prevent LIKE injection.
 
 The `contains`, `prefix`, and `suffix` helpers use this internally. You'll typically use `escapeLike` when building custom `valueMapper` functions.
 
 ```typescript
-escapeLike("foo%bar")
+escapeLike("foo%bar");
 // "foo\\%bar"
 ```
 
 #### `prefix(value)`
+
 Adds trailing `%` wildcard for "starts with" matching. Automatically escapes special LIKE characters.
 
 ```typescript
-toSQL(ast, { valueMapper: prefix })
+toSQL(ast, { valueMapper: prefix });
 // "admin" → "admin%"
 ```
 
 #### `suffix(value)`
+
 Adds leading `%` wildcard for "ends with" matching. Automatically escapes special LIKE characters.
 
 ```typescript
-toSQL(ast, { valueMapper: suffix })
+toSQL(ast, { valueMapper: suffix });
 // ".pdf" → "%.pdf"
 ```
 
@@ -127,6 +131,31 @@ const { sql, params } = toSQL(ast, {
 });
 // Input:  age > 18
 // Output: users.age > $1
+```
+
+## Value Mapping
+
+The `valueMapper` option allows you to transform values before they're added to the parameter list. This is particularly useful with the LIKE operator (`~`) to add wildcards or escape special characters.
+
+```typescript
+import { parse } from "@filtron/core";
+import { toSQL, contains } from "@filtron/sql";
+
+const ast1 = parse('name ~ "john"');
+const result1 = toSQL(ast1, { valueMapper: contains });
+// sql: "name LIKE $1"
+// params: ["%john%"]
+```
+
+### Custom Value Mapping
+
+```typescript
+// Custom mapper: uppercase all string values
+const { sql, params } = toSQL(ast, {
+  valueMapper: (value) => {
+    return typeof value === 'string' ? value.toUpperCase() : value;
+  }
+});
 ```
 
 ## Custom Start Index

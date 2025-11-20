@@ -54,6 +54,27 @@ try {
 }
 ```
 
+..or use the `@filtron/sql` package to create a WHERE query:
+
+```bash
+bun add @filtron/sql
+```
+
+```typescript
+import { parse } from "@filtron/core";
+import { toSQL } from "@filtron/sql";
+
+const result = parse('age > 18 AND status = "active"');
+
+if (result.success) {
+  const { sql, params } = toSQL(result.ast);
+  // sql: "(age > $1 AND status = $2)"
+  // params: [18, "active"]
+
+  const users = await db.query(`SELECT * FROM users WHERE ${sql}`, params);
+}
+```
+
 ## Syntax
 
 ```typescript
@@ -139,51 +160,6 @@ function handleAST(node: ASTNode) {
   }
 }
 ```
-
-## Use Cases
-
-- **SQL Generation**: Build WHERE clauses from user queries
-- **In-Memory Filtering**: Filter arrays/collections with complex logic
-- **Search APIs**: Parse user search filters safely
-- **Access Control**: Define permission rules with queries
-
-## Project Structure
-
-This is a monorepo containing multiple packages:
-
-### [@filtron/core](./packages/core)
-
-The core query language parser. This is the main package that provides the parsing functionality.
-
-```bash
-bun add @filtron/core
-```
-
-See the [@filtron/core README](./packages/core/README.md) for full documentation.
-
-### [@filtron/sql](./packages/sql)
-
-SQL WHERE clause generator with parameterized queries for safe database filtering.
-
-```bash
-bun add @filtron/sql
-```
-
-```typescript
-import { parse } from "@filtron/core";
-import { toSQL } from "@filtron/sql";
-
-const result = parse('age > 18 AND status = "active"');
-if (result.success) {
-  const { sql, params } = toSQL(result.ast);
-  // sql: "(age > $1 AND status = $2)"
-  // params: [18, "active"]
-
-  const users = await db.query(`SELECT * FROM users WHERE ${sql}`, params);
-}
-```
-
-See the [@filtron/sql README](./packages/sql/README.md) for full documentation.
 
 ## Contributing
 

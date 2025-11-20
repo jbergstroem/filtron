@@ -153,8 +153,8 @@ const result1 = toSQL(ast1, { valueMapper: contains });
 // Custom mapper: uppercase all string values
 const { sql, params } = toSQL(ast, {
   valueMapper: (value) => {
-    return typeof value === 'string' ? value.toUpperCase() : value;
-  }
+    return typeof value === "string" ? value.toUpperCase() : value;
+  },
 });
 ```
 

@@ -24,7 +24,7 @@ seedDatabase(db);
  */
 export const app = new Elysia()
 	// List users with optional filtering
-	.get("/users", ({ query }) => {
+	.get("/users", ({ query, set }) => {
 		try {
 			const filterQuery = query.filter as string | undefined;
 
@@ -44,8 +44,8 @@ export const app = new Elysia()
 			const parseResult = parse(filterQuery);
 
 			if (!parseResult.success) {
+				set.status = 400;
 				return {
-					status: 400,
 					success: false,
 					error: "Invalid filter query",
 					message: parseResult.message,

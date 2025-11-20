@@ -9,7 +9,7 @@ jobs:
   unit:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version-file: package.json
@@ -63,7 +63,7 @@ jobs:
             test_cmd: deno eval
     name: e2e (${{ matrix.setup }} ${{ matrix.version }})
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Setup Bun (for building)
         uses: oven-sh/setup-bun@v2

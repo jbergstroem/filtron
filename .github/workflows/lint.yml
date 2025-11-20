@@ -6,7 +6,7 @@ jobs:
   actionlint:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - run: curl -Ls "https://github.com/rhysd/actionlint/releases/download/v${{ env.version }}/actionlint_${{ env.version }}_linux_amd64.tar.gz" | sudo tar -x -z -C /usr/local/bin actionlint
         env:
           version: "1.7.8"
@@ -17,13 +17,13 @@ jobs:
   typos:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: crate-ci/typos@v1
 
   validate-renovate-config:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - uses: tj-actions/changed-files@v47
@@ -40,7 +40,7 @@ jobs:
   lint:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version-file: package.json
@@ -50,7 +50,7 @@ jobs:
   format:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version-file: package.json

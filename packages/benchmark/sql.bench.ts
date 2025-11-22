@@ -56,13 +56,7 @@ bench
 async function main() {
 	await bench.run();
 
-	console.table(
-		bench.tasks.map(({ name, result }) => ({
-			Benchmark: name,
-			"ops/sec": result?.hz?.toFixed(0) || "N/A",
-			"avg (µs)": result?.mean ? (result.mean * 1000000).toFixed(2) : "N/A",
-		})),
-	);
+	console.table(bench.table());
 }
 
 main().catch(console.error);

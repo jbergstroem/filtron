@@ -101,23 +101,10 @@ bench
 		parse("age > ");
 	});
 
-// ============================================================
-// RUN BENCHMARKS
-// ============================================================
-
 async function main() {
 	await bench.run();
 
-	console.log("\n📊 Results:\n");
-	console.table(
-		bench.tasks.map(({ name, result }) => ({
-			Benchmark: name,
-			"ops/sec": result?.hz?.toFixed(0) || "N/A",
-			"avg (ms)": result?.mean ? (result.mean * 1000).toFixed(3) : "N/A",
-			"min (ms)": result?.min ? (result.min * 1000).toFixed(3) : "N/A",
-			"max (ms)": result?.max ? (result.max * 1000).toFixed(3) : "N/A",
-		})),
-	);
+	console.table(bench.table());
 }
 
 main().catch(console.error);

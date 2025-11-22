@@ -2,6 +2,18 @@ import type { FiltronActionDict } from "./grammar.ohm-bundle.js";
 import type { ASTNode, Value } from "./types";
 
 /**
+ * Escape sequence mapping for string literals
+ * Using a map lookup is faster than switch statements
+ */
+const ESCAPE_MAP: Record<string, string> = {
+	n: "\n",
+	t: "\t",
+	r: "\r",
+	"\\": "\\",
+	'"': '"',
+};
+
+/**
  * Semantic actions for converting Ohm parse tree to Filtron AST
  */
 export const semanticActions: FiltronActionDict<
@@ -149,12 +161,13 @@ export const semanticActions: FiltronActionDict<
 			return first.sourceString;
 		}
 
-		// Build dotted path with direct concatenation
-		let result = first.sourceString;
+		// Build dotted path with array join (faster than string concatenation)
+		const parts = new Array(len + 1);
+		parts[0] = first.sourceString;
 		for (let i = 0; i < len; i++) {
-			result += "." + children[i].sourceString;
+			parts[i + 1] = children[i].sourceString;
 		}
-		return result;
+		return parts.join(".");
 	},
 
 	Value(value: any): Value {
@@ -170,34 +183,34 @@ export const semanticActions: FiltronActionDict<
 			return { type: "string", value: "" };
 		}
 
+		// Fast path: check if any escapes exist (most strings have no escapes)
+		let hasEscapes = false;
+		for (let i = 0; i < len; i++) {
+			if (children[i].sourceString.length > 1) {
+				hasEscapes = true;
+				break;
+			}
+		}
+
+		if (!hasEscapes) {
+			// Fast path for unescaped strings: join all characters at once
+			const parts = new Array(len);
+			for (let i = 0; i < len; i++) {
+				parts[i] = children[i].sourceString;
+			}
+			return { type: "string", value: parts.join("") };
+		}
+
+		// Slow path: handle escape sequences
 		let result = "";
 		for (let i = 0; i < len; i++) {
-			const char = children[i];
-			const source = char.sourceString;
+			const source = children[i].sourceString;
 			// Escaped characters have length > 1 (backslash + character)
 			if (source.length > 1 && source[0] === "\\") {
-				// Get the character after the backslash
+				// Get the character after the backslash and lookup in map
 				const escapedChar = source[1];
-				// Handle common escape sequences
-				switch (escapedChar) {
-					case "n":
-						result += "\n";
-						break;
-					case "t":
-						result += "\t";
-						break;
-					case "r":
-						result += "\r";
-						break;
-					case "\\":
-						result += "\\";
-						break;
-					case '"':
-						result += '"';
-						break;
-					default:
-						result += escapedChar;
-				}
+				const unescaped = ESCAPE_MAP[escapedChar];
+				result += unescaped !== undefined ? unescaped : escapedChar;
 			} else {
 				result += source;
 			}
@@ -205,15 +218,15 @@ export const semanticActions: FiltronActionDict<
 		return { type: "string", value: result };
 	},
 
-	numberLiteral_float(sign: any, whole: any, _dot: any, frac: any): Value {
-		const value = Number.parseFloat(
-			sign.sourceString + whole.sourceString + "." + frac.sourceString,
-		);
+	numberLiteral_float(this: any, sign: any, whole: any, _dot: any, frac: any): Value {
+		// Use entire matched source directly (zero-copy, faster than concatenation)
+		const value = Number.parseFloat(this.sourceString);
 		return { type: "number", value };
 	},
 
-	numberLiteral_int(sign: any, digits: any): Value {
-		const value = Number.parseInt(sign.sourceString + digits.sourceString, 10);
+	numberLiteral_int(this: any, sign: any, digits: any): Value {
+		// Use entire matched source directly (zero-copy, faster than concatenation)
+		const value = Number.parseInt(this.sourceString, 10);
 		return { type: "number", value };
 	},
 

@@ -1,6 +1,10 @@
 import type { ASTNode } from "./types";
 import grammarBundle from "./grammar.ohm-bundle.js";
 import { semanticActions } from "./semantics";
+import {
+	tryFastPath,
+	getFastPathMetrics,
+} from "./fast-path";
 
 // Create semantics with proper typing from generated bundle
 // Note: We use 'as any' here because the generated types are too restrictive for runtime usage
@@ -48,6 +52,17 @@ export type ParseResult = ParseSuccess | ParseError;
  * ```
  */
 export const parse = (query: string): ParseResult => {
+	// Try fast path first for common patterns
+	// Fast paths bypass the full grammar parser for significant speedup
+	const fastPathResult = tryFastPath(query);
+	if (fastPathResult) {
+		return {
+			success: true,
+			ast: fastPathResult,
+		};
+	}
+
+	// Fall back to full grammar parser for complex queries
 	try {
 		const matchResult = grammar.match(query);
 

@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   benchmarks:
-    name: run and report to Codspeed
+    name: run
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
@@ -22,13 +22,10 @@ jobs:
           bun-version-file: package.json
       - run: bun ci
       - run: bun run build
-
       - uses: actions/setup-node@v6
         with:
           node-version: 24
-
-      - name: Run the benchmarks
-        uses: CodSpeedHQ/action@v4
+      - uses: CodSpeedHQ/action@v4
         with:
-          mode: instrumentation
+          mode: walltime
           run: cd packages/benchmark && bun run bench

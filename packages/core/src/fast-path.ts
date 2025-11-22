@@ -49,7 +49,9 @@ function parseSimpleValue(valueStr: string): Value | null {
 
 	// Number: -123 or 45.67
 	if (/^-?\d+(\.\d+)?$/.test(trimmed)) {
-		return { type: "number", value: Number(trimmed) };
+		return trimmed.includes(".")
+			? Number.parseFloat(trimmed)
+			: Number.parseInt(trimmed, 10);
 	}
 
 	// Boolean: true or false (case-insensitive)

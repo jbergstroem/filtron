@@ -60,7 +60,7 @@ function parseSimpleValue(valueStr: string): Value | null {
 
 	// Identifier: fieldname or dotted.field.name
 	// Must not start with digit, can contain letters, digits, underscore, dots
-	if (/^[a-zA-Z_][a-zA-Z0-9_.]*$/.test(trimmed)) {
+	if (SIMPLE_FIELD_REGEX.test(trimmed)) {
 		return { type: "identifier", value: trimmed };
 	}
 

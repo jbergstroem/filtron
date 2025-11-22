@@ -1,10 +1,7 @@
 import type { ASTNode } from "./types";
+import { tryFastPath } from "./fast-path";
 import grammarBundle from "./grammar.ohm-bundle.js";
 import { semanticActions } from "./semantics";
-import {
-	tryFastPath,
-	getFastPathMetrics,
-} from "./fast-path";
 
 // Create semantics with proper typing from generated bundle
 // Note: We use 'as any' here because the generated types are too restrictive for runtime usage

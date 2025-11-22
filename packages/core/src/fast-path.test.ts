@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach } from "bun:test";
+import { describe, test, expect } from "bun:test";
 import {
 	parseSimpleComparison,
 	parseSimpleBooleanField,
@@ -6,7 +6,6 @@ import {
 	tryFastPath,
 } from "./fast-path";
 import { parse } from "./parser";
-import type { ComparisonExpression, BooleanFieldExpression, AndExpression } from "./types";
 
 describe("Fast Path Parser", () => {
 	describe("parseSimpleComparison", () => {

@@ -17,7 +17,8 @@ const SIMPLE_COMPARISON_REGEX =
 	/^([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*)(\s*)(=|!=|>=|<=|>|<|~|:)(\s*)(.+)$/;
 
 // Pattern: simple field name (for boolean field shorthand)
-const SIMPLE_FIELD_REGEX = /^[a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*$/;
+const SIMPLE_FIELD_REGEX =
+	/^[a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*$/;
 
 // Reserved keywords that cannot be used as bare field names
 const KEYWORDS = new Set(["and", "or", "not", "exists", "true", "false"]);
@@ -149,8 +150,7 @@ export function parseSimpleAnd(query: string): AndExpression | null {
 	// Try to parse left side
 	const leftTrimmed = parts[0].trim();
 	const left =
-		parseSimpleComparison(leftTrimmed) ||
-		parseSimpleBooleanField(leftTrimmed);
+		parseSimpleComparison(leftTrimmed) || parseSimpleBooleanField(leftTrimmed);
 
 	if (!left) {
 		return null; // Left side too complex

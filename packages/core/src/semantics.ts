@@ -162,7 +162,7 @@ export const semanticActions: FiltronActionDict<
 		}
 
 		// Build dotted path with array join (faster than string concatenation)
-		const parts = new Array(len + 1);
+		const parts = Array.from({ length: len + 1 });
 		parts[0] = first.sourceString;
 		for (let i = 0; i < len; i++) {
 			parts[i + 1] = children[i].sourceString;
@@ -194,7 +194,7 @@ export const semanticActions: FiltronActionDict<
 
 		if (!hasEscapes) {
 			// Fast path for unescaped strings: join all characters at once
-			const parts = new Array(len);
+			const parts = Array.from({ length: len });
 			for (let i = 0; i < len; i++) {
 				parts[i] = children[i].sourceString;
 			}
@@ -218,13 +218,19 @@ export const semanticActions: FiltronActionDict<
 		return { type: "string", value: result };
 	},
 
-	numberLiteral_float(this: any, sign: any, whole: any, _dot: any, frac: any): Value {
+	numberLiteral_float(
+		this: any,
+		_sign: any,
+		_whole: any,
+		_dot: any,
+		_frac: any,
+	): Value {
 		// Use entire matched source directly (zero-copy, faster than concatenation)
 		const value = Number.parseFloat(this.sourceString);
 		return { type: "number", value };
 	},
 
-	numberLiteral_int(this: any, sign: any, digits: any): Value {
+	numberLiteral_int(this: any, _sign: any, _digits: any): Value {
 		// Use entire matched source directly (zero-copy, faster than concatenation)
 		const value = Number.parseInt(this.sourceString, 10);
 		return { type: "number", value };

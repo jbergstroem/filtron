@@ -12,37 +12,6 @@ Filtron is organized as a **monorepo** with multiple packages:
 - **`@filtron/core`** - Core query parser using [Ohm.js](https://ohmjs.org/)
 - **`@filtron/sql`** - SQL WHERE clause generator that converts Filtron AST to SQL
 
-### Monorepo Structure
-
-```
-filtron/
-├── packages/
-│   ├── core/              # @filtron/core - Core parser package
-│   │   ├── src/
-│   │   │   ├── grammar.ohm            # Grammar definition
-│   │   │   ├── grammar.ohm-bundle.js  # Pre-compiled grammar (auto-generated)
-│   │   │   ├── grammar.ohm-bundle.d.ts # TypeScript types (auto-generated)
-│   │   │   ├── semantics.ts           # AST generation
-│   │   │   ├── parser.ts              # Public API
-│   │   │   ├── types.ts               # TypeScript AST types
-│   │   │   └── parser.test.ts         # Tests
-│   │   ├── examples/
-│   │   ├── benchmark.ts
-│   │   └── package.json
-│   │
-│   └── sql/               # @filtron/sql - SQL converter package
-│       ├── src/
-│       │   ├── converter.ts           # AST to SQL converter
-│       │   └── converter.test.ts      # Tests
-│       ├── examples/
-│       ├── benchmark.ts
-│       └── package.json
-│
-├── package.json           # Root workspace configuration
-├── README.md              # Project overview
-├── CONTRIBUTING.md        # Collaboration guidelines
-└── AGENTS.md              # Agent workflows (this file)
-```
 
 ## Workflow Checklist
 

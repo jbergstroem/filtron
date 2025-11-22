@@ -1,4 +1,4 @@
-name: Benchmark
+name: benchmark
 
 on:
   push:
@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   benchmarks:
-    name: Run and report to Codspeed
+    name: run and report to Codspeed
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6

@@ -1,6 +1,6 @@
 /**
  * SQL Converter Benchmark Suite
- * 
+ *
  * Continuous performance tracking using tinybench + CodSpeed
  * Run: bun run bench:sql
  */
@@ -10,14 +10,18 @@ import { withCodSpeed } from "@codspeed/tinybench-plugin";
 import { parse } from "@filtron/core";
 import { toSQL } from "@filtron/sql";
 
-const bench = withCodSpeed(new Bench({
-	warmupIterations: 10,
-	iterations: 100,
-}));
+const bench = withCodSpeed(
+	new Bench({
+		warmupIterations: 10,
+		iterations: 100,
+	}),
+);
 
 const simpleAST = parse("age > 18");
 const mediumAST = parse('status = "active" AND age >= 18');
-const complexAST = parse('(role = "admin" OR role = "moderator") AND status = "active"');
+const complexAST = parse(
+	'(role = "admin" OR role = "moderator") AND status = "active"',
+);
 
 // Validate ASTs
 if (!simpleAST.success || !mediumAST.success || !complexAST.success) {
@@ -54,12 +58,11 @@ async function main() {
 
 	console.table(
 		bench.tasks.map(({ name, result }) => ({
-			"Benchmark": name,
+			Benchmark: name,
 			"ops/sec": result?.hz?.toFixed(0) || "N/A",
 			"avg (µs)": result?.mean ? (result.mean * 1000000).toFixed(2) : "N/A",
-		}))
+		})),
 	);
-	
 }
 
 main().catch(console.error);

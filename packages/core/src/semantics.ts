@@ -245,10 +245,6 @@ export const semanticActions: FiltronActionDict<
 		return { type: "identifier", value: result };
 	},
 
-	Value_simpleIdent(ident: any): Value {
-		return ident.toAST();
-	},
-
 	// These just pass through the source string for keywords
 	or(_or: any): any {
 		return _or;

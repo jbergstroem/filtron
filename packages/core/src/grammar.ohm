@@ -11,31 +11,33 @@ Filtron {
   PrimaryExpression = "(" OrExpression ")" -- parens
                     | FieldExpression
 
-  FieldExpression = FieldName "?" -- existsQuestion
-                  | FieldName exists -- existsKeyword
-                  | FieldName notOneOfOp "[" NonemptyListOf<Value, ","> "]" -- notOneOf
+  // Most common cases first to reduce backtracking
+  FieldExpression = FieldName ComparisonOp Value -- comparison
                   | FieldName oneOfOp "[" NonemptyListOf<Value, ","> "]" -- oneOf
-                  | FieldName ComparisonOp Value -- comparison
+                  | FieldName notOneOfOp "[" NonemptyListOf<Value, ","> "]" -- notOneOf
+                  | FieldName "?" -- existsQuestion
+                  | FieldName exists -- existsKeyword
                   | FieldName -- booleanField
 
   FieldName = ident ("." ident)*
 
   oneOfOp = ":"
   notOneOfOp = "!:"
-  ComparisonOp = "!=" | ">=" | "<=" | "=" | "~" | ">" | "<" | ":"
+  
+  // Two-char operators first, then single-char by frequency
+  ComparisonOp = "!=" | ">=" | "<=" | "=" | ">" | "<" | "~" | ":"
 
   Value = stringLiteral
         | numberLiteral
         | booleanLiteral
         | ident ("." ident)* -- dottedIdent
-        | ident -- simpleIdent
 
   stringLiteral = "\"" stringChar* "\""
   stringChar = ~("\"" | "\\") any -- nonEscaped
              | "\\" any -- escaped
 
   numberLiteral = "-"? digit+ "." digit+ -- float
-                | "-"? digit+ -- int
+                | "-"? digit+ ~"." -- int
 
   booleanLiteral = true | false
 
@@ -43,14 +45,13 @@ Filtron {
   identStart = letter | "_"
   identPart = alnum | "_"
 
-  // Keywords (case-insensitive)
-  keyword = or | and | not | exists | true | false
-  or = caseInsensitive<"or"> ~identPart
+  keyword = and | or | not | true | false | exists
   and = caseInsensitive<"and"> ~identPart
+  or = caseInsensitive<"or"> ~identPart
   not = caseInsensitive<"not"> ~identPart
-  exists = caseInsensitive<"exists"> ~identPart
   true = caseInsensitive<"true"> ~identPart
   false = caseInsensitive<"false"> ~identPart
+  exists = caseInsensitive<"exists"> ~identPart
 
   // Whitespace
   space += comment

@@ -19,11 +19,11 @@ export interface FiltronActionDict<T> extends BaseActionDict<T> {
   NotExpression?: (this: NonterminalNode, arg0: NonterminalNode) => T;
   PrimaryExpression_parens?: (this: NonterminalNode, arg0: TerminalNode, arg1: NonterminalNode, arg2: TerminalNode) => T;
   PrimaryExpression?: (this: NonterminalNode, arg0: NonterminalNode) => T;
+  FieldExpression_comparison?: (this: NonterminalNode, arg0: NonterminalNode, arg1: NonterminalNode, arg2: NonterminalNode) => T;
+  FieldExpression_oneOf?: (this: NonterminalNode, arg0: NonterminalNode, arg1: NonterminalNode, arg2: TerminalNode, arg3: NonterminalNode, arg4: TerminalNode) => T;
+  FieldExpression_notOneOf?: (this: NonterminalNode, arg0: NonterminalNode, arg1: NonterminalNode, arg2: TerminalNode, arg3: NonterminalNode, arg4: TerminalNode) => T;
   FieldExpression_existsQuestion?: (this: NonterminalNode, arg0: NonterminalNode, arg1: TerminalNode) => T;
   FieldExpression_existsKeyword?: (this: NonterminalNode, arg0: NonterminalNode, arg1: NonterminalNode) => T;
-  FieldExpression_notOneOf?: (this: NonterminalNode, arg0: NonterminalNode, arg1: NonterminalNode, arg2: TerminalNode, arg3: NonterminalNode, arg4: TerminalNode) => T;
-  FieldExpression_oneOf?: (this: NonterminalNode, arg0: NonterminalNode, arg1: NonterminalNode, arg2: TerminalNode, arg3: NonterminalNode, arg4: TerminalNode) => T;
-  FieldExpression_comparison?: (this: NonterminalNode, arg0: NonterminalNode, arg1: NonterminalNode, arg2: NonterminalNode) => T;
   FieldExpression_booleanField?: (this: NonterminalNode, arg0: NonterminalNode) => T;
   FieldExpression?: (this: NonterminalNode, arg0: NonterminalNode) => T;
   FieldName?: (this: NonterminalNode, arg0: NonterminalNode, arg1: IterationNode, arg2: IterationNode) => T;
@@ -31,7 +31,6 @@ export interface FiltronActionDict<T> extends BaseActionDict<T> {
   notOneOfOp?: (this: NonterminalNode, arg0: TerminalNode) => T;
   ComparisonOp?: (this: NonterminalNode, arg0: TerminalNode) => T;
   Value_dottedIdent?: (this: NonterminalNode, arg0: NonterminalNode, arg1: IterationNode, arg2: IterationNode) => T;
-  Value_simpleIdent?: (this: NonterminalNode, arg0: NonterminalNode) => T;
   Value?: (this: NonterminalNode, arg0: NonterminalNode) => T;
   stringLiteral?: (this: NonterminalNode, arg0: TerminalNode, arg1: IterationNode, arg2: TerminalNode) => T;
   stringChar_nonEscaped?: (this: NonterminalNode, arg0: NonterminalNode) => T;
@@ -45,12 +44,12 @@ export interface FiltronActionDict<T> extends BaseActionDict<T> {
   identStart?: (this: NonterminalNode, arg0: NonterminalNode | TerminalNode) => T;
   identPart?: (this: NonterminalNode, arg0: NonterminalNode | TerminalNode) => T;
   keyword?: (this: NonterminalNode, arg0: NonterminalNode) => T;
-  or?: (this: NonterminalNode, arg0: NonterminalNode) => T;
   and?: (this: NonterminalNode, arg0: NonterminalNode) => T;
+  or?: (this: NonterminalNode, arg0: NonterminalNode) => T;
   not?: (this: NonterminalNode, arg0: NonterminalNode) => T;
-  exists?: (this: NonterminalNode, arg0: NonterminalNode) => T;
   true?: (this: NonterminalNode, arg0: NonterminalNode) => T;
   false?: (this: NonterminalNode, arg0: NonterminalNode) => T;
+  exists?: (this: NonterminalNode, arg0: NonterminalNode) => T;
   space?: (this: NonterminalNode, arg0: NonterminalNode | TerminalNode) => T;
   comment?: (this: NonterminalNode, arg0: TerminalNode, arg1: IterationNode) => T;
 }

@@ -14,7 +14,7 @@ import type {
 // Pattern: field = value, field.nested > 123, etc.
 // Matches: fieldname operator value (with optional whitespace)
 const SIMPLE_COMPARISON_REGEX =
-	/^([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*)(\s*)(=|!=|>=|<=|>|<|~|:)(\s*)(.+)$/;
+	/^([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*)(\s*)(!=|>=|<=|=|>|<|~|:)(\s*)(.+)$/;
 
 // Pattern: simple field name (for boolean field shorthand)
 const SIMPLE_FIELD_REGEX =

@@ -87,14 +87,12 @@ export const semanticActions: FiltronActionDict<
 		values: any,
 		_close: any,
 	): ASTNode {
-		const iter = values.asIteration();
-		const children = iter.children;
+		const children = values.asIteration().children;
 		const len = children.length;
-		const valueArray: Value[] = Array.from({ length: len });
+		const valueArray: Value[] = [];
 
-		// Pre-allocate array and fill to avoid resizing overhead
 		for (let i = 0; i < len; i++) {
-			valueArray[i] = children[i].toAST();
+			valueArray.push(children[i].toAST());
 		}
 
 		return {
@@ -111,14 +109,12 @@ export const semanticActions: FiltronActionDict<
 		values: any,
 		_close: any,
 	): ASTNode {
-		const iter = values.asIteration();
-		const children = iter.children;
+		const children = values.asIteration().children;
 		const len = children.length;
-		const valueArray: Value[] = Array.from({ length: len });
+		const valueArray: Value[] = [];
 
-		// Pre-allocate array and fill to avoid resizing overhead
 		for (let i = 0; i < len; i++) {
-			valueArray[i] = children[i].toAST();
+			valueArray.push(children[i].toAST());
 		}
 
 		return {

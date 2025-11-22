@@ -1,0 +1,31 @@
+name: benchmark
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  benchmarks:
+    name: run
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
+      - run: bun ci
+      - run: bun run build
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - uses: CodSpeedHQ/action@v4
+        with:
+          mode: simulation
+          run: cd packages/benchmark && bun run bench

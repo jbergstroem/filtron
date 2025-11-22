@@ -8,7 +8,7 @@
   "scripts": {
     "bench": "bun run bench:core && bun run bench:sql",
     "bench:core": "node core.bench.ts",
-    "bench:sql": "node sql.bench.ts",
+    "bench:sql": "node sql.bench.ts"
   },
   "dependencies": {
     "@codspeed/tinybench-plugin": "5.0.1",

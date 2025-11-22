@@ -2,8 +2,7 @@
  * Core Parser Benchmark Suite
  *
  * Continuous performance tracking using tinybench + CodSpeed
- * Run: bun run bench.ts
- * CI: Automatically tracked by CodSpeed
+ * Run: bun run bench:core
  */
 
 import { Bench } from "tinybench";

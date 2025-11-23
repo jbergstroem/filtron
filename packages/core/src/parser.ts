@@ -68,13 +68,7 @@ export interface ParseOptions {
  *
  * @example
  * ```typescript
- * // Enable fast-path for simple queries
- * const result = parse('status = "active"', { fastPath: true });
- * ```
- *
- * @example
- * ```typescript
- * // Complex queries don't need fast-path
+ * // Disable fast-path to skip the check entirely (query will go directly to full parser)
  * const result = parse('(age > 18 OR verified) AND NOT banned', { fastPath: false });
  * ```
  */

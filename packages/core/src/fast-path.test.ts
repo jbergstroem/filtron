@@ -13,7 +13,7 @@ import {
 } from "./fast-path";
 import { parse, parseOrThrow } from "./parser";
 
-describe("Fast Path Parser", () => {
+describe("Fast Path", () => {
 	describe("parseSimpleComparison", () => {
 		test("parses various operators and value types", () => {
 			expect(parseSimpleComparison('status = "active"')).toMatchObject({
@@ -230,7 +230,7 @@ describe("Fast Path Parser", () => {
 				right: { type: "booleanField", field: "premium" },
 			});
 
-			expect(parseSimpleAnd('role = "admin" AND age > 18')).toMatchObject({
+			expect(parseSimpleAnd("age > 18 AND count < 100")).toMatchObject({
 				type: "and",
 				left: { type: "comparison" },
 				right: { type: "comparison" },
@@ -248,10 +248,6 @@ describe("Fast Path Parser", () => {
 				left: { type: "exists" },
 			});
 
-			expect(parseSimpleAnd('verified AND status : ["active"]')).toMatchObject({
-				right: { type: "oneOf" },
-			});
-
 			expect(parseSimpleAnd("verified AND NOT banned")).toMatchObject({
 				right: { type: "not" },
 			});
@@ -265,6 +261,8 @@ describe("Fast Path Parser", () => {
 			expect(
 				parseSimpleAnd("a=1 AND b=2 AND c=3 AND d=4 AND e=5 AND f=6"),
 			).toBeNull(); // >5 terms
+			expect(parseSimpleAnd('role = "admin" AND age > 18')).toBeNull(); // string literals
+			expect(parseSimpleAnd('verified AND status : ["active"]')).toBeNull(); // array literals
 		});
 	});
 
@@ -276,9 +274,7 @@ describe("Fast Path Parser", () => {
 				right: { type: "booleanField", field: "premium" },
 			});
 
-			expect(
-				parseSimpleOr('role = "admin" OR role = "moderator"'),
-			).toMatchObject({
+			expect(parseSimpleOr("age > 18 OR count < 100")).toMatchObject({
 				type: "or",
 				left: { type: "comparison" },
 				right: { type: "comparison" },
@@ -306,6 +302,59 @@ describe("Fast Path Parser", () => {
 			expect(
 				parseSimpleOr("a=1 OR b=2 OR c=3 OR d=4 OR e=5 OR f=6"),
 			).toBeNull(); // >5 terms
+			expect(parseSimpleOr('role = "admin" OR role = "moderator"')).toBeNull(); // string literals
+		});
+	});
+
+	describe("String Literal Safety", () => {
+		test("parseSimpleAnd rejects queries with string literals", () => {
+			// These should be rejected to avoid incorrect splitting
+			expect(parseSimpleAnd('name = "ANDY" AND age > 18')).toBeNull();
+			expect(
+				parseSimpleAnd('title = "SENIOR ANALYST" AND verified'),
+			).toBeNull();
+			expect(
+				parseSimpleAnd('text = "foo AND bar" AND status = "active"'),
+			).toBeNull();
+			expect(
+				parseSimpleAnd('description = "Do NOT use" AND verified'),
+			).toBeNull();
+			expect(
+				parseSimpleAnd('status = "pending OR active" AND verified'),
+			).toBeNull();
+		});
+
+		test("parseSimpleOr rejects queries with string literals", () => {
+			// These should be rejected to avoid incorrect splitting
+			expect(parseSimpleOr('role = "admin" OR role = "moderator"')).toBeNull();
+			expect(
+				parseSimpleOr('title = "HISTORY" OR status = "active"'),
+			).toBeNull();
+			expect(parseSimpleOr('name = "CANDY" OR name = "SANDY"')).toBeNull();
+			expect(parseSimpleOr('text = "foo OR bar" OR verified')).toBeNull();
+		});
+
+		test("full parser correctly handles AND/OR in string literals", () => {
+			// Even though fast-path rejects these, full parser should handle them
+			const testCases = [
+				'name = "ANDY" AND age > 18',
+				'title = "HISTORY" OR role = "admin"',
+				'text = "foo AND bar" AND status = "active"',
+				'company = "PANDORA" AND verified',
+			];
+
+			for (const query of testCases) {
+				const result = parse(query);
+				expect(result.success).toBe(true);
+			}
+		});
+
+		test("queries without string literals still use fast-path", () => {
+			// These should NOT be rejected - they have no string literals
+			expect(parseSimpleAnd("verified AND premium")).not.toBeNull();
+			expect(parseSimpleAnd("age > 18 AND count < 100")).not.toBeNull();
+			expect(parseSimpleOr("admin OR moderator")).not.toBeNull();
+			expect(parseSimpleOr("email? OR phone?")).not.toBeNull();
 		});
 	});
 

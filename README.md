@@ -13,7 +13,7 @@ Fast, type-safe query language parser for filtering data in real-time APIs. Buil
 
 ## Features
 
-- **Fast**: ~50μs parse time, 18K+ parses/sec
+- **Fast**: 200-900ns for simple queries (fast-path), 2-240μs for complex queries, 84K+ parses/sec
 - **Small**: 15 KB minified, 56 KB installed
 - **Type-safe**: Full TypeScript support with discriminated union AST
 - **Snack-sized dependencies**: Only `ohm-js` runtime required

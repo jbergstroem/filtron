@@ -377,9 +377,13 @@ export function parseSimpleNot(query: string): NotExpression | null {
  * Returns null if pattern doesn't match or expressions are complex
  */
 export function parseSimpleAnd(query: string): AndExpression | null {
+	// Reject queries with string literals to avoid incorrect splitting
+	// (splitting on AND would break strings like 'name = "foo AND bar"')
+	if (query.includes('"')) {
+		return null; // Has string literals, use full parser
+	}
+
 	// Split on AND (case-insensitive, with word boundaries)
-	// This regex will split on AND but may include ANDs inside string literals
-	// That's safe because it produces incorrect parts, causing fallback to Ohm.js
 	const parts = query.split(/\s+AND\s+/i);
 
 	if (parts.length < 2) {
@@ -434,6 +438,12 @@ export function parseSimpleAnd(query: string): AndExpression | null {
  * Returns null if pattern doesn't match or expressions are complex
  */
 export function parseSimpleOr(query: string): OrExpression | null {
+	// Reject queries with string literals to avoid incorrect splitting
+	// (splitting on OR would break strings like 'status = "pending OR active"')
+	if (query.includes('"')) {
+		return null; // Has string literals, use full parser
+	}
+
 	// Must not contain AND at the same level (would need parentheses)
 	// Quick heuristic: if both AND and OR are present without parens, reject
 	if (/\bAND\b/i.test(query) && /\bOR\b/i.test(query)) {

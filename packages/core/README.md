@@ -7,7 +7,7 @@ Fast, type-safe query language parser for filtering data in real-time APIs. Buil
 
 ## Features
 
-- **Fast**: ~50μs parse time, 18K+ parses/sec (benchmarked on M2 Max)
+- **Fast**: 200-900ns for simple queries (fast-path), 2-240μs for complex queries, 84K+ parses/sec
 - **Small**: 15 KB minified, 56 KB installed
 - **Type-safe**: Full TypeScript support with discriminated union AST
 
@@ -200,12 +200,11 @@ See the [@filtron/sql README](./packages/sql/README.md) for full documentation.
 ## Performance
 
 ```
-Parse Time:       ~20μs per query (simple queries with fast-path, default)
-                  ~50μs per query (complex queries or fast-path disabled)
-Throughput:       ~35,000 parses/sec (simple queries with fast-path, default)
-                  18,755 parses/sec (complex queries or fast-path disabled)
+Parse Time:       200-900ns per query (simple queries with fast-path, default)
+                  2-240μs per query (complex queries or fast-path disabled)
+Throughput:       ~84,000 parses/sec (average across query types)
 Startup:          <1ms with pre-compiled grammar
-Memory:           Efficient GC, minimal allocation
+Memory:           Efficient GC, minimal allocation (~600KB heap growth per 10K parses)
 ```
 
 Run benchmarks: `bun run bench`

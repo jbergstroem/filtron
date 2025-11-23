@@ -2,7 +2,7 @@
 
 This document describes the core workflows and principles for working on the Filtron query language parser. The two most important goals of this library are:
 
-1. **Performance** - This parser is designed for real-time API usage where query parsing happens on every request (200-500ns for simple queries)
+1. **Performance** - This parser is designed for real-time API usage where query parsing happens on every request (200-900ns for simple/medium queries via fast-path)
 2. **Correctness** - The parser must accurately parse all valid queries and reject invalid ones with clear error messages
 
 ## Project Architecture
@@ -38,7 +38,8 @@ Before submitting changes, ensure:
 
 The parser uses a hybrid approach for optimal performance:
 
-**Fast-Path Patterns** (85-90% of queries, 200ns-2μs):
+**Fast-Path Patterns** (85-90% of queries, 200-900ns):
+
 - ✅ Simple comparisons: `field = value`, `age > 18`
 - ✅ Boolean fields: `verified`, `premium`
 - ✅ EXISTS checks: `email?`, `name exists`
@@ -47,7 +48,8 @@ The parser uses a hybrid approach for optimal performance:
 - ✅ Simple AND: `verified AND age > 18` (up to 5 terms)
 - ✅ Simple OR: `admin OR moderator` (up to 5 terms)
 
-**Ohm.js Fallback** (10-15% of queries, 20-200μs):
+**Ohm.js Fallback** (10-15% of queries, 2-240μs):
+
 - Parentheses: `(a OR b) AND c`
 - Mixed AND/OR: `a AND b OR c` (without parentheses)
 - Nested NOT: `NOT (a AND b)`
@@ -245,20 +247,22 @@ bun run bench
 
 Typical targets:
 
-- **Parser (fast-path)**: 200-500ns for simple queries, 1-2μs for medium queries
-- **Parser (Ohm.js fallback)**: 20-200μs for complex queries
-- **SQL Converter**: < 50μs for simple queries, < 500μs for complex queries
+- **Parser (fast-path)**: 180-300ns for simple queries, 700ns-1μs for medium queries
+- **Parser (Ohm.js fallback)**: 2-240μs for complex queries
+- **SQL Converter**: < 50μs for simple queries, < 500μs for complex queries (adds minimal overhead)
 
 Current benchmarks (as of fast-path expansion):
-- Simple queries: 250-550ns (2-5M ops/s) ⚡
-- Medium queries: 900-2,000ns (500K-1M ops/s)
-- Complex queries: 100-200μs (5-10K ops/s)
+
+- Simple queries: 180-300ns ⚡
+- Medium queries: 700ns-1μs
+- Complex queries: 2-240μs
+- Average throughput: 84K+ parses/sec
 
 ### When to Optimize
 
 - ❌ Don't optimize prematurely
 - ✅ Do measure with realistic queries
-- ✅ Do optimize if > 1μs for typical queries (fast-path target)
+- ✅ Do optimize if > 1μs for simple/medium queries (fast-path target)
 - ✅ Do profile before changing anything
 - ✅ Expand fast-path for patterns used in >5% of real-world queries
 

@@ -1,0 +1,10 @@
+http://localhost:3000/users
+http://localhost:3000/users?filter=status = "active"
+http://localhost:3000/users?filter=status = "active" AND verified
+http://localhost:3000/users?filter=role:["admin","moderator"]
+http://localhost:3000/users?filter=age >= 30
+http://localhost:3000/users?filter=age < 30
+http://localhost:3000/users?filter=age >= 30 AND age <= 40
+http://localhost:3000/users?filter=(age < 25 OR age > 50) AND verified
+http://localhost:3000/users?filter=age > 30
+http://localhost:3000/users?filter=age > 25 AND status = "active"

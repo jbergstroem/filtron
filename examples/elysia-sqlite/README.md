@@ -40,6 +40,10 @@ curl --get --data-urlencode 'filter=role:["admin","moderator"]' "http://localhos
 curl --get --data-urlencode 'filter=status = "active" AND role:["admin","moderator"] AND age >= 25 AND age <= 45' "http://localhost:3000/users"
 ```
 
-## Sample Data
+## Benchmarking with [oha](https://github.com/hatoo/oha)
 
-The in-memory database is automatically seeded with 500 "users" on startup, generated using [Faker.js](https://fakerjs.dev/) with a constant seed (12345) for reproducibility.
+Start the dev server and benchmark:
+
+```bash
+oha -z 10s --urls-from-file oha-urls.txt
+```

@@ -474,6 +474,113 @@ describe("Core", () => {
 				expect(expr.values).toHaveLength(1);
 			}
 		});
+
+		test("one-of with escaped quotes in strings", () => {
+			const result = parse(
+				'message : ["He said \\"Hello\\"", "She said \\"Goodbye\\""]',
+			);
+			expect(result.success).toBe(true);
+			if (result.success) {
+				const expr = result.ast as OneOfExpression;
+				expect(expr.type).toBe("oneOf");
+				expect(expr.field).toBe("message");
+				expect(expr.values).toHaveLength(2);
+				expect(expr.values[0]).toEqual({
+					type: "string",
+					value: 'He said "Hello"',
+				});
+				expect(expr.values[1]).toEqual({
+					type: "string",
+					value: 'She said "Goodbye"',
+				});
+			}
+		});
+
+		test("one-of with backslashes and escaped quotes", () => {
+			const result = parse(
+				'path : ["C:\\\\Users\\\\Documents", "D:\\\\Program Files\\\\App"]',
+			);
+			expect(result.success).toBe(true);
+			if (result.success) {
+				const expr = result.ast as OneOfExpression;
+				expect(expr.values).toHaveLength(2);
+				expect(expr.values[0]).toEqual({
+					type: "string",
+					value: "C:\\Users\\Documents",
+				});
+				expect(expr.values[1]).toEqual({
+					type: "string",
+					value: "D:\\Program Files\\App",
+				});
+			}
+		});
+
+		test("not-one-of with escaped quotes", () => {
+			const result = parse('message !: ["Don\'t", "Can\\"t"]');
+			expect(result.success).toBe(true);
+			if (result.success) {
+				const expr = result.ast as NotOneOfExpression;
+				expect(expr.type).toBe("notOneOf");
+				expect(expr.field).toBe("message");
+				expect(expr.values).toHaveLength(2);
+				expect(expr.values[0]).toEqual({ type: "string", value: "Don't" });
+				expect(expr.values[1]).toEqual({ type: "string", value: 'Can"t' });
+			}
+		});
+
+		test("one-of with mixed escaped and normal strings", () => {
+			const result = parse(
+				'text : ["normal", "with \\"quotes\\"", "also normal"]',
+			);
+			expect(result.success).toBe(true);
+			if (result.success) {
+				const expr = result.ast as OneOfExpression;
+				expect(expr.values).toHaveLength(3);
+				expect(expr.values[0]).toEqual({ type: "string", value: "normal" });
+				expect(expr.values[1]).toEqual({
+					type: "string",
+					value: 'with "quotes"',
+				});
+				expect(expr.values[2]).toEqual({
+					type: "string",
+					value: "also normal",
+				});
+			}
+		});
+
+		test("one-of with string containing comma and escaped quote", () => {
+			const result = parse('text : ["hello, world", "say \\"hi\\", friend"]');
+			expect(result.success).toBe(true);
+			if (result.success) {
+				const expr = result.ast as OneOfExpression;
+				expect(expr.values).toHaveLength(2);
+				expect(expr.values[0]).toEqual({
+					type: "string",
+					value: "hello, world",
+				});
+				expect(expr.values[1]).toEqual({
+					type: "string",
+					value: 'say "hi", friend',
+				});
+			}
+		});
+
+		test("regression: escaped quote should not split array incorrectly", () => {
+			// Bug scenario: ["hello\"world", "test"] should parse as 2 values, not split at wrong comma
+			const result = parse('status : ["hello\\"world", "test"]');
+			expect(result.success).toBe(true);
+			if (result.success) {
+				const expr = result.ast as OneOfExpression;
+				expect(expr.type).toBe("oneOf");
+				expect(expr.field).toBe("status");
+				expect(expr.values).toHaveLength(2);
+				expect(expr.values[0]).toEqual({
+					type: "string",
+					value: 'hello"world',
+				});
+				expect(expr.values[1]).toEqual({ type: "string", value: "test" });
+			}
+		});
 	});
 
 	describe("Complex Queries", () => {

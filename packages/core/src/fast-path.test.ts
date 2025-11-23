@@ -165,6 +165,38 @@ describe("Fast Path", () => {
 			expect(parseOneOf("status : []")).toBeNull(); // empty array
 			expect(parseOneOf('text : ["hello\\"world"]')).toBeNull(); // escapes
 		});
+
+		test("escaped quotes fallback to full parser but parse correctly", () => {
+			// Fast-path detects escapes and returns null for fallback
+			expect(parseOneOf('text : ["hello\\"world", "test"]')).toBeNull();
+			expect(parseOneOf('msg : ["say \\"hi\\"", "normal"]')).toBeNull();
+
+			// Full parser handles escaped quotes correctly
+			const result1 = parse('text : ["hello\\"world", "test"]');
+			expect(result1.success).toBe(true);
+			if (result1.success) {
+				expect(result1.ast).toMatchObject({
+					type: "oneOf",
+					field: "text",
+					values: [
+						{ type: "string", value: 'hello"world' },
+						{ type: "string", value: "test" },
+					],
+				});
+			}
+
+			// Verify the fix: arrays with escaped quotes don't split at wrong commas
+			const result2 = parse('status : ["a\\"b,c", "d"]');
+			expect(result2.success).toBe(true);
+			if (result2.success) {
+				expect(result2.ast).toMatchObject({
+					values: [
+						{ type: "string", value: 'a"b,c' }, // comma is inside the string
+						{ type: "string", value: "d" },
+					],
+				});
+			}
+		});
 	});
 
 	describe("parseNotOneOf", () => {

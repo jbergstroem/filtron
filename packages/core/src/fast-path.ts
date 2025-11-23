@@ -114,7 +114,20 @@ function parseValueArray(valuesStr: string): Value[] | null {
 		const char = valuesStr[i];
 
 		if (char === '"') {
-			inString = !inString;
+			// Check if this quote is escaped by counting preceding backslashes
+			let numBackslashes = 0;
+			let j = i - 1;
+			while (j >= 0 && valuesStr[j] === "\\") {
+				numBackslashes++;
+				j--;
+			}
+
+			// If odd number of backslashes, the quote is escaped
+			const isEscaped = numBackslashes % 2 === 1;
+
+			if (!isEscaped) {
+				inString = !inString;
+			}
 			current += char;
 		} else if (char === "," && !inString) {
 			// End of value

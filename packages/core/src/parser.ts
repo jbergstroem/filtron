@@ -1,4 +1,5 @@
 import type { ASTNode } from "./types";
+import { tryFastPath } from "./fast-path";
 import grammarBundle from "./grammar.ohm-bundle.js";
 import { semanticActions } from "./semantics";
 
@@ -32,9 +33,27 @@ export interface ParseError {
 export type ParseResult = ParseSuccess | ParseError;
 
 /**
+ * Options for configuring the parser behavior
+ */
+export interface ParseOptions {
+	/**
+	 * Enable fast-path optimization for simple queries.
+	 * When enabled, simple queries (like "field = value" or "field1 = 1 AND field2 = 2")
+	 * bypass the full parser using optimized regex patterns for better performance.
+	 *
+	 * Fast-path automatically falls back to the full parser when patterns don't match,
+	 * so there's no downside to keeping it enabled (default).
+	 *
+	 * @default true
+	 */
+	fastPath?: boolean;
+}
+
+/**
  * Parses a Filtron query string into an Abstract Syntax Tree (AST).
  *
  * @param query - The Filtron query string to parse
+ * @param options - Optional configuration for parser behavior
  * @returns A ParseResult containing either the AST or an error message
  *
  * @example
@@ -46,8 +65,32 @@ export type ParseResult = ParseSuccess | ParseError;
  *   console.error(result.error);
  * }
  * ```
+ *
+ * @example
+ * ```typescript
+ * // Disable fast-path to skip the check entirely (query will go directly to full parser)
+ * const result = parse('(age > 18 OR verified) AND NOT banned', { fastPath: false });
+ * ```
  */
-export const parse = (query: string): ParseResult => {
+export const parse = (
+	query: string,
+	options: ParseOptions = {},
+): ParseResult => {
+	const { fastPath = true } = options;
+
+	// Try fast path first for common patterns if enabled
+	// Fast paths bypass the full grammar parser for significant speedup
+	if (fastPath) {
+		const fastPathResult = tryFastPath(query);
+		if (fastPathResult) {
+			return {
+				success: true,
+				ast: fastPathResult,
+			};
+		}
+	}
+
+	// Use full grammar parser
 	try {
 		const matchResult = grammar.match(query);
 
@@ -80,6 +123,7 @@ export const parse = (query: string): ParseResult => {
  * Use this when you want to handle errors with try/catch instead of checking the result.
  *
  * @param query - The Filtron query string to parse
+ * @param options - Optional configuration for parser behavior
  * @returns The parsed AST
  * @throws Error if parsing fails
  *
@@ -92,9 +136,18 @@ export const parse = (query: string): ParseResult => {
  *   console.error('Parse failed:', error.message);
  * }
  * ```
+ *
+ * @example
+ * ```typescript
+ * // Enable fast-path for simple queries
+ * const ast = parseOrThrow('status = "active"', { fastPath: true });
+ * ```
  */
-export const parseOrThrow = (query: string): ASTNode => {
-	const result = parse(query);
+export const parseOrThrow = (
+	query: string,
+	options: ParseOptions = {},
+): ASTNode => {
+	const result = parse(query, options);
 
 	if (result.success) {
 		return result.ast;

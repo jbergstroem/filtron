@@ -2,6 +2,26 @@ import type { FiltronActionDict } from "./grammar.ohm-bundle.js";
 import type { ASTNode, Value } from "./types";
 
 /**
+ * Unescape a single escape sequence character
+ */
+function unescapeChar(escapedChar: string): string {
+	switch (escapedChar) {
+		case "n":
+			return "\n";
+		case "t":
+			return "\t";
+		case "r":
+			return "\r";
+		case "\\":
+			return "\\";
+		case '"':
+			return '"';
+		default:
+			return escapedChar;
+	}
+}
+
+/**
  * Semantic actions for converting Ohm parse tree to Filtron AST
  */
 export const semanticActions: FiltronActionDict<
@@ -149,7 +169,7 @@ export const semanticActions: FiltronActionDict<
 			return first.sourceString;
 		}
 
-		// Build dotted path with direct concatenation
+		// Build dotted path with string concatenation
 		let result = first.sourceString;
 		for (let i = 0; i < len; i++) {
 			result += "." + children[i].sourceString;
@@ -170,34 +190,29 @@ export const semanticActions: FiltronActionDict<
 			return { type: "string", value: "" };
 		}
 
+		// Fast path: check if any escapes exist (most strings have no escapes)
+		let hasEscapes = false;
+		for (let i = 0; i < len; i++) {
+			if (children[i].sourceString.length > 1) {
+				hasEscapes = true;
+				break;
+			}
+		}
+
+		if (!hasEscapes) {
+			// Fast path for unescaped strings: use map to construct array efficiently
+			const value = children.map((c: any) => c.sourceString).join("");
+			return { type: "string", value };
+		}
+
+		// Slow path: handle escape sequences
 		let result = "";
 		for (let i = 0; i < len; i++) {
-			const char = children[i];
-			const source = char.sourceString;
+			const source = children[i].sourceString;
 			// Escaped characters have length > 1 (backslash + character)
 			if (source.length > 1 && source[0] === "\\") {
-				// Get the character after the backslash
-				const escapedChar = source[1];
-				// Handle common escape sequences
-				switch (escapedChar) {
-					case "n":
-						result += "\n";
-						break;
-					case "t":
-						result += "\t";
-						break;
-					case "r":
-						result += "\r";
-						break;
-					case "\\":
-						result += "\\";
-						break;
-					case '"':
-						result += '"';
-						break;
-					default:
-						result += escapedChar;
-				}
+				// Get the character after the backslash and unescape it
+				result += unescapeChar(source[1]);
 			} else {
 				result += source;
 			}
@@ -205,15 +220,19 @@ export const semanticActions: FiltronActionDict<
 		return { type: "string", value: result };
 	},
 
-	numberLiteral_float(sign: any, whole: any, _dot: any, frac: any): Value {
-		const value = Number.parseFloat(
-			sign.sourceString + whole.sourceString + "." + frac.sourceString,
-		);
+	numberLiteral_float(
+		this: any,
+		_sign: any,
+		_whole: any,
+		_dot: any,
+		_frac: any,
+	): Value {
+		const value = Number.parseFloat(this.sourceString);
 		return { type: "number", value };
 	},
 
-	numberLiteral_int(sign: any, digits: any): Value {
-		const value = Number.parseInt(sign.sourceString + digits.sourceString, 10);
+	numberLiteral_int(this: any, _sign: any, _digits: any): Value {
+		const value = Number.parseInt(this.sourceString, 10);
 		return { type: "number", value };
 	},
 

@@ -7,7 +7,7 @@ Fast, type-safe query language parser for filtering data in real-time APIs. Buil
 
 ## Features
 
-- **Fast**: ~50μs parse time, 18K+ parses/sec (benchmarked on M2 Max)
+- **Fast**: 200-900ns for simple queries (fast-path), 2-240μs for complex queries, 84K+ parses/sec
 - **Small**: 15 KB minified, 56 KB installed
 - **Type-safe**: Full TypeScript support with discriminated union AST
 
@@ -47,6 +47,33 @@ try {
   console.error(error.message);
 }
 ```
+
+## Parser Options
+
+Both `parse()` and `parseOrThrow()` accept an optional second parameter for configuration:
+
+```typescript
+interface ParseOptions {
+  fastPath?: boolean; // Enable fast-path optimization (default: true)
+}
+```
+
+### Fast Path Optimization
+
+The `fastPath` option enables optimized regex-based parsing for simple queries, bypassing the full grammar parser for significant performance gains. **It is enabled by default** and automatically falls back to the full parser when patterns don't match, so there's no downside to keeping it enabled.
+
+**When to keep enabled (`fastPath: true`, default):**
+
+- Most use cases - fast-path automatically handles both simple and complex queries
+- Simple comparisons: `field = value`, `age > 18` (uses fast-path)
+- Simple AND expressions: `field1 = 1 AND field2 = 2` (uses fast-path)
+- Boolean fields: `verified`, `active` (uses fast-path)
+- Complex queries: automatically falls back to full parser
+
+**When to disable (`fastPath: false`):**
+
+- Rare cases where you know all queries are complex and want to skip the fast-path check entirely
+- Benchmarking or profiling the full parser specifically
 
 ## Syntax
 
@@ -173,13 +200,16 @@ See the [@filtron/sql README](./packages/sql/README.md) for full documentation.
 ## Performance
 
 ```
-Parse Time:       ~50μs per query
-Throughput:       18,755 parses/sec
+Parse Time:       200-900ns per query (simple queries with fast-path, default)
+                  2-240μs per query (complex queries or fast-path disabled)
+Throughput:       ~84,000 parses/sec (average across query types)
 Startup:          <1ms with pre-compiled grammar
-Memory:           Efficient GC, minimal allocation
+Memory:           Efficient GC, minimal allocation (~600KB heap growth per 10K parses)
 ```
 
 Run benchmarks: `bun run bench`
+
+**Note:** Fast-path optimization is enabled by default and provides 2-3x performance improvement for simple queries. See [Parser Options](#parser-options) for details.
 
 ## Documentation
 

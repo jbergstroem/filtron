@@ -37,7 +37,6 @@ bun run lint
    ```
 
 2. **Make your changes**
-
    - Edit source files in `packages/core/src/` or `packages/sql/src/`
    - Add or update tests in the respective package
    - Update documentation if needed

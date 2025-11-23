@@ -69,6 +69,12 @@ function parseSimpleValue(valueStr: string): Value | null {
 			return null;
 		}
 
+		// Check for unescaped quotes in the middle
+		// Since we already rejected backslashes, any quote here is unescaped
+		if (str.includes('"')) {
+			return null;
+		}
+
 		return { type: "string", value: str };
 	}
 

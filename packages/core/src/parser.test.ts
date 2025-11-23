@@ -822,6 +822,21 @@ describe("Core", () => {
 			expect(result.success).toBe(false);
 		});
 
+		test("string with unescaped quote in middle", () => {
+			const result = parse('name = "hello"world"');
+			expect(result.success).toBe(false);
+		});
+
+		test("string with unescaped quote and space", () => {
+			const result = parse('name = "hello" world"');
+			expect(result.success).toBe(false);
+		});
+
+		test("string with multiple unescaped quotes", () => {
+			const result = parse('text = "foo"bar"baz"');
+			expect(result.success).toBe(false);
+		});
+
 		test("invalid operator", () => {
 			const result = parse("age === 18");
 			expect(result.success).toBe(false);

@@ -54,6 +54,13 @@ describe("Fast Path Parser", () => {
 			expect(parseSimpleComparison("field = [1, 2]")).toBeNull(); // array
 			expect(parseSimpleComparison('status : ["a"]')).toBeNull(); // oneOf pattern
 		});
+
+		test("rejects malformed strings with unescaped quotes", () => {
+			expect(parseSimpleComparison('name = "hello"world"')).toBeNull(); // quote in middle
+			expect(parseSimpleComparison('name = "hello" world"')).toBeNull(); // quote with space
+			expect(parseSimpleComparison('text = "foo"bar"baz"')).toBeNull(); // multiple quotes
+			expect(parseSimpleComparison('value = ""test""')).toBeNull(); // double quotes at start
+		});
 	});
 
 	describe("parseSimpleBooleanField", () => {

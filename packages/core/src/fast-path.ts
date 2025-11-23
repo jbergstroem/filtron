@@ -13,6 +13,8 @@ import type {
 
 // Pattern: field = value, field.nested > 123, etc.
 // Matches: fieldname operator value (with optional whitespace)
+// Note: Two-character operators (!=, >=, <=) come first to prevent regex backtracking
+// when matching single-character operators (=, >, <). This improves performance.
 const SIMPLE_COMPARISON_REGEX =
 	/^([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*)(\s*)(!=|>=|<=|=|>|<|~|:)(\s*)(.+)$/;
 
@@ -49,9 +51,7 @@ function parseSimpleValue(valueStr: string): Value | null {
 
 	// Number: -123 or 45.67
 	if (/^-?\d+(\.\d+)?$/.test(trimmed)) {
-		return trimmed.includes(".")
-			? Number.parseFloat(trimmed)
-			: Number.parseInt(trimmed, 10);
+		return { type: "number", value: Number(trimmed) };
 	}
 
 	// Boolean: true or false (case-insensitive)

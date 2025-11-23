@@ -5,7 +5,7 @@ import {
 	parseSimpleAnd,
 	tryFastPath,
 } from "./fast-path";
-import { parse } from "./parser";
+import { parse, parseOrThrow } from "./parser";
 
 describe("Fast Path Parser", () => {
 	describe("parseSimpleComparison", () => {
@@ -496,6 +496,51 @@ describe("Fast Path Parser", () => {
 			const result = parse("a = 1 OR b = 2");
 
 			expect(result.success).toBe(true);
+		});
+	});
+
+	describe("fastPath option", () => {
+		test("fastPath: true enables fast path for simple queries", () => {
+			const result = parse("age > 18", { fastPath: true });
+
+			expect(result.success).toBe(true);
+			if (result.success) {
+				expect(result.ast).toEqual({
+					type: "comparison",
+					field: "age",
+					operator: ">",
+					value: { type: "number", value: 18 },
+				});
+			}
+		});
+
+		test("fastPath: false disables fast path for simple queries", () => {
+			const result = parse("age > 18", { fastPath: false });
+
+			expect(result.success).toBe(true);
+			// Should still produce correct AST via full parser
+			if (result.success) {
+				expect(result.ast).toEqual({
+					type: "comparison",
+					field: "age",
+					operator: ">",
+					value: { type: "number", value: 18 },
+				});
+			}
+		});
+
+		test("parseOrThrow respects fastPath option", () => {
+			const ast1 = parseOrThrow('status = "active"', { fastPath: true });
+			const ast2 = parseOrThrow('status = "active"', { fastPath: false });
+
+			// Both should produce correct AST
+			expect(ast1).toEqual({
+				type: "comparison",
+				field: "status",
+				operator: "=",
+				value: { type: "string", value: "active" },
+			});
+			expect(ast2).toEqual(ast1);
 		});
 	});
 });

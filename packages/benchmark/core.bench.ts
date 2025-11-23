@@ -66,11 +66,14 @@ bench
 		);
 	})
 	.add("complex: deep nesting", () => {
-		parse("(a = 1 AND (b = 2 OR c = 3)) AND (d = 4 OR (e = 5 AND f = 6))");
+		parse("(a = 1 AND (b = 2 OR c = 3)) AND (d = 4 OR (e = 5 AND f = 6))", {
+			fastPath: false,
+		});
 	})
 	.add("complex: mixed operators", () => {
 		parse(
 			'email? AND verified = true AND status : ["active", "premium"] AND user.age >= 18 AND NOT suspended',
+			{ fastPath: false },
 		);
 	})
 	.add("complex: permission check", () => {
@@ -89,7 +92,9 @@ bench
 		);
 	})
 	.add("api: role-based filter", () => {
-		parse('verified = true AND role : ["user", "premium"] AND NOT suspended');
+		parse('verified = true AND role : ["user", "premium"] AND NOT suspended', {
+			fastPath: false,
+		});
 	});
 
 bench

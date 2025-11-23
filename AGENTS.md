@@ -12,7 +12,6 @@ Filtron is organized as a **monorepo** with multiple packages:
 - **`@filtron/core`** - Core query parser using [Ohm.js](https://ohmjs.org/)
 - **`@filtron/sql`** - SQL WHERE clause generator that converts Filtron AST to SQL
 
-
 ## Workflow Checklist
 
 Before submitting changes, ensure:

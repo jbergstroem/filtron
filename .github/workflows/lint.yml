@@ -22,6 +22,7 @@ jobs:
         with:
           reporter: github-pr-check
           fail_on_error: true
+          vale_flags: "--glob='!**/.github/*'"
 
   validate-renovate-config:
     runs-on: ubuntu-24.04

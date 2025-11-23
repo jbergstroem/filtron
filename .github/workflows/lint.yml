@@ -14,11 +14,17 @@ jobs:
           echo "::add-matcher::.github/matchers/actionlint.json"
           actionlint -color
 
-  typos:
+  vale:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
-      - uses: crate-ci/typos@v1
+      - run: curl -Ls "https://github.com/errata-ai/vale/releases/download/v${{ env.version }}/vale_${{ env.version }}_Linux_64-bit.tar.gz" | sudo tar -x -z -C /usr/local/bin vale
+        env:
+          version: "3.13.0"
+      - run: |
+          echo "::add-matcher::.github/matchers/vale.json"
+          vale sync
+          find . -type f -name "*.md" -not -path "*/.github/*" -not -path "*/node_modules/*" -print0 | xargs -0 vale --minAlertLevel=suggestion --output=line
 
   validate-renovate-config:
     runs-on: ubuntu-24.04

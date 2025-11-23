@@ -356,6 +356,13 @@ describe("Fast Path Parser", () => {
 			const result = parseSimpleAnd('a = 1 AND b : ["x", "y"]');
 			expect(result).toBeNull();
 		});
+
+		test("rejects AND inside string literals (safe fallback)", () => {
+			// Query with AND inside a string literal would split into 3 parts,
+			// causing parseSimpleAnd to return null and fall back to full parser
+			const result = parseSimpleAnd('status = "hello AND world" AND verified');
+			expect(result).toBeNull();
+		});
 	});
 
 	describe("tryFastPath", () => {

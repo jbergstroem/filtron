@@ -162,12 +162,11 @@ export const semanticActions: FiltronActionDict<
 		}
 
 		// Build dotted path with array join (faster than string concatenation)
-		const parts = Array.from({ length: len + 1 });
-		parts[0] = first.sourceString;
-		for (let i = 0; i < len; i++) {
-			parts[i + 1] = children[i].sourceString;
-		}
-		return parts.join(".");
+		// Use map to construct array efficiently without pre-allocating undefined values
+		return [
+			first.sourceString,
+			...children.map((c: any) => c.sourceString),
+		].join(".");
 	},
 
 	Value(value: any): Value {
@@ -193,12 +192,9 @@ export const semanticActions: FiltronActionDict<
 		}
 
 		if (!hasEscapes) {
-			// Fast path for unescaped strings: join all characters at once
-			const parts = Array.from({ length: len });
-			for (let i = 0; i < len; i++) {
-				parts[i] = children[i].sourceString;
-			}
-			return { type: "string", value: parts.join("") };
+			// Fast path for unescaped strings: use map to construct array efficiently
+			const value = children.map((c: any) => c.sourceString).join("");
+			return { type: "string", value };
 		}
 
 		// Slow path: handle escape sequences

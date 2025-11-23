@@ -143,10 +143,13 @@ export function parseSimpleBooleanField(
 export function parseSimpleAnd(query: string): AndExpression | null {
 	// Split on AND (case-insensitive, with word boundaries)
 	// Only handle single AND (no chaining)
+	// Note: This regex will split on AND inside string literals (e.g., "hello AND world"),
+	// but that's safe because it produces more than 2 parts, causing the check below
+	// to return null and fall back to the full parser which handles it correctly.
 	const parts = query.split(/\s+AND\s+/i);
 
 	if (parts.length !== 2) {
-		return null; // Multiple ANDs or no AND
+		return null; // Multiple ANDs, no AND, or AND inside string literals
 	}
 
 	// Try to parse left side

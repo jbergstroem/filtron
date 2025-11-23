@@ -170,11 +170,6 @@ export const semanticActions: FiltronActionDict<
 		}
 
 		// Build dotted path with string concatenation
-		// Benchmarked 5-12x faster than Array.map().join() for typical field names (1-3 dots)
-		// which represent the vast majority of real-world usage.
-		// Modern JS engines optimize string concatenation extremely well, while array methods
-		// add allocation overhead from creating intermediate arrays.
-		// See: packages/core/benchmarks/field-name-concat.bench.ts for detailed measurements
 		let result = first.sourceString;
 		for (let i = 0; i < len; i++) {
 			result += "." + children[i].sourceString;
@@ -232,13 +227,11 @@ export const semanticActions: FiltronActionDict<
 		_dot: any,
 		_frac: any,
 	): Value {
-		// Use entire matched source directly (zero-copy, faster than concatenation)
 		const value = Number.parseFloat(this.sourceString);
 		return { type: "number", value };
 	},
 
 	numberLiteral_int(this: any, _sign: any, _digits: any): Value {
-		// Use entire matched source directly (zero-copy, faster than concatenation)
 		const value = Number.parseInt(this.sourceString, 10);
 		return { type: "number", value };
 	},

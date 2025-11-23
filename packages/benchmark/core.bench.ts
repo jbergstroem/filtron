@@ -89,9 +89,7 @@ bench
 		);
 	})
 	.add("api: role-based filter", () => {
-		parse('verified = true AND role : ["user", "premium"] AND NOT suspended', {
-			fastPath: false,
-		});
+		parse('verified = true AND role : ["user", "premium"] AND NOT suspended');
 	});
 
 bench

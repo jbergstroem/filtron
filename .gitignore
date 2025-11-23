@@ -4,3 +4,5 @@ dist
 *.cpuprofile
 coverage
 junit.xml
+
+.github/vale-styles

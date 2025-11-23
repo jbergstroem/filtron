@@ -14,11 +14,11 @@ jobs:
           echo "::add-matcher::.github/matchers/actionlint.json"
           actionlint -color
 
-  typos:
+  vale:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
-      - uses: crate-ci/typos@v1
+      - uses: errata-ai/vale-action@v2.1.1
 
   validate-renovate-config:
     runs-on: ubuntu-24.04

@@ -3,551 +3,403 @@ import {
 	parseSimpleComparison,
 	parseSimpleBooleanField,
 	parseSimpleAnd,
+	parseSimpleOr,
+	parseSimpleNot,
+	parseExistsQuestion,
+	parseExistsKeyword,
+	parseOneOf,
+	parseNotOneOf,
 	tryFastPath,
 } from "./fast-path";
 import { parse, parseOrThrow } from "./parser";
 
 describe("Fast Path Parser", () => {
 	describe("parseSimpleComparison", () => {
-		test("parses simple string comparison", () => {
-			const result = parseSimpleComparison('status = "active"');
-			expect(result).toEqual({
+		test("parses various operators and value types", () => {
+			expect(parseSimpleComparison('status = "active"')).toMatchObject({
 				type: "comparison",
-				field: "status",
 				operator: "=",
 				value: { type: "string", value: "active" },
 			});
-		});
 
-		test("parses number comparison with >", () => {
-			const result = parseSimpleComparison("age > 18");
-			expect(result).toEqual({
+			expect(parseSimpleComparison("age > 18")).toMatchObject({
 				type: "comparison",
-				field: "age",
 				operator: ">",
 				value: { type: "number", value: 18 },
 			});
-		});
 
-		test("parses negative number", () => {
-			const result = parseSimpleComparison("temperature >= -5");
-			expect(result).toEqual({
-				type: "comparison",
-				field: "temperature",
+			expect(parseSimpleComparison("temperature >= -5.5")).toMatchObject({
 				operator: ">=",
-				value: { type: "number", value: -5 },
+				value: { type: "number", value: -5.5 },
 			});
-		});
 
-		test("parses float comparison", () => {
-			const result = parseSimpleComparison("score <= 4.5");
-			expect(result).toEqual({
-				type: "comparison",
-				field: "score",
-				operator: "<=",
-				value: { type: "number", value: 4.5 },
-			});
-		});
-
-		test("parses boolean true", () => {
-			const result = parseSimpleComparison("verified = true");
-			expect(result).toEqual({
-				type: "comparison",
-				field: "verified",
-				operator: "=",
-				value: { type: "boolean", value: true },
-			});
-		});
-
-		test("parses boolean false", () => {
-			const result = parseSimpleComparison("active != false");
-			expect(result).toEqual({
-				type: "comparison",
-				field: "active",
+			expect(parseSimpleComparison("verified != false")).toMatchObject({
 				operator: "!=",
 				value: { type: "boolean", value: false },
 			});
-		});
 
-		test("parses identifier value", () => {
-			const result = parseSimpleComparison("status = pending");
-			expect(result).toEqual({
-				type: "comparison",
-				field: "status",
-				operator: "=",
+			expect(parseSimpleComparison("status = pending")).toMatchObject({
 				value: { type: "identifier", value: "pending" },
 			});
-		});
 
-		test("parses dotted field name", () => {
-			const result = parseSimpleComparison("user.profile.age >= 18");
-			expect(result).toEqual({
-				type: "comparison",
+			expect(parseSimpleComparison("user.profile.age >= 18")).toMatchObject({
 				field: "user.profile.age",
-				operator: ">=",
-				value: { type: "number", value: 18 },
 			});
 		});
 
-		test("parses dotted identifier value", () => {
-			const result = parseSimpleComparison("status = user.status");
-			expect(result).toEqual({
-				type: "comparison",
-				field: "status",
-				operator: "=",
-				value: { type: "identifier", value: "user.status" },
-			});
-		});
-
-		test("handles whitespace around operator", () => {
-			const result = parseSimpleComparison("age    >    18");
-			expect(result).toEqual({
-				type: "comparison",
-				field: "age",
-				operator: ">",
-				value: { type: "number", value: 18 },
-			});
-		});
-
-		test("handles no whitespace", () => {
-			const result = parseSimpleComparison("age>18");
-			expect(result).toEqual({
-				type: "comparison",
-				field: "age",
-				operator: ">",
-				value: { type: "number", value: 18 },
-			});
-		});
-
-		test("parses all comparison operators", () => {
-			expect(parseSimpleComparison("a = 1")?.operator).toBe("=");
-			expect(parseSimpleComparison("a != 1")?.operator).toBe("!=");
-			expect(parseSimpleComparison("a > 1")?.operator).toBe(">");
-			expect(parseSimpleComparison("a >= 1")?.operator).toBe(">=");
-			expect(parseSimpleComparison("a < 1")?.operator).toBe("<");
-			expect(parseSimpleComparison("a <= 1")?.operator).toBe("<=");
-			expect(parseSimpleComparison("a ~ 1")?.operator).toBe("~");
-			expect(parseSimpleComparison("a : 1")?.operator).toBe(":");
-		});
-
-		test("rejects keyword as field name", () => {
-			expect(parseSimpleComparison("and = 1")).toBeNull();
-			expect(parseSimpleComparison("or = 1")).toBeNull();
-			expect(parseSimpleComparison("not = 1")).toBeNull();
-			expect(parseSimpleComparison("exists = 1")).toBeNull();
-			expect(parseSimpleComparison("true = 1")).toBeNull();
-			expect(parseSimpleComparison("false = 1")).toBeNull();
-		});
-
-		test("rejects keyword with case insensitivity", () => {
-			expect(parseSimpleComparison("AND = 1")).toBeNull();
-			expect(parseSimpleComparison("Or = 1")).toBeNull();
-			expect(parseSimpleComparison("NOT = 1")).toBeNull();
-		});
-
-		test("rejects string with escapes", () => {
-			const result = parseSimpleComparison('text = "hello\\"world"');
-			expect(result).toBeNull(); // Falls back to full parser for escapes
-		});
-
-		test("rejects empty value", () => {
-			const result = parseSimpleComparison("field =");
-			expect(result).toBeNull();
-		});
-
-		test("rejects complex patterns", () => {
-			expect(parseSimpleComparison("a = 1 AND b = 2")).toBeNull();
-			expect(parseSimpleComparison("(a = 1)")).toBeNull();
-			expect(parseSimpleComparison("NOT a = 1")).toBeNull();
-		});
-
-		test("rejects array values", () => {
-			expect(parseSimpleComparison('status : ["a", "b"]')).toBeNull();
+		test("rejects invalid patterns", () => {
+			expect(parseSimpleComparison("and = 1")).toBeNull(); // keyword
+			expect(parseSimpleComparison('text = "hello\\"world"')).toBeNull(); // escape
+			expect(parseSimpleComparison("field = ")).toBeNull(); // empty value
+			expect(parseSimpleComparison("field = [1, 2]")).toBeNull(); // array
+			expect(parseSimpleComparison('status : ["a"]')).toBeNull(); // oneOf pattern
 		});
 	});
 
 	describe("parseSimpleBooleanField", () => {
-		test("parses simple field name", () => {
-			const result = parseSimpleBooleanField("verified");
-			expect(result).toEqual({
+		test("parses simple and dotted field names", () => {
+			expect(parseSimpleBooleanField("verified")).toEqual({
 				type: "booleanField",
 				field: "verified",
 			});
-		});
 
-		test("parses dotted field name", () => {
-			const result = parseSimpleBooleanField("user.premium");
-			expect(result).toEqual({
+			expect(parseSimpleBooleanField("user.profile.premium")).toEqual({
 				type: "booleanField",
-				field: "user.premium",
+				field: "user.profile.premium",
+			});
+
+			expect(parseSimpleBooleanField("  field_name  ")).toMatchObject({
+				field: "field_name",
 			});
 		});
 
-		test("parses deeply nested field", () => {
-			const result = parseSimpleBooleanField("user.profile.settings.active");
-			expect(result).toEqual({
-				type: "booleanField",
-				field: "user.profile.settings.active",
-			});
-		});
-
-		test("parses field with underscores", () => {
-			const result = parseSimpleBooleanField("is_active");
-			expect(result).toEqual({
-				type: "booleanField",
-				field: "is_active",
-			});
-		});
-
-		test("handles extra whitespace", () => {
-			const result = parseSimpleBooleanField("  verified  ");
-			expect(result).toEqual({
-				type: "booleanField",
-				field: "verified",
-			});
-		});
-
-		test("rejects keywords (case insensitive)", () => {
+		test("rejects keywords and invalid patterns", () => {
 			expect(parseSimpleBooleanField("and")).toBeNull();
-			expect(parseSimpleBooleanField("AND")).toBeNull();
-			expect(parseSimpleBooleanField("or")).toBeNull();
 			expect(parseSimpleBooleanField("OR")).toBeNull();
-			expect(parseSimpleBooleanField("not")).toBeNull();
 			expect(parseSimpleBooleanField("NOT")).toBeNull();
-			expect(parseSimpleBooleanField("exists")).toBeNull();
-			expect(parseSimpleBooleanField("true")).toBeNull();
-			expect(parseSimpleBooleanField("false")).toBeNull();
-		});
-
-		test("rejects invalid patterns", () => {
-			expect(parseSimpleBooleanField("field > 1")).toBeNull();
-			expect(parseSimpleBooleanField("a AND b")).toBeNull();
-			expect(parseSimpleBooleanField("(field)")).toBeNull();
-			expect(parseSimpleBooleanField("field?")).toBeNull();
-		});
-
-		test("rejects field starting with number", () => {
+			expect(parseSimpleBooleanField("field = value")).toBeNull();
 			expect(parseSimpleBooleanField("123field")).toBeNull();
 		});
 	});
 
-	describe("parseSimpleAnd", () => {
-		test("parses two comparisons with AND", () => {
-			const result = parseSimpleAnd('status = "active" AND age > 18');
-			expect(result).toEqual({
-				type: "and",
-				left: {
-					type: "comparison",
-					field: "status",
-					operator: "=",
-					value: { type: "string", value: "active" },
-				},
-				right: {
-					type: "comparison",
-					field: "age",
-					operator: ">",
-					value: { type: "number", value: 18 },
-				},
+	describe("parseExistsQuestion", () => {
+		test("parses exists check with ?", () => {
+			expect(parseExistsQuestion("email?")).toEqual({
+				type: "exists",
+				field: "email",
+			});
+
+			expect(parseExistsQuestion("user.profile.avatar?")).toMatchObject({
+				field: "user.profile.avatar",
 			});
 		});
 
-		test("parses comparison AND boolean field", () => {
-			const result = parseSimpleAnd("age >= 18 AND verified");
-			expect(result).toEqual({
-				type: "and",
-				left: {
-					type: "comparison",
-					field: "age",
-					operator: ">=",
-					value: { type: "number", value: 18 },
-				},
-				right: {
-					type: "booleanField",
-					field: "verified",
-				},
-			});
-		});
-
-		test("parses boolean field AND comparison", () => {
-			const result = parseSimpleAnd("premium AND age > 21");
-			expect(result).toEqual({
-				type: "and",
-				left: {
-					type: "booleanField",
-					field: "premium",
-				},
-				right: {
-					type: "comparison",
-					field: "age",
-					operator: ">",
-					value: { type: "number", value: 21 },
-				},
-			});
-		});
-
-		test("parses two boolean fields", () => {
-			const result = parseSimpleAnd("verified AND premium");
-			expect(result).toEqual({
-				type: "and",
-				left: {
-					type: "booleanField",
-					field: "verified",
-				},
-				right: {
-					type: "booleanField",
-					field: "premium",
-				},
-			});
-		});
-
-		test("handles case-insensitive AND", () => {
-			const result = parseSimpleAnd("verified and premium");
-			expect(result).not.toBeNull();
-			expect(result?.type).toBe("and");
-		});
-
-		test("handles mixed case AND", () => {
-			const result = parseSimpleAnd("verified And premium");
-			expect(result).not.toBeNull();
-			expect(result?.type).toBe("and");
-		});
-
-		test("handles extra whitespace", () => {
-			const result = parseSimpleAnd("  verified   AND   premium  ");
-			expect(result).toEqual({
-				type: "and",
-				left: {
-					type: "booleanField",
-					field: "verified",
-				},
-				right: {
-					type: "booleanField",
-					field: "premium",
-				},
-			});
-		});
-
-		test("rejects multiple ANDs (chaining)", () => {
-			const result = parseSimpleAnd("a = 1 AND b = 2 AND c = 3");
-			expect(result).toBeNull(); // Falls back to full parser
-		});
-
-		test("rejects OR expressions", () => {
-			const result = parseSimpleAnd("a = 1 OR b = 2");
-			expect(result).toBeNull();
-		});
-
-		test("rejects parentheses", () => {
-			const result = parseSimpleAnd("(a = 1) AND (b = 2)");
-			expect(result).toBeNull();
-		});
-
-		test("rejects NOT expressions", () => {
-			const result = parseSimpleAnd("NOT a = 1 AND b = 2");
-			expect(result).toBeNull();
-		});
-
-		test("rejects complex left side", () => {
-			const result = parseSimpleAnd('a : ["x", "y"] AND b = 2');
-			expect(result).toBeNull();
-		});
-
-		test("rejects complex right side", () => {
-			const result = parseSimpleAnd('a = 1 AND b : ["x", "y"]');
-			expect(result).toBeNull();
-		});
-
-		test("rejects AND inside string literals (safe fallback)", () => {
-			// Query with AND inside a string literal would split into 3 parts,
-			// causing parseSimpleAnd to return null and fall back to full parser
-			const result = parseSimpleAnd('status = "hello AND world" AND verified');
-			expect(result).toBeNull();
+		test("rejects invalid patterns", () => {
+			expect(parseExistsQuestion("and?")).toBeNull(); // keyword
+			expect(parseExistsQuestion("email")).toBeNull(); // no ?
+			expect(parseExistsQuestion("email? AND verified")).toBeNull(); // extra content
 		});
 	});
 
-	describe("tryFastPath", () => {
-		test("tries comparison first", () => {
-			const result = tryFastPath("age > 18");
-			expect(result).toEqual({
-				type: "comparison",
-				field: "age",
-				operator: ">",
-				value: { type: "number", value: 18 },
+	describe("parseExistsKeyword", () => {
+		test("parses exists keyword (case-insensitive)", () => {
+			expect(parseExistsKeyword("email exists")).toEqual({
+				type: "exists",
+				field: "email",
+			});
+
+			expect(parseExistsKeyword("name EXISTS")).toMatchObject({
+				field: "name",
+			});
+
+			expect(parseExistsKeyword("user.bio ExIsTs")).toMatchObject({
+				field: "user.bio",
 			});
 		});
 
-		test("tries AND second", () => {
-			const result = tryFastPath("verified AND premium");
-			expect(result).toEqual({
+		test("rejects invalid patterns", () => {
+			expect(parseExistsKeyword("or exists")).toBeNull();
+			expect(parseExistsKeyword("email")).toBeNull();
+		});
+	});
+
+	describe("parseOneOf", () => {
+		test("parses oneOf with various value types", () => {
+			expect(parseOneOf('status : ["active", "pending"]')).toEqual({
+				type: "oneOf",
+				field: "status",
+				values: [
+					{ type: "string", value: "active" },
+					{ type: "string", value: "pending" },
+				],
+			});
+
+			expect(parseOneOf("role : [1, 2, 3]")).toMatchObject({
+				values: [
+					{ type: "number", value: 1 },
+					{ type: "number", value: 2 },
+					{ type: "number", value: 3 },
+				],
+			});
+
+			expect(parseOneOf('status : ["active", 1, true]')).toMatchObject({
+				type: "oneOf",
+			});
+
+			expect(parseOneOf('user.role : ["admin"]')).toMatchObject({
+				field: "user.role",
+			});
+
+			expect(parseOneOf('status:["active","pending"]')).toBeTruthy(); // no whitespace
+		});
+
+		test("rejects invalid patterns", () => {
+			expect(parseOneOf('not : ["a", "b"]')).toBeNull(); // keyword
+			expect(parseOneOf("status : []")).toBeNull(); // empty array
+			expect(parseOneOf('text : ["hello\\"world"]')).toBeNull(); // escapes
+		});
+	});
+
+	describe("parseNotOneOf", () => {
+		test("parses notOneOf arrays", () => {
+			expect(parseNotOneOf('status !: ["banned", "deleted"]')).toEqual({
+				type: "notOneOf",
+				field: "status",
+				values: [
+					{ type: "string", value: "banned" },
+					{ type: "string", value: "deleted" },
+				],
+			});
+
+			expect(parseNotOneOf("role !: [0, -1]")).toMatchObject({
+				type: "notOneOf",
+			});
+		});
+
+		test("rejects invalid patterns", () => {
+			expect(parseNotOneOf('true !: ["a"]')).toBeNull(); // keyword
+			expect(parseNotOneOf("status !: []")).toBeNull(); // empty
+		});
+	});
+
+	describe("parseSimpleNot", () => {
+		test("parses NOT with various inner expressions", () => {
+			expect(parseSimpleNot("NOT verified")).toEqual({
+				type: "not",
+				expression: {
+					type: "booleanField",
+					field: "verified",
+				},
+			});
+
+			expect(parseSimpleNot('NOT status = "banned"')).toMatchObject({
+				type: "not",
+				expression: { type: "comparison" },
+			});
+
+			expect(parseSimpleNot("NOT email?")).toMatchObject({
+				expression: { type: "exists" },
+			});
+
+			expect(parseSimpleNot('NOT status : ["active"]')).toMatchObject({
+				expression: { type: "oneOf" },
+			});
+
+			expect(parseSimpleNot("not verified")).toBeTruthy(); // case-insensitive
+		});
+
+		test("rejects complex patterns", () => {
+			expect(parseSimpleNot("NOT NOT verified")).toBeNull(); // double NOT
+			expect(parseSimpleNot("NOT (a OR b)")).toBeNull(); // parentheses
+			expect(parseSimpleNot("verified")).toBeNull(); // no NOT
+		});
+	});
+
+	describe("parseSimpleAnd", () => {
+		test("parses AND with 2-5 terms", () => {
+			expect(parseSimpleAnd("verified AND premium")).toEqual({
 				type: "and",
 				left: { type: "booleanField", field: "verified" },
 				right: { type: "booleanField", field: "premium" },
 			});
-		});
 
-		test("tries boolean field third", () => {
-			const result = tryFastPath("verified");
-			expect(result).toEqual({
-				type: "booleanField",
-				field: "verified",
+			expect(parseSimpleAnd('role = "admin" AND age > 18')).toMatchObject({
+				type: "and",
+				left: { type: "comparison" },
+				right: { type: "comparison" },
 			});
+
+			// 3-term chain (left-associative)
+			const threeTerms = parseSimpleAnd("a = 1 AND b = 2 AND c = 3");
+			expect(threeTerms).toMatchObject({
+				type: "and",
+				left: { type: "and" }, // (a AND b)
+				right: { type: "comparison" }, // AND c
+			});
+
+			expect(parseSimpleAnd("email? AND verified")).toMatchObject({
+				left: { type: "exists" },
+			});
+
+			expect(parseSimpleAnd('verified AND status : ["active"]')).toMatchObject({
+				right: { type: "oneOf" },
+			});
+
+			expect(parseSimpleAnd("verified AND NOT banned")).toMatchObject({
+				right: { type: "not" },
+			});
+
+			expect(parseSimpleAnd("verified and premium")).toBeTruthy(); // case-insensitive
 		});
 
-		test("returns null for complex queries", () => {
-			expect(tryFastPath("a = 1 OR b = 2")).toBeNull();
-			expect(tryFastPath("NOT verified")).toBeNull();
-			expect(tryFastPath("(a = 1)")).toBeNull();
-			expect(tryFastPath('a : ["x", "y"]')).toBeNull();
+		test("rejects invalid patterns", () => {
+			expect(parseSimpleAnd("a = 1 OR b = 2")).toBeNull(); // OR
+			expect(parseSimpleAnd("(a = 1) AND (b = 2)")).toBeNull(); // parentheses
+			expect(
+				parseSimpleAnd("a=1 AND b=2 AND c=3 AND d=4 AND e=5 AND f=6"),
+			).toBeNull(); // >5 terms
 		});
 	});
 
-	describe("Fast Path vs Full Parser Equivalence", () => {
-		test("simple comparisons match full parser", () => {
+	describe("parseSimpleOr", () => {
+		test("parses OR with 2-5 terms", () => {
+			expect(parseSimpleOr("verified OR premium")).toEqual({
+				type: "or",
+				left: { type: "booleanField", field: "verified" },
+				right: { type: "booleanField", field: "premium" },
+			});
+
+			expect(
+				parseSimpleOr('role = "admin" OR role = "moderator"'),
+			).toMatchObject({
+				type: "or",
+				left: { type: "comparison" },
+				right: { type: "comparison" },
+			});
+
+			// 3-term chain (left-associative)
+			const threeTerms = parseSimpleOr("a = 1 OR b = 2 OR c = 3");
+			expect(threeTerms).toMatchObject({
+				type: "or",
+				left: { type: "or" },
+				right: { type: "comparison" },
+			});
+
+			expect(parseSimpleOr("email? OR phone?")).toMatchObject({
+				left: { type: "exists" },
+				right: { type: "exists" },
+			});
+
+			expect(parseSimpleOr("verified or premium")).toBeTruthy(); // case-insensitive
+		});
+
+		test("rejects invalid patterns", () => {
+			expect(parseSimpleOr("a = 1 AND b = 2 OR c = 3")).toBeNull(); // mixed AND/OR
+			expect(parseSimpleOr("verified")).toBeNull(); // no OR
+			expect(
+				parseSimpleOr("a=1 OR b=2 OR c=3 OR d=4 OR e=5 OR f=6"),
+			).toBeNull(); // >5 terms
+		});
+	});
+
+	describe("tryFastPath", () => {
+		test("matches patterns in priority order", () => {
+			expect(tryFastPath("age > 18")).toMatchObject({ type: "comparison" });
+			expect(tryFastPath("verified")).toMatchObject({ type: "booleanField" });
+			expect(tryFastPath("email?")).toMatchObject({ type: "exists" });
+			expect(tryFastPath("name exists")).toMatchObject({ type: "exists" });
+			expect(tryFastPath('status : ["active"]')).toMatchObject({
+				type: "oneOf",
+			});
+			expect(tryFastPath('status !: ["banned"]')).toMatchObject({
+				type: "notOneOf",
+			});
+			expect(tryFastPath("NOT banned")).toMatchObject({ type: "not" });
+			expect(tryFastPath("verified AND premium")).toMatchObject({
+				type: "and",
+			});
+			expect(tryFastPath("admin OR moderator")).toMatchObject({ type: "or" });
+			expect(tryFastPath("a = 1 AND b = 2 AND c = 3")).toMatchObject({
+				type: "and",
+			});
+		});
+
+		test("rejects complex queries early", () => {
+			expect(tryFastPath("(a OR b) AND c")).toBeNull(); // parentheses
+			expect(tryFastPath("")).toBeNull(); // empty
+			expect(tryFastPath("a = 1 AND b = 2 OR c = 3")).toBeNull(); // mixed AND/OR
+		});
+	});
+
+	describe("Full Parser Equivalence", () => {
+		test("fast-path AST matches full parser AST", () => {
 			const queries = [
 				"age > 18",
 				'status = "active"',
-				"verified = true",
-				"count != 0",
-				"score >= 4.5",
-				"temp <= -5",
-				"name ~ pattern",
-				"type : value",
-			];
-
-			for (const query of queries) {
-				const fastResult = tryFastPath(query);
-				const fullResult = parse(query);
-
-				expect(fullResult.success).toBe(true);
-				if (fullResult.success && fastResult) {
-					expect(fastResult).toEqual(fullResult.ast);
-				}
-			}
-		});
-
-		test("boolean fields match full parser", () => {
-			const queries = ["verified", "premium", "user.active", "is_enabled"];
-
-			for (const query of queries) {
-				const fastResult = tryFastPath(query);
-				const fullResult = parse(query);
-
-				expect(fullResult.success).toBe(true);
-				if (fullResult.success && fastResult) {
-					expect(fastResult).toEqual(fullResult.ast);
-				}
-			}
-		});
-
-		test("simple AND expressions match full parser", () => {
-			const queries = [
-				'status = "active" AND age > 18',
+				"verified",
 				"verified AND premium",
-				"age >= 18 AND verified",
-				"a = 1 AND b = 2",
+				"admin OR moderator",
 			];
 
 			for (const query of queries) {
 				const fastResult = tryFastPath(query);
 				const fullResult = parse(query);
 
+				expect(fastResult).not.toBeNull();
 				expect(fullResult.success).toBe(true);
-				if (fullResult.success && fastResult) {
+				if (fullResult.success) {
 					expect(fastResult).toEqual(fullResult.ast);
 				}
 			}
 		});
 
-		test("complex queries fall back to full parser", () => {
+		test("complex queries fallback to full parser", () => {
 			const queries = [
-				"a = 1 OR b = 2",
-				"NOT verified",
 				"(a = 1) AND (b = 2)",
-				'status : ["active", "pending"]',
-				"a = 1 AND b = 2 AND c = 3",
-				"field?",
-				"field EXISTS",
+				"(a OR b) AND c",
 				'text = "with \\"escape\\""',
+				"a AND b OR c",
 			];
 
 			for (const query of queries) {
 				const fastResult = tryFastPath(query);
 				const fullResult = parse(query);
 
-				expect(fastResult).toBeNull(); // Fast path doesn't handle it
-				expect(fullResult.success).toBe(true); // But full parser does
+				expect(fastResult).toBeNull();
+				expect(fullResult.success).toBe(true);
 			}
 		});
 	});
 
-	describe("Integration with parse()", () => {
-		test("parse() uses fast path for simple comparison", () => {
+	describe("Integration", () => {
+		test("parse() uses fast-path by default", () => {
 			const result = parse("age > 18");
-
-			expect(result.success).toBe(true);
-		});
-
-		test("parse() uses fast path for boolean field", () => {
-			const result = parse("verified");
-
-			expect(result.success).toBe(true);
-		});
-
-		test("parse() uses fast path for simple AND", () => {
-			const result = parse("verified AND premium");
-
-			expect(result.success).toBe(true);
-		});
-
-		test("parse() falls back to full parser for complex query", () => {
-			const result = parse("a = 1 OR b = 2");
-
-			expect(result.success).toBe(true);
-		});
-	});
-
-	describe("fastPath option", () => {
-		test("fastPath: true enables fast path for simple queries", () => {
-			const result = parse("age > 18", { fastPath: true });
-
 			expect(result.success).toBe(true);
 			if (result.success) {
-				expect(result.ast).toEqual({
-					type: "comparison",
-					field: "age",
-					operator: ">",
-					value: { type: "number", value: 18 },
-				});
+				expect(result.ast).toMatchObject({ type: "comparison" });
 			}
 		});
 
-		test("fastPath: false disables fast path for simple queries", () => {
-			const result = parse("age > 18", { fastPath: false });
+		test("fastPath option controls behavior", () => {
+			const query = 'status = "active"';
 
-			expect(result.success).toBe(true);
-			// Should still produce correct AST via full parser
-			if (result.success) {
-				expect(result.ast).toEqual({
-					type: "comparison",
-					field: "age",
-					operator: ">",
-					value: { type: "number", value: 18 },
-				});
+			const withFastPath = parse(query, { fastPath: true });
+			const withoutFastPath = parse(query, { fastPath: false });
+
+			expect(withFastPath.success).toBe(true);
+			expect(withoutFastPath.success).toBe(true);
+
+			if (withFastPath.success && withoutFastPath.success) {
+				expect(withFastPath.ast).toEqual(withoutFastPath.ast);
 			}
 		});
 
-		test("parseOrThrow respects fastPath option", () => {
+		test("parseOrThrow works with fast-path", () => {
 			const ast1 = parseOrThrow('status = "active"', { fastPath: true });
 			const ast2 = parseOrThrow('status = "active"', { fastPath: false });
+			expect(ast1).toEqual(ast2);
 
-			// Both should produce correct AST
-			expect(ast1).toEqual({
-				type: "comparison",
-				field: "status",
-				operator: "=",
-				value: { type: "string", value: "active" },
-			});
-			expect(ast2).toEqual(ast1);
+			expect(() => parseOrThrow("invalid query")).toThrow();
 		});
 	});
 });

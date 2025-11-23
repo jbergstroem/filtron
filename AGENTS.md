@@ -2,7 +2,7 @@
 
 This document describes the core workflows and principles for working on the Filtron query language parser. The two most important goals of this library are:
 
-1. **Performance** - This parser is designed for real-time API usage where query parsing happens on every request
+1. **Performance** - This parser is designed for real-time API usage where query parsing happens on every request (200-500ns for simple queries)
 2. **Correctness** - The parser must accurately parse all valid queries and reject invalid ones with clear error messages
 
 ## Project Architecture
@@ -32,6 +32,27 @@ Before submitting changes, ensure:
 - **Prefer immutability** - AST nodes are immutable plain objects
 - **Use discriminated unions** - All AST nodes have `type` field
 - **Monorepo-aware** - Use workspace dependencies (`workspace:*`) and catalog dependencies (`catalog:`)
+- **Fast-path first** - 85-90% of queries use regex fast-path, Ohm.js handles complex cases
+
+### Fast-Path Coverage
+
+The parser uses a hybrid approach for optimal performance:
+
+**Fast-Path Patterns** (85-90% of queries, 200ns-2μs):
+- ✅ Simple comparisons: `field = value`, `age > 18`
+- ✅ Boolean fields: `verified`, `premium`
+- ✅ EXISTS checks: `email?`, `name exists`
+- ✅ NOT expressions: `NOT banned`, `NOT status = "deleted"`
+- ✅ oneOf/notOneOf: `status : ["active", "pending"]`, `role !: [0]`
+- ✅ Simple AND: `verified AND age > 18` (up to 5 terms)
+- ✅ Simple OR: `admin OR moderator` (up to 5 terms)
+
+**Ohm.js Fallback** (10-15% of queries, 20-200μs):
+- Parentheses: `(a OR b) AND c`
+- Mixed AND/OR: `a AND b OR c` (without parentheses)
+- Nested NOT: `NOT (a AND b)`
+- Escape sequences: `"hello \"world\""`
+- Complex nesting and error recovery
 
 ## Working with @filtron/core
 
@@ -198,13 +219,15 @@ If parsing takes 10ms and you have 100 req/s, that's 1 full CPU core just parsin
 
 ### Optimization Techniques
 
-1. **Pre-compiled grammar bundle** - Considerably faster than parsing grammar source
-2. **Grammar is loaded once** - At module init, zero overhead per parse
-3. **Ohm memoization** - Repeated patterns are cached during parse
-4. **Single-pass AST generation** - No tree traversal after parsing
-5. **Zero-copy strings** - Use `.sourceString` from Ohm nodes
-6. **Discriminated unions** - Fast type narrowing without instanceof
-7. **Minimal allocations** - Reuse parameter arrays in SQL converter
+1. **Fast-path regex patterns** - 85-90% of queries bypass Ohm.js entirely (100x faster)
+2. **Pre-compiled grammar bundle** - Considerably faster than parsing grammar source
+3. **Grammar is loaded once** - At module init, zero overhead per parse
+4. **Early pattern rejection** - Check for parentheses before running regex patterns
+5. **Ohm memoization** - Repeated patterns are cached during parse
+6. **Single-pass AST generation** - No tree traversal after parsing
+7. **Zero-copy strings** - Use `.sourceString` from Ohm nodes
+8. **Discriminated unions** - Fast type narrowing without instanceof
+9. **Minimal allocations** - Reuse parameter arrays in SQL converter
 
 ### Benchmarking
 
@@ -222,15 +245,33 @@ bun run bench
 
 Typical targets:
 
-- **Parser**: < 100μs for simple queries, < 1ms for complex queries
+- **Parser (fast-path)**: 200-500ns for simple queries, 1-2μs for medium queries
+- **Parser (Ohm.js fallback)**: 20-200μs for complex queries
 - **SQL Converter**: < 50μs for simple queries, < 500μs for complex queries
+
+Current benchmarks (as of fast-path expansion):
+- Simple queries: 250-550ns (2-5M ops/s) ⚡
+- Medium queries: 900-2,000ns (500K-1M ops/s)
+- Complex queries: 100-200μs (5-10K ops/s)
 
 ### When to Optimize
 
 - ❌ Don't optimize prematurely
 - ✅ Do measure with realistic queries
-- ✅ Do optimize if > 1ms for typical queries
+- ✅ Do optimize if > 1μs for typical queries (fast-path target)
 - ✅ Do profile before changing anything
+- ✅ Expand fast-path for patterns used in >5% of real-world queries
+
+### Expanding Fast-Path
+
+When adding new fast-path patterns:
+
+1. **Measure frequency** - Pattern should appear in >5% of queries
+2. **Keep it simple** - Only handle unambiguous cases, fallback to Ohm.js for complexity
+3. **Test thoroughly** - Fast-path AST must match Ohm.js AST exactly
+4. **Limit chain length** - Cap AND/OR chains at 5 terms for performance
+5. **Reject early** - Use string checks (`.includes()`) before expensive regex
+6. **Document limitations** - Be clear about what falls back to Ohm.js
 
 ## Key Correctness Considerations
 

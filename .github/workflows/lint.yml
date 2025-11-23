@@ -23,6 +23,7 @@ jobs:
           version: "3.13.0"
       - run: |
           echo "::add-matcher::.github/matchers/vale.json"
+          vale sync
           find . -type f -name "*.md" -not -path "*/.github/*" -not -path "*/node_modules/*" -print0 | xargs -0 vale --minAlertLevel=suggestion --output=line
 
   validate-renovate-config:

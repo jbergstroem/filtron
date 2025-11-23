@@ -18,11 +18,12 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
-      - uses: errata-ai/vale-action@v2.1.1
-        with:
-          reporter: github-pr-review
-          fail_on_error: true
-          vale_flags: "--glob='!**/.github/*'"
+      - run: curl -Ls "https://github.com/errata-ai/vale/releases/download/v${{ env.version }}/vale_${{ env.version }}_Linux_64-bit.tar.gz" | sudo tar -x -z -C /usr/local/bin vale
+        env:
+          version: "3.13.0"
+      - run: |
+        echo "::add-matcher::.github/matchers/vale.json"
+        find . -type f -name "*.md" -not -path "*/.github/*" -not -path "*/node_modules/*" | xargs vale 
 
   validate-renovate-config:
     runs-on: ubuntu-24.04

@@ -31,7 +31,8 @@
     "bench": "cd packages/core && bun run bench",
     "build": "bun run --filter '@filtron/core' build && bun run --filter '!@filtron/core' build",
     "lint": "oxlint --type-aware && oxfmt",
-    "test": "bun test"
+    "test": "bun test",
+    "vale": "find . -type f -name \"*.md\" -not -path \"*/.github/*\" -not -path \"*/node_modules/*\" | xargs vale --minAlertLevel=suggestion"
   },
   "devDependencies": {
     "oxfmt": "0.14.0",

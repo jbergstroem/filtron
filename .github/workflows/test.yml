@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   unit:
     runs-on: ubuntu-24.04
@@ -19,15 +23,15 @@ jobs:
       - uses: codecov/codecov-action@v5
         if: ${{ !cancelled() }}
         with:
+          use_oidc: true
           files: ./coverage/lcov.info
           disable_search: true
-          token: ${{ secrets.CODECOV_TOKEN }}
       - uses: codecov/test-results-action@v1
         if: ${{ !cancelled() }}
         with:
+          use_oidc: true
           file: ./junit.xml
           disable_search: true
-          token: ${{ secrets.CODECOV_TOKEN }}
 
   e2e:
     runs-on: ubuntu-24.04

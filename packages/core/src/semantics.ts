@@ -2,16 +2,24 @@ import type { FiltronActionDict } from "./grammar.ohm-bundle.js";
 import type { ASTNode, Value } from "./types";
 
 /**
- * Escape sequence mapping for string literals
- * Using a map lookup is faster than switch statements
+ * Unescape a single escape sequence character
  */
-const ESCAPE_MAP: Record<string, string> = {
-	n: "\n",
-	t: "\t",
-	r: "\r",
-	"\\": "\\",
-	'"': '"',
-};
+function unescapeChar(escapedChar: string): string {
+	switch (escapedChar) {
+		case "n":
+			return "\n";
+		case "t":
+			return "\t";
+		case "r":
+			return "\r";
+		case "\\":
+			return "\\";
+		case '"':
+			return '"';
+		default:
+			return escapedChar;
+	}
+}
 
 /**
  * Semantic actions for converting Ohm parse tree to Filtron AST
@@ -161,12 +169,17 @@ export const semanticActions: FiltronActionDict<
 			return first.sourceString;
 		}
 
-		// Build dotted path with array join (faster than string concatenation)
-		// Use map to construct array efficiently without pre-allocating undefined values
-		return [
-			first.sourceString,
-			...children.map((c: any) => c.sourceString),
-		].join(".");
+		// Build dotted path with string concatenation
+		// Benchmarked 5-12x faster than Array.map().join() for typical field names (1-3 dots)
+		// which represent the vast majority of real-world usage.
+		// Modern JS engines optimize string concatenation extremely well, while array methods
+		// add allocation overhead from creating intermediate arrays.
+		// See: packages/core/benchmarks/field-name-concat.bench.ts for detailed measurements
+		let result = first.sourceString;
+		for (let i = 0; i < len; i++) {
+			result += "." + children[i].sourceString;
+		}
+		return result;
 	},
 
 	Value(value: any): Value {
@@ -203,10 +216,8 @@ export const semanticActions: FiltronActionDict<
 			const source = children[i].sourceString;
 			// Escaped characters have length > 1 (backslash + character)
 			if (source.length > 1 && source[0] === "\\") {
-				// Get the character after the backslash and lookup in map
-				const escapedChar = source[1];
-				const unescaped = ESCAPE_MAP[escapedChar];
-				result += unescaped !== undefined ? unescaped : escapedChar;
+				// Get the character after the backslash and unescape it
+				result += unescapeChar(source[1]);
 			} else {
 				result += source;
 			}

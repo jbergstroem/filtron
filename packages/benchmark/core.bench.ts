@@ -66,8 +66,7 @@ bench
 		);
 	})
 	.add("complex: deep nesting", () => {
-		parse("(a = 1 AND (b = 2 OR c = 3)) AND (d = 4 OR (e = 5 AND f = 6))", {
-		});
+		parse("(a = 1 AND (b = 2 OR c = 3)) AND (d = 4 OR (e = 5 AND f = 6))", {});
 	})
 	.add("complex: mixed operators", () => {
 		parse(

@@ -9,6 +9,7 @@ import {
 	parseExistsKeyword,
 	parseOneOf,
 	parseNotOneOf,
+	parseRange,
 	tryFastPath,
 } from "./fast-path";
 import { parse, parseOrThrow } from "./parser";
@@ -290,9 +291,7 @@ describe("Fast Path", () => {
 		test("rejects invalid patterns", () => {
 			expect(parseSimpleAnd("a = 1 OR b = 2")).toBeNull(); // OR
 			expect(parseSimpleAnd("(a = 1) AND (b = 2)")).toBeNull(); // parentheses
-			expect(
-				parseSimpleAnd("a=1 AND b=2 AND c=3 AND d=4 AND e=5 AND f=6"),
-			).toBeNull(); // >5 terms
+			expect(parseSimpleAnd("a=1 AND b=2 AND c=3 AND d=4 AND e=5 AND f=6")).toBeNull(); // >5 terms
 			expect(parseSimpleAnd('role = "admin" AND age > 18')).toBeNull(); // string literals
 			expect(parseSimpleAnd('verified AND status : ["active"]')).toBeNull(); // array literals
 		});
@@ -331,9 +330,7 @@ describe("Fast Path", () => {
 		test("rejects invalid patterns", () => {
 			expect(parseSimpleOr("a = 1 AND b = 2 OR c = 3")).toBeNull(); // mixed AND/OR
 			expect(parseSimpleOr("verified")).toBeNull(); // no OR
-			expect(
-				parseSimpleOr("a=1 OR b=2 OR c=3 OR d=4 OR e=5 OR f=6"),
-			).toBeNull(); // >5 terms
+			expect(parseSimpleOr("a=1 OR b=2 OR c=3 OR d=4 OR e=5 OR f=6")).toBeNull(); // >5 terms
 			expect(parseSimpleOr('role = "admin" OR role = "moderator"')).toBeNull(); // string literals
 		});
 	});
@@ -342,26 +339,16 @@ describe("Fast Path", () => {
 		test("parseSimpleAnd rejects queries with string literals", () => {
 			// These should be rejected to avoid incorrect splitting
 			expect(parseSimpleAnd('name = "ANDY" AND age > 18')).toBeNull();
-			expect(
-				parseSimpleAnd('title = "SENIOR ANALYST" AND verified'),
-			).toBeNull();
-			expect(
-				parseSimpleAnd('text = "foo AND bar" AND status = "active"'),
-			).toBeNull();
-			expect(
-				parseSimpleAnd('description = "Do NOT use" AND verified'),
-			).toBeNull();
-			expect(
-				parseSimpleAnd('status = "pending OR active" AND verified'),
-			).toBeNull();
+			expect(parseSimpleAnd('title = "SENIOR ANALYST" AND verified')).toBeNull();
+			expect(parseSimpleAnd('text = "foo AND bar" AND status = "active"')).toBeNull();
+			expect(parseSimpleAnd('description = "Do NOT use" AND verified')).toBeNull();
+			expect(parseSimpleAnd('status = "pending OR active" AND verified')).toBeNull();
 		});
 
 		test("parseSimpleOr rejects queries with string literals", () => {
 			// These should be rejected to avoid incorrect splitting
 			expect(parseSimpleOr('role = "admin" OR role = "moderator"')).toBeNull();
-			expect(
-				parseSimpleOr('title = "HISTORY" OR status = "active"'),
-			).toBeNull();
+			expect(parseSimpleOr('title = "HISTORY" OR status = "active"')).toBeNull();
 			expect(parseSimpleOr('name = "CANDY" OR name = "SANDY"')).toBeNull();
 			expect(parseSimpleOr('text = "foo OR bar" OR verified')).toBeNull();
 		});
@@ -387,11 +374,88 @@ describe("Fast Path", () => {
 			expect(parseSimpleAnd("age > 18 AND count < 100")).not.toBeNull();
 			expect(parseSimpleOr("admin OR moderator")).not.toBeNull();
 			expect(parseSimpleOr("email? OR phone?")).not.toBeNull();
+			// Range expressions in AND/OR
+			expect(parseSimpleAnd("age = 18..65 AND verified")).not.toBeNull();
+			expect(parseSimpleOr("age = 0..17 OR age = 65..100")).not.toBeNull();
+		});
+	});
+
+	describe("parseRange", () => {
+		test("parses integer ranges", () => {
+			expect(parseRange("age = 18..65")).toMatchObject({
+				type: "range",
+				field: "age",
+				min: 18,
+				max: 65,
+			});
+
+			expect(parseRange("count = 0..100")).toMatchObject({
+				type: "range",
+				min: 0,
+				max: 100,
+			});
+		});
+
+		test("parses float ranges", () => {
+			expect(parseRange("price = 9.99..99.99")).toMatchObject({
+				type: "range",
+				field: "price",
+				min: 9.99,
+				max: 99.99,
+			});
+		});
+
+		test("parses negative number ranges", () => {
+			expect(parseRange("temp = -20..40")).toMatchObject({
+				type: "range",
+				min: -20,
+				max: 40,
+			});
+
+			expect(parseRange("delta = -100..-10")).toMatchObject({
+				type: "range",
+				min: -100,
+				max: -10,
+			});
+		});
+
+		test("parses dotted field names", () => {
+			expect(parseRange("user.profile.age = 18..65")).toMatchObject({
+				type: "range",
+				field: "user.profile.age",
+			});
+		});
+
+		test("handles whitespace variations", () => {
+			expect(parseRange("age=1..100")).toMatchObject({ type: "range" });
+			expect(parseRange("age = 1..100")).toMatchObject({ type: "range" });
+			expect(parseRange("age  =  1  ..  100")).toMatchObject({ type: "range" });
+		});
+
+		test("rejects invalid patterns", () => {
+			expect(parseRange("age > 18")).toBeNull(); // Not a range
+			expect(parseRange("age = 18")).toBeNull(); // Missing second number
+			expect(parseRange('age = "18..65"')).toBeNull(); // String, not range
+			expect(parseRange("and = 1..10")).toBeNull(); // Keyword as field
+			expect(parseRange("age = 1...100")).toBeNull(); // Three dots
+		});
+
+		test("mixed integer and float", () => {
+			expect(parseRange("score = 0..99.5")).toMatchObject({
+				min: 0,
+				max: 99.5,
+			});
+
+			expect(parseRange("value = 1.5..100")).toMatchObject({
+				min: 1.5,
+				max: 100,
+			});
 		});
 	});
 
 	describe("tryFastPath", () => {
 		test("matches patterns in priority order", () => {
+			expect(tryFastPath("age = 18..65")).toMatchObject({ type: "range" });
 			expect(tryFastPath("age > 18")).toMatchObject({ type: "comparison" });
 			expect(tryFastPath("verified")).toMatchObject({ type: "booleanField" });
 			expect(tryFastPath("email?")).toMatchObject({ type: "exists" });
@@ -427,6 +491,8 @@ describe("Fast Path", () => {
 				"verified",
 				"verified AND premium",
 				"admin OR moderator",
+				"age = 18..65",
+				"price = 0..99.99",
 			];
 
 			for (const query of queries) {

@@ -54,9 +54,7 @@ describe("Elysia E2E Tests", () => {
 
 		expect(response.status).toBe(200);
 		expect(data.success).toBe(true);
-		expect(
-			data.data.every((u: any) => u.status === "active" && u.verified),
-		).toBe(true);
+		expect(data.data.every((u: any) => u.status === "active" && u.verified)).toBe(true);
 	});
 
 	test("should filter with one-of operator", async () => {
@@ -67,21 +65,15 @@ describe("Elysia E2E Tests", () => {
 
 		expect(response.status).toBe(200);
 		expect(data.success).toBe(true);
-		expect(
-			data.data.every((u: any) => u.role === "admin" || u.role === "moderator"),
-		).toBe(true);
+		expect(data.data.every((u: any) => u.role === "admin" || u.role === "moderator")).toBe(true);
 	});
 
 	test("should filter with comparison operators", async () => {
-		const response1 = await fetch(
-			`${BASE_URL}/users?filter=${encodeURIComponent("age >= 30")}`,
-		);
+		const response1 = await fetch(`${BASE_URL}/users?filter=${encodeURIComponent("age >= 30")}`);
 		const data1 = await response1.json();
 		expect(data1.data.every((u: any) => u.age >= 30)).toBe(true);
 
-		const response2 = await fetch(
-			`${BASE_URL}/users?filter=${encodeURIComponent("age < 30")}`,
-		);
+		const response2 = await fetch(`${BASE_URL}/users?filter=${encodeURIComponent("age < 30")}`);
 		const data2 = await response2.json();
 		expect(data2.data.every((u: any) => u.age < 30)).toBe(true);
 	});
@@ -98,9 +90,7 @@ describe("Elysia E2E Tests", () => {
 	});
 
 	test("should filter with contains operator", async () => {
-		const response = await fetch(
-			`${BASE_URL}/users?filter=${encodeURIComponent('name ~ "%a%"')}`,
-		);
+		const response = await fetch(`${BASE_URL}/users?filter=${encodeURIComponent('name ~ "%a%"')}`);
 		const data = await response.json();
 
 		expect(response.status).toBe(200);
@@ -116,15 +106,11 @@ describe("Elysia E2E Tests", () => {
 
 		expect(response.status).toBe(200);
 		expect(data.success).toBe(true);
-		expect(
-			data.data.every((u: any) => (u.age < 25 || u.age > 50) && u.verified),
-		).toBe(true);
+		expect(data.data.every((u: any) => (u.age < 25 || u.age > 50) && u.verified)).toBe(true);
 	});
 
 	test("should handle invalid filter syntax", async () => {
-		const response = await fetch(
-			`${BASE_URL}/users?filter=${encodeURIComponent("age >> 30")}`,
-		);
+		const response = await fetch(`${BASE_URL}/users?filter=${encodeURIComponent("age >> 30")}`);
 		const data = await response.json();
 
 		expect(response.status).toBe(400);

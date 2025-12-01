@@ -3,16 +3,10 @@
  * Demonstrates dynamic filtering using Filtron query language with Elysia and SQLite
  */
 
-import { Elysia } from "elysia";
 import { parse } from "@filtron/core";
 import { toSQL } from "@filtron/sql";
-import {
-	db,
-	getAllUsers,
-	getFilteredUsers,
-	countUsers,
-	seedDatabase,
-} from "./db";
+import { Elysia } from "elysia";
+import { db, getAllUsers, getFilteredUsers, countUsers, seedDatabase } from "./db";
 
 /**
  * Initialize database and seed on startup if empty

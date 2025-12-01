@@ -5,9 +5,9 @@
  * Run: bun run bench:core
  */
 
-import { Bench } from "tinybench";
 import { withCodSpeed } from "@codspeed/tinybench-plugin";
 import { parse } from "@filtron/core";
+import { Bench } from "tinybench";
 
 const bench = withCodSpeed(
 	new Bench({
@@ -56,14 +56,10 @@ bench
 
 bench
 	.add("complex: parentheses with AND/OR", () => {
-		parse(
-			'(role = "admin" OR role = "moderator") AND status = "active" AND age >= 18',
-		);
+		parse('(role = "admin" OR role = "moderator") AND status = "active" AND age >= 18');
 	})
 	.add("complex: multiple arrays", () => {
-		parse(
-			'status : ["active", "pending"] AND role : ["admin", "moderator", "user"] AND verified',
-		);
+		parse('status : ["active", "pending"] AND role : ["admin", "moderator", "user"] AND verified');
 	})
 	.add("complex: deep nesting", () => {
 		parse("(a = 1 AND (b = 2 OR c = 3)) AND (d = 4 OR (e = 5 AND f = 6))");

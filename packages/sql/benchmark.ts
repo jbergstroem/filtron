@@ -5,9 +5,9 @@
  * Run with: bun run benchmark.ts
  */
 
+import { parse, parseOrThrow } from "@filtron/core";
 import { heapStats } from "bun:jsc";
 import { bench, group, run } from "mitata";
-import { parse, parseOrThrow } from "@filtron/core";
 import { toSQL } from "./index.js";
 
 console.log("=== @filtron/sql Benchmark Suite ===\n");
@@ -26,13 +26,7 @@ function doNotOptimize(value: unknown) {
 // ============================================================================
 
 group("Simple Queries - Overhead Analysis", () => {
-	const queries = [
-		"age > 18",
-		'status = "active"',
-		"verified",
-		"email?",
-		"NOT suspended",
-	];
+	const queries = ["age > 18", 'status = "active"', "verified", "email?", "NOT suspended"];
 
 	for (const query of queries) {
 		bench(`parse only: ${query}`, () => {
@@ -91,13 +85,9 @@ group("SQL Conversion Only (Pre-parsed AST)", () => {
 		simple: parseOrThrow("age > 18"),
 		comparison: parseOrThrow('status = "active"'),
 		boolean: parseOrThrow("age > 18 AND verified"),
-		complex: parseOrThrow(
-			'(role = "admin" OR role = "moderator") AND verified',
-		),
+		complex: parseOrThrow('(role = "admin" OR role = "moderator") AND verified'),
 		oneOf: parseOrThrow('status : ["pending", "approved", "active"]'),
-		nested: parseOrThrow(
-			'(age > 18 AND verified) OR (role = "admin" AND NOT suspended)',
-		),
+		nested: parseOrThrow('(age > 18 AND verified) OR (role = "admin" AND NOT suspended)'),
 	};
 
 	bench("toSQL: simple comparison", () => {
@@ -130,9 +120,7 @@ group("SQL Conversion Only (Pre-parsed AST)", () => {
 // ============================================================================
 
 group("Parameter Styles", () => {
-	const ast = parseOrThrow(
-		'age > 18 AND status = "active" AND role : ["user", "admin"]',
-	);
+	const ast = parseOrThrow('age > 18 AND status = "active" AND role : ["user", "admin"]');
 
 	bench("numbered ($1, $2, $3)", () => {
 		return doNotOptimize(toSQL(ast, { parameterStyle: "numbered" }));
@@ -179,8 +167,7 @@ group("Throughput - Parse + SQL Generation", () => {
 	const queries = {
 		simple: "age > 18",
 		moderate: 'age > 18 AND status = "active"',
-		complex:
-			'(role = "admin" OR role = "moderator") AND verified AND age >= 21',
+		complex: '(role = "admin" OR role = "moderator") AND verified AND age >= 21',
 	};
 
 	bench("simple query", () => {
@@ -232,9 +219,7 @@ function measureMemory(label: string, iterations: number, fn: () => void) {
 	const after = heapStats();
 	const avgBytes = (after.heapSize - before.heapSize) / iterations;
 
-	console.log(
-		`${label.padEnd(40)} ${(avgBytes / 1024).toFixed(2)} KB per operation`,
-	);
+	console.log(`${label.padEnd(40)} ${(avgBytes / 1024).toFixed(2)} KB per operation`);
 }
 
 const testQuery = 'age > 18 AND status = "active" AND verified';
@@ -300,12 +285,8 @@ console.log(
 const throughputParseOnly = 1000 / parseOnlyTime;
 const throughputParseAndSQL = 1000 / parseAndSQLTime;
 
-console.log(
-	`\nThroughput (parse):  ${Math.round(throughputParseOnly).toLocaleString()} ops/sec`,
-);
-console.log(
-	`Throughput (+ SQL):  ${Math.round(throughputParseAndSQL).toLocaleString()} ops/sec`,
-);
+console.log(`\nThroughput (parse):  ${Math.round(throughputParseOnly).toLocaleString()} ops/sec`);
+console.log(`Throughput (+ SQL):  ${Math.round(throughputParseAndSQL).toLocaleString()} ops/sec`);
 
 // ============================================================================
 // Run Benchmarks
@@ -325,12 +306,8 @@ await run({
 
 console.log("\n=== Benchmark Complete ===\n");
 console.log("Summary:");
-console.log(
-	`- SQL conversion adds ~${(sqlOnlyTime * 1000).toFixed(1)}μs overhead per query`,
-);
-console.log(
-	`- This is ~${((sqlOnlyTime / parseOnlyTime) * 100).toFixed(0)}% of the parse time`,
-);
+console.log(`- SQL conversion adds ~${(sqlOnlyTime * 1000).toFixed(1)}μs overhead per query`);
+console.log(`- This is ~${((sqlOnlyTime / parseOnlyTime) * 100).toFixed(0)}% of the parse time`);
 console.log(
 	`- Total throughput: ${Math.round(throughputParseAndSQL).toLocaleString()} queries/sec (parse + SQL)`,
 );

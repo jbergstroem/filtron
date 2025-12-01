@@ -34,9 +34,9 @@
     "test": "bun test"
   },
   "devDependencies": {
-    "oxfmt": "0.14.0",
-    "oxlint": "1.29.0",
-    "oxlint-tsgolint": "0.8.1"
+    "oxfmt": "0.16.0",
+    "oxlint": "1.31.0",
+    "oxlint-tsgolint": "0.8.3"
   },
   "engines": {
     "node": ">=20.0.0",

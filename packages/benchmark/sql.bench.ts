@@ -5,10 +5,10 @@
  * Run: bun run bench:sql
  */
 
-import { Bench } from "tinybench";
 import { withCodSpeed } from "@codspeed/tinybench-plugin";
 import { parse } from "@filtron/core";
 import { toSQL } from "@filtron/sql";
+import { Bench } from "tinybench";
 
 const bench = withCodSpeed(
 	new Bench({
@@ -19,9 +19,7 @@ const bench = withCodSpeed(
 
 const simpleAST = parse("age > 18");
 const mediumAST = parse('status = "active" AND age >= 18');
-const complexAST = parse(
-	'(role = "admin" OR role = "moderator") AND status = "active"',
-);
+const complexAST = parse('(role = "admin" OR role = "moderator") AND status = "active"');
 
 // Validate ASTs
 if (!simpleAST.success || !mediumAST.success || !complexAST.success) {

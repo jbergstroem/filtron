@@ -8,6 +8,7 @@ import type {
 	ExistsExpression,
 	OneOfExpression,
 	NotOneOfExpression,
+	RangeExpression,
 	Value,
 	ComparisonOperator,
 } from "./types";
@@ -23,27 +24,27 @@ const SIMPLE_COMPARISON_REGEX =
 	/^([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*)(\s*)(!=|>=|<=|=|>|<|~|:)(\s*)(.+)$/;
 
 // Pattern: simple field name (for boolean field shorthand)
-const SIMPLE_FIELD_REGEX =
-	/^[a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*$/;
+const SIMPLE_FIELD_REGEX = /^[a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*$/;
 
 // Pattern: field? (exists check with question mark)
-const EXISTS_QUESTION_REGEX =
-	/^([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*)\?$/;
+const EXISTS_QUESTION_REGEX = /^([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*)\?$/;
 
 // Pattern: field exists (exists check with keyword)
-const EXISTS_KEYWORD_REGEX =
-	/^([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*)\s+exists$/i;
+const EXISTS_KEYWORD_REGEX = /^([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*)\s+exists$/i;
 
 // Pattern: NOT expression (simple negation)
 const NOT_REGEX = /^NOT\s+(.+)$/i;
 
 // Pattern: field : [values] (oneOf)
-const ONE_OF_REGEX =
-	/^([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*)\s*:\s*\[([^\]]+)\]$/;
+const ONE_OF_REGEX = /^([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*)\s*:\s*\[([^\]]+)\]$/;
 
 // Pattern: field !: [values] (notOneOf)
 const NOT_ONE_OF_REGEX =
 	/^([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*)\s*!:\s*\[([^\]]+)\]$/;
+
+// Pattern: field = min..max (range expression, numbers only)
+const RANGE_REGEX =
+	/^([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*)\s*=\s*(-?\d+(?:\.\d+)?)\s*\.\.\s*(-?\d+(?:\.\d+)?)$/;
 
 // Reserved keywords that cannot be used as bare field names
 const KEYWORDS = new Set(["and", "or", "not", "exists", "true", "false"]);
@@ -158,9 +159,7 @@ function parseValueArray(valuesStr: string): Value[] | null {
  *
  * Returns null if pattern doesn't match or value is too complex
  */
-export function parseSimpleComparison(
-	query: string,
-): ComparisonExpression | null {
+export function parseSimpleComparison(query: string): ComparisonExpression | null {
 	const match = SIMPLE_COMPARISON_REGEX.exec(query);
 	if (!match) {
 		return null;
@@ -200,9 +199,7 @@ export function parseSimpleComparison(
  *
  * Returns null if pattern doesn't match or is a keyword
  */
-export function parseSimpleBooleanField(
-	query: string,
-): BooleanFieldExpression | null {
+export function parseSimpleBooleanField(query: string): BooleanFieldExpression | null {
 	const trimmed = query.trim();
 
 	// Check if it's a keyword (case-insensitive)
@@ -347,6 +344,41 @@ export function parseNotOneOf(query: string): NotOneOfExpression | null {
 }
 
 /**
+ * Fast path: Parse range expression
+ * Handles: age = 18..65, price = 0..100, score = -10..10
+ *
+ * Returns null if pattern doesn't match
+ */
+export function parseRange(query: string): RangeExpression | null {
+	const trimmed = query.trim();
+	const match = RANGE_REGEX.exec(trimmed);
+
+	if (!match) {
+		return null;
+	}
+
+	const field = match[1];
+	const minStr = match[2];
+	const maxStr = match[3];
+
+	// Check if field is a keyword
+	if (KEYWORDS.has(field.toLowerCase())) {
+		return null;
+	}
+
+	// Parse numbers
+	const min = minStr.includes(".") ? Number.parseFloat(minStr) : Number.parseInt(minStr, 10);
+	const max = maxStr.includes(".") ? Number.parseFloat(maxStr) : Number.parseInt(maxStr, 10);
+
+	return {
+		type: "range",
+		field,
+		min,
+		max,
+	};
+}
+
+/**
  * Fast path: Parse NOT expression (single negation)
  * Handles: NOT verified, NOT (field = value), NOT status : ["active"]
  *
@@ -365,6 +397,7 @@ export function parseSimpleNot(query: string): NotExpression | null {
 	// Try to parse the inner expression using fast-paths
 	// Note: We avoid recursion with NOT (NOT x) by only trying simple patterns
 	const inner =
+		parseRange(innerQuery) ||
 		parseSimpleComparison(innerQuery) ||
 		parseSimpleBooleanField(innerQuery) ||
 		parseExistsQuestion(innerQuery) ||
@@ -414,6 +447,7 @@ export function parseSimpleAnd(query: string): AndExpression | null {
 
 		// Try all simple fast-path patterns (but not other AND/OR to avoid complexity)
 		const expr =
+			parseRange(trimmed) ||
 			parseSimpleComparison(trimmed) ||
 			parseSimpleBooleanField(trimmed) ||
 			parseExistsQuestion(trimmed) ||
@@ -481,6 +515,7 @@ export function parseSimpleOr(query: string): OrExpression | null {
 
 		// Try all simple fast-path patterns (but not other AND/OR)
 		const expr =
+			parseRange(trimmed) ||
 			parseSimpleComparison(trimmed) ||
 			parseSimpleBooleanField(trimmed) ||
 			parseExistsQuestion(trimmed) ||
@@ -530,14 +565,23 @@ export function tryFastPath(query: string): ASTNode | null {
 		return null;
 	}
 
-	// Fast path 1: Simple comparison (most common)
+	// Fast path 1: Range expression (check before comparison to avoid ambiguity)
+	// Examples: age = 18..65, price = 0..100
+	if (trimmed.includes("..")) {
+		const range = parseRange(trimmed);
+		if (range) {
+			return range;
+		}
+	}
+
+	// Fast path 2: Simple comparison (most common)
 	// Examples: age > 18, status = "active", count >= 100
 	const comparison = parseSimpleComparison(trimmed);
 	if (comparison) {
 		return comparison;
 	}
 
-	// Fast path 2: Simple AND (second most common)
+	// Fast path 3: Simple AND (second most common)
 	// Examples: verified AND age > 18, status = "active" AND NOT banned
 	// Note: Must check before OR to avoid ambiguity
 	if (/\bAND\b/i.test(trimmed) && !/\bOR\b/i.test(trimmed)) {
@@ -547,7 +591,7 @@ export function tryFastPath(query: string): ASTNode | null {
 		}
 	}
 
-	// Fast path 3: Simple OR
+	// Fast path 4: Simple OR
 	// Examples: role = "admin" OR role = "moderator"
 	// Note: Reject if both AND and OR are present (needs parentheses)
 	if (/\bOR\b/i.test(trimmed) && !/\bAND\b/i.test(trimmed)) {
@@ -557,7 +601,7 @@ export function tryFastPath(query: string): ASTNode | null {
 		}
 	}
 
-	// Fast path 4: oneOf expression
+	// Fast path 5: oneOf expression
 	// Examples: status : ["active", "pending"], role : [1, 2, 3]
 	// Check before notOneOf since it's more common
 	if (trimmed.includes(":[") || trimmed.includes(": [")) {
@@ -567,7 +611,7 @@ export function tryFastPath(query: string): ASTNode | null {
 		}
 	}
 
-	// Fast path 5: notOneOf expression
+	// Fast path 6: notOneOf expression
 	// Examples: status !: ["banned", "deleted"]
 	if (trimmed.includes("!:[") || trimmed.includes("!: [")) {
 		const notOneOf = parseNotOneOf(trimmed);
@@ -576,7 +620,7 @@ export function tryFastPath(query: string): ASTNode | null {
 		}
 	}
 
-	// Fast path 6: Exists check with ?
+	// Fast path 7: Exists check with ?
 	// Examples: email?, user.avatar?
 	if (trimmed.includes("?")) {
 		const exists = parseExistsQuestion(trimmed);
@@ -585,7 +629,7 @@ export function tryFastPath(query: string): ASTNode | null {
 		}
 	}
 
-	// Fast path 7: Exists check with keyword
+	// Fast path 8: Exists check with keyword
 	// Examples: email exists, name EXISTS
 	if (/\bexists\b/i.test(trimmed)) {
 		const exists = parseExistsKeyword(trimmed);
@@ -594,7 +638,7 @@ export function tryFastPath(query: string): ASTNode | null {
 		}
 	}
 
-	// Fast path 8: NOT expression
+	// Fast path 9: NOT expression
 	// Examples: NOT verified, NOT status = "active"
 	if (/^NOT\b/i.test(trimmed)) {
 		const notExpr = parseSimpleNot(trimmed);
@@ -603,7 +647,7 @@ export function tryFastPath(query: string): ASTNode | null {
 		}
 	}
 
-	// Fast path 9: Boolean field (less common, check near end)
+	// Fast path 10: Boolean field (less common, check near end)
 	// Examples: verified, premium, user.active
 	const boolField = parseSimpleBooleanField(trimmed);
 	if (boolField) {

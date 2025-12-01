@@ -21,13 +21,7 @@ group("Simple Queries", () => {
 			},
 		};
 	})
-		.args("query", [
-			"age > 18",
-			'status = "active"',
-			"verified",
-			"email?",
-			"NOT suspended",
-		])
+		.args("query", ["age > 18", 'status = "active"', "verified", "email?", "NOT suspended"])
 		.gc("inner");
 });
 
@@ -99,9 +93,7 @@ console.log("=".repeat(60));
 const heapBefore = heapStats();
 console.log("\n📈 Initial Heap Stats:");
 console.log(`   Heap Size:     ${(heapBefore.heapSize / 1024).toFixed(2)} KB`);
-console.log(
-	`   Heap Capacity: ${(heapBefore.heapCapacity / 1024).toFixed(2)} KB`,
-);
+console.log(`   Heap Capacity: ${(heapBefore.heapCapacity / 1024).toFixed(2)} KB`);
 console.log(`   Objects:       ${heapBefore.objectCount.toLocaleString()}`);
 
 // Perform a batch of parses
@@ -135,9 +127,7 @@ console.log(
 const heapAfter = heapStats();
 console.log("\n📊 Heap Stats After Parsing:");
 console.log(`   Heap Size:     ${(heapAfter.heapSize / 1024).toFixed(2)} KB`);
-console.log(
-	`   Heap Capacity: ${(heapAfter.heapCapacity / 1024).toFixed(2)} KB`,
-);
+console.log(`   Heap Capacity: ${(heapAfter.heapCapacity / 1024).toFixed(2)} KB`);
 console.log(`   Objects:       ${heapAfter.objectCount.toLocaleString()}`);
 
 // Calculate deltas
@@ -146,9 +136,7 @@ const objectDelta = heapAfter.objectCount - heapBefore.objectCount;
 
 console.log("\n📉 Memory Delta:");
 console.log(`   Heap Growth:   ${(heapDelta / 1024).toFixed(2)} KB`);
-console.log(
-	`   Object Delta:  ${objectDelta > 0 ? "+" : ""}${objectDelta.toLocaleString()}`,
-);
+console.log(`   Object Delta:  ${objectDelta > 0 ? "+" : ""}${objectDelta.toLocaleString()}`);
 
 // Force GC and check again
 console.log("\n♻️  Running garbage collection...");
@@ -157,9 +145,7 @@ const heapAfterGC = heapStats();
 
 console.log("\n📊 Heap Stats After GC:");
 console.log(`   Heap Size:     ${(heapAfterGC.heapSize / 1024).toFixed(2)} KB`);
-console.log(
-	`   Heap Capacity: ${(heapAfterGC.heapCapacity / 1024).toFixed(2)} KB`,
-);
+console.log(`   Heap Capacity: ${(heapAfterGC.heapCapacity / 1024).toFixed(2)} KB`);
 console.log(`   Objects:       ${heapAfterGC.objectCount.toLocaleString()}`);
 
 const freedBytes = heapAfter.heapSize - heapAfterGC.heapSize;

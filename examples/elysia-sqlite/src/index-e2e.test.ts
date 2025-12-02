@@ -84,9 +84,7 @@ describe("Elysia E2E Tests", () => {
 	});
 
 	test("should filter with range expression syntax", async () => {
-		const response = await fetch(
-			`${BASE_URL}/users?filter=${encodeURIComponent("age = 30..40")}`,
-		);
+		const response = await fetch(`${BASE_URL}/users?filter=${encodeURIComponent("age = 30..40")}`);
 		const data = await response.json();
 
 		expect(response.status).toBe(200);

@@ -30,7 +30,7 @@
   "scripts": {
     "bench": "cd packages/core && bun run bench",
     "build": "bun run --filter '@filtron/core' build && bun run --filter '!@filtron/core' build",
-    "lint": "oxlint --type-aware && oxfmt",
+    "lint": "oxlint && oxfmt --check",
     "test": "bun test"
   },
   "devDependencies": {

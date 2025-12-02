@@ -45,7 +45,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "bench": "bun --expose-gc run benchmark.ts",
+    "bench": "bun build && bun --expose-gc run benchmark.ts",
     "build": "bun run build:grammar && bun build --minify --splitting --outdir=dist --external ohm-js index.ts && tsc --emitDeclarationOnly --declaration --declarationMap --outDir dist --skipLibCheck",
     "build:grammar": "bun run ohm generateBundles --withTypes --esm src/grammar.ohm",
     "prepublishOnly": "bun run build && bun test",

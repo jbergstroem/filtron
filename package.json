@@ -28,8 +28,8 @@
     }
   },
   "scripts": {
-    "bench": "bun run --filter 'core' bench",
-    "build": "bun run --filter '*' build",
+    "bench": "cd packages/core && bun run bench",
+    "build": "bun run --filter '@filtron/core' build && bun run --filter '!@filtron/core' build",
     "lint": "oxlint && oxfmt --check",
     "test": "bun test"
   },

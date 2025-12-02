@@ -31,7 +31,7 @@
         "@codspeed/tinybench-plugin": "5.0.1",
         "@filtron/core": "workspace:*",
         "@filtron/sql": "workspace:*",
-        "tinybench": "6.0.0",
+        "tinybench": "5.1.0",
       },
       "devDependencies": {
         "@types/bun": "catalog:",
@@ -285,7 +285,7 @@
 
     "strtok3": ["strtok3@10.3.4", "", { "dependencies": { "@tokenizer/token": "^0.3.0" } }, "sha512-KIy5nylvC5le1OdaaoCJ07L+8iQzJHGH6pWDuzS+d07Cu7n1MZ2x26P8ZKIWfbK02+XIL8Mp4RkWeqdUCrDMfg=="],
 
-    "tinybench": ["tinybench@6.0.0", "", {}, "sha512-BWlWpVbbZXaYjRV0twGLNQO00Zj4HA/sjLOQP2IvzQqGwRGp+2kh7UU3ijyJ3ywFRogYDRbiHDMrUOfaMnN56g=="],
+    "tinybench": ["tinybench@5.1.0", "", {}, "sha512-LXKNtFualiKOm6gADe1UXPtf8+Nfn1CtPMEHAT33Fd2YjQatrujkDcK0+4wRC1X6t7fxUDXUs6BsvuIgfkDgDg=="],
 
     "to-regex-range": ["to-regex-range@5.0.1", "", { "dependencies": { "is-number": "^7.0.0" } }, "sha512-65P7iz6X5yEr1cwcgvQxbbIw7Uk3gOy5dIdtZ4rDveLqhrdJP+Li/Hx6tyK0NEb+2GCyneCMJiGqrADCSNk8sQ=="],
 

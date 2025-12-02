@@ -14,7 +14,7 @@
     "@codspeed/tinybench-plugin": "5.0.1",
     "@filtron/core": "workspace:*",
     "@filtron/sql": "workspace:*",
-    "tinybench": "6.0.0"
+    "tinybench": "5.1.0"
   },
   "devDependencies": {
     "@types/bun": "catalog:",

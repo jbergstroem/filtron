@@ -397,13 +397,13 @@ export function parseSimpleNot(query: string): NotExpression | null {
 	// Try to parse the inner expression using fast-paths
 	// Note: We avoid recursion with NOT (NOT x) by only trying simple patterns
 	const inner =
-		parseRange(innerQuery) ||
 		parseSimpleComparison(innerQuery) ||
 		parseSimpleBooleanField(innerQuery) ||
 		parseExistsQuestion(innerQuery) ||
 		parseExistsKeyword(innerQuery) ||
 		parseOneOf(innerQuery) ||
-		parseNotOneOf(innerQuery);
+		parseNotOneOf(innerQuery) ||
+		parseRange(innerQuery);
 
 	if (!inner) {
 		return null; // Inner expression too complex, fallback
@@ -515,14 +515,14 @@ export function parseSimpleOr(query: string): OrExpression | null {
 
 		// Try all simple fast-path patterns (but not other AND/OR)
 		const expr =
-			parseRange(trimmed) ||
 			parseSimpleComparison(trimmed) ||
 			parseSimpleBooleanField(trimmed) ||
 			parseExistsQuestion(trimmed) ||
 			parseExistsKeyword(trimmed) ||
 			parseOneOf(trimmed) ||
 			parseNotOneOf(trimmed) ||
-			parseSimpleNot(trimmed);
+			parseSimpleNot(trimmed) ||
+			parseRange(trimmed);
 
 		if (!expr) {
 			return null; // One part is too complex, fallback
@@ -565,23 +565,14 @@ export function tryFastPath(query: string): ASTNode | null {
 		return null;
 	}
 
-	// Fast path 1: Range expression (check before comparison to avoid ambiguity)
-	// Examples: age = 18..65, price = 0..100
-	if (trimmed.includes("..")) {
-		const range = parseRange(trimmed);
-		if (range) {
-			return range;
-		}
-	}
-
-	// Fast path 2: Simple comparison (most common)
+	// Fast path 1: Simple comparison (most common)
 	// Examples: age > 18, status = "active", count >= 100
 	const comparison = parseSimpleComparison(trimmed);
 	if (comparison) {
 		return comparison;
 	}
 
-	// Fast path 3: Simple AND (second most common)
+	// Fast path 2: Simple AND (second most common)
 	// Examples: verified AND age > 18, status = "active" AND NOT banned
 	// Note: Must check before OR to avoid ambiguity
 	if (/\bAND\b/i.test(trimmed) && !/\bOR\b/i.test(trimmed)) {
@@ -591,7 +582,7 @@ export function tryFastPath(query: string): ASTNode | null {
 		}
 	}
 
-	// Fast path 4: Simple OR
+	// Fast path 3: Simple OR
 	// Examples: role = "admin" OR role = "moderator"
 	// Note: Reject if both AND and OR are present (needs parentheses)
 	if (/\bOR\b/i.test(trimmed) && !/\bAND\b/i.test(trimmed)) {
@@ -601,7 +592,7 @@ export function tryFastPath(query: string): ASTNode | null {
 		}
 	}
 
-	// Fast path 5: oneOf expression
+	// Fast path 4: oneOf expression
 	// Examples: status : ["active", "pending"], role : [1, 2, 3]
 	// Check before notOneOf since it's more common
 	if (trimmed.includes(":[") || trimmed.includes(": [")) {
@@ -611,7 +602,7 @@ export function tryFastPath(query: string): ASTNode | null {
 		}
 	}
 
-	// Fast path 6: notOneOf expression
+	// Fast path 5: notOneOf expression
 	// Examples: status !: ["banned", "deleted"]
 	if (trimmed.includes("!:[") || trimmed.includes("!: [")) {
 		const notOneOf = parseNotOneOf(trimmed);
@@ -620,7 +611,7 @@ export function tryFastPath(query: string): ASTNode | null {
 		}
 	}
 
-	// Fast path 7: Exists check with ?
+	// Fast path 6: Exists check with ?
 	// Examples: email?, user.avatar?
 	if (trimmed.includes("?")) {
 		const exists = parseExistsQuestion(trimmed);
@@ -629,7 +620,7 @@ export function tryFastPath(query: string): ASTNode | null {
 		}
 	}
 
-	// Fast path 8: Exists check with keyword
+	// Fast path 7: Exists check with keyword
 	// Examples: email exists, name EXISTS
 	if (/\bexists\b/i.test(trimmed)) {
 		const exists = parseExistsKeyword(trimmed);
@@ -638,7 +629,7 @@ export function tryFastPath(query: string): ASTNode | null {
 		}
 	}
 
-	// Fast path 9: NOT expression
+	// Fast path 8: NOT expression
 	// Examples: NOT verified, NOT status = "active"
 	if (/^NOT\b/i.test(trimmed)) {
 		const notExpr = parseSimpleNot(trimmed);
@@ -647,11 +638,20 @@ export function tryFastPath(query: string): ASTNode | null {
 		}
 	}
 
-	// Fast path 10: Boolean field (less common, check near end)
+	// Fast path 9: Boolean field (less common, check near end)
 	// Examples: verified, premium, user.active
 	const boolField = parseSimpleBooleanField(trimmed);
 	if (boolField) {
 		return boolField;
+	}
+
+	// Fast path 10: Range expression (least common, check last)
+	// Examples: age = 18..65, price = 0..100
+	if (trimmed.includes("..")) {
+		const range = parseRange(trimmed);
+		if (range) {
+			return range;
+		}
 	}
 
 	// No fast path matched - fallback to full Ohm.js parser

@@ -96,6 +96,10 @@ parse("name EXISTS");
 // One-of expressions
 parse('status : ["pending", "approved", "active"]');
 
+// Range expressions
+parse("age = 18..65");
+parse("price = 9.99..99.99");
+
 // Complex queries
 parse('(role = "admin" OR role = "mod") AND status = "active"');
 
@@ -112,6 +116,7 @@ parse("user.profile.age >= 18");
 | `>`, `>=`, `<`, `<=` | Comparison    | `age >= 18`         |
 | `~`                  | Contains      | `name ~ "john"`     |
 | `?`, `EXISTS`        | Field exists  | `email?`            |
+| `..`                 | Range         | `age = 18..65`      |
 | `AND`, `OR`, `NOT`   | Boolean logic | `a AND b OR c`      |
 
 ## AST Structure

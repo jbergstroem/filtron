@@ -13,7 +13,8 @@ export type ASTNode =
 	| OneOfExpression
 	| NotOneOfExpression
 	| ExistsExpression
-	| BooleanFieldExpression;
+	| BooleanFieldExpression
+	| RangeExpression;
 
 /**
  * Value type - represents literal values in expressions
@@ -23,15 +24,7 @@ export type Value = StringValue | NumberValue | BooleanValue | IdentifierValue;
 /**
  * Comparison operators supported
  */
-export type ComparisonOperator =
-	| "="
-	| "!="
-	| "~"
-	| ">"
-	| ">="
-	| "<"
-	| "<="
-	| ":";
+export type ComparisonOperator = "=" | "!=" | "~" | ">" | ">=" | "<" | "<=" | ":";
 
 /**
  * Logical OR expression - combines two expressions with OR
@@ -106,6 +99,17 @@ export interface ExistsExpression {
 export interface BooleanFieldExpression {
 	type: "booleanField";
 	field: string;
+}
+
+/**
+ * Range expression - checks if a field value is between two numbers (inclusive)
+ * Example: age = 18..65, price = 0..100
+ */
+export interface RangeExpression {
+	type: "range";
+	field: string;
+	min: number;
+	max: number;
 }
 
 /**

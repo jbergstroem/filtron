@@ -15,6 +15,7 @@ import type {
 	NotOneOfExpression,
 	ExistsExpression,
 	BooleanFieldExpression,
+	RangeExpression,
 } from "@filtron/core";
 
 /**
@@ -138,6 +139,8 @@ function generateSQL(node: ASTNode, state: GeneratorState): string {
 			return generateExists(node, state);
 		case "booleanField":
 			return generateBooleanField(node, state);
+		case "range":
+			return generateRange(node, state);
 		default:
 			// TypeScript exhaustiveness check
 			const _exhaustive: never = node;
@@ -174,10 +177,7 @@ function generateNot(node: NotExpression, state: GeneratorState): string {
 /**
  * Generates SQL for comparison expression
  */
-function generateComparison(
-	node: ComparisonExpression,
-	state: GeneratorState,
-): string {
+function generateComparison(node: ComparisonExpression, state: GeneratorState): string {
 	const field = state.fieldMapper(node.field);
 	const operator = mapComparisonOperator(node.operator);
 
@@ -211,10 +211,7 @@ function generateOneOf(node: OneOfExpression, state: GeneratorState): string {
 /**
  * Generates SQL for not-one-of expression (NOT IN clause)
  */
-function generateNotOneOf(
-	node: NotOneOfExpression,
-	state: GeneratorState,
-): string {
+function generateNotOneOf(node: NotOneOfExpression, state: GeneratorState): string {
 	const field = state.fieldMapper(node.field);
 	const values = node.values.map((v) => extractValue(v));
 
@@ -238,13 +235,20 @@ function generateExists(node: ExistsExpression, state: GeneratorState): string {
 /**
  * Generates SQL for boolean field expression
  */
-function generateBooleanField(
-	node: BooleanFieldExpression,
-	state: GeneratorState,
-): string {
+function generateBooleanField(node: BooleanFieldExpression, state: GeneratorState): string {
 	const field = state.fieldMapper(node.field);
 	const param = addParameter(true, state);
 	return `${field} = ${param}`;
+}
+
+/**
+ * Generates SQL for range expression (BETWEEN)
+ */
+function generateRange(node: RangeExpression, state: GeneratorState): string {
+	const field = state.fieldMapper(node.field);
+	const minParam = addParameter(node.min, state);
+	const maxParam = addParameter(node.max, state);
+	return `${field} BETWEEN ${minParam} AND ${maxParam}`;
 }
 
 /**

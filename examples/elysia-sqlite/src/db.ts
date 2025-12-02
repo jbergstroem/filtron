@@ -3,9 +3,9 @@
  * Uses Bun's built-in SQLite driver
  */
 
-import { Database } from "bun:sqlite";
 import type { SQLResult } from "@filtron/sql";
 import { faker } from "@faker-js/faker";
+import { Database } from "bun:sqlite";
 
 /**
  * User model interface
@@ -47,9 +47,7 @@ export function getFilteredUsers(sqlResult: SQLResult): User[] {
  * Count total users
  */
 export function countUsers(): number {
-	const query = db.query<{ count: number }, []>(
-		"SELECT COUNT(*) as count FROM users",
-	);
+	const query = db.query<{ count: number }, []>("SELECT COUNT(*) as count FROM users");
 	return query.get()?.count ?? 0;
 }
 
@@ -68,10 +66,8 @@ function generateUsers(count: number) {
 
 	for (let i = 0; i < count; i++) {
 		// Bias towards active users and regular users
-		const status =
-			i < count * 0.6 ? "active" : faker.helpers.arrayElement(statuses);
-		const role =
-			i < 3 ? "admin" : i < 6 ? "moderator" : faker.helpers.arrayElement(roles);
+		const status = i < count * 0.6 ? "active" : faker.helpers.arrayElement(statuses);
+		const role = i < 3 ? "admin" : i < 6 ? "moderator" : faker.helpers.arrayElement(roles);
 		const verified = faker.datatype.boolean({ probability: 0.7 }) ? 1 : 0;
 
 		users.push({
@@ -112,9 +108,7 @@ export function seedDatabase(db: Database, count: number = 500): void {
 	db.exec("CREATE INDEX IF NOT EXISTS idx_users_verified ON users(verified)");
 
 	// Check if already seeded
-	const result = db
-		.query<{ count: number }, []>("SELECT COUNT(*) as count FROM users")
-		.get();
+	const result = db.query<{ count: number }, []>("SELECT COUNT(*) as count FROM users").get();
 	if (result && result.count > 0) {
 		return;
 	}
@@ -126,14 +120,7 @@ export function seedDatabase(db: Database, count: number = 500): void {
 	);
 
 	for (const user of users) {
-		insertStmt.run(
-			user.name,
-			user.email,
-			user.age,
-			user.status,
-			user.role,
-			user.verified,
-		);
+		insertStmt.run(user.name, user.email, user.age, user.status, user.role, user.verified);
 	}
 }
 

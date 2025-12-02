@@ -14,12 +14,7 @@
 
 // Parser functions
 export { parse, parseOrThrow } from "./parser";
-export type {
-	ParseResult,
-	ParseSuccess,
-	ParseError,
-	ParseOptions,
-} from "./parser";
+export type { ParseResult, ParseSuccess, ParseError, ParseOptions } from "./parser";
 
 // AST type definitions
 export type {
@@ -34,6 +29,7 @@ export type {
 	NotOneOfExpression,
 	ExistsExpression,
 	BooleanFieldExpression,
+	RangeExpression,
 	StringValue,
 	NumberValue,
 	BooleanValue,

@@ -18,8 +18,7 @@ const testCases = [
 	},
 	{
 		name: "Very Complex",
-		query:
-			'age >= 21 AND verified AND role : ["user", "premium", "admin"] AND NOT suspended',
+		query: 'age >= 21 AND verified AND role : ["user", "premium", "admin"] AND NOT suspended',
 	},
 ];
 
@@ -112,9 +111,7 @@ console.table(conversionResults);
 
 console.log("\n=== Parameter Style Comparison ===\n");
 
-const complexAst = parseOrThrow(
-	'age > 18 AND status = "active" AND role : ["user", "admin"]',
-);
+const complexAst = parseOrThrow('age > 18 AND status = "active" AND role : ["user", "admin"]');
 
 const numberedStart = performance.now();
 for (let i = 0; i < iterations; i++) {
@@ -152,9 +149,7 @@ console.log(
 );
 
 console.log("\n=== Key Takeaways ===\n");
-console.log(
-	`✓ SQL conversion adds only ~${(avgOverhead * 1000).toFixed(2)} μs overhead`,
-);
+console.log(`✓ SQL conversion adds only ~${(avgOverhead * 1000).toFixed(2)} μs overhead`);
 console.log("✓ Impact is less than 1% of total query processing time");
 console.log(
 	`✓ Can process ${Math.round(1000 / (avgOverhead + 0.06)).toLocaleString()}+ queries/sec end-to-end`,

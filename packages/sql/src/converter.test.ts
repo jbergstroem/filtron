@@ -1,5 +1,5 @@
-import { describe, expect, test } from "bun:test";
 import type { ASTNode } from "@filtron/core";
+import { describe, expect, test } from "bun:test";
 import { toSQL, contains, prefix, suffix } from "./converter";
 
 describe("SQL", () => {
@@ -225,6 +225,63 @@ describe("SQL", () => {
 			const result = toSQL(ast);
 			expect(result.sql).toBe("((role = $1 OR role = $2) AND status = $3)");
 			expect(result.params).toEqual(["admin", "moderator", "active"]);
+		});
+	});
+
+	describe("Range Expressions", () => {
+		test("basic integer range", () => {
+			const ast: ASTNode = {
+				type: "range",
+				field: "age",
+				min: 18,
+				max: 65,
+			};
+
+			const result = toSQL(ast);
+			expect(result.sql).toBe("age BETWEEN $1 AND $2");
+			expect(result.params).toEqual([18, 65]);
+		});
+
+		test("float range", () => {
+			const ast: ASTNode = {
+				type: "range",
+				field: "price",
+				min: 9.99,
+				max: 99.99,
+			};
+
+			const result = toSQL(ast);
+			expect(result.sql).toBe("price BETWEEN $1 AND $2");
+			expect(result.params).toEqual([9.99, 99.99]);
+		});
+
+		test("negative number range", () => {
+			const ast: ASTNode = {
+				type: "range",
+				field: "temperature",
+				min: -20,
+				max: 40,
+			};
+
+			const result = toSQL(ast);
+			expect(result.sql).toBe("temperature BETWEEN $1 AND $2");
+			expect(result.params).toEqual([-20, 40]);
+		});
+
+		test("range with field mapper", () => {
+			const ast: ASTNode = {
+				type: "range",
+				field: "user.age",
+				min: 18,
+				max: 65,
+			};
+
+			const result = toSQL(ast, {
+				fieldMapper: (field) => `t.${field}`,
+			});
+
+			expect(result.sql).toBe("t.user.age BETWEEN $1 AND $2");
+			expect(result.params).toEqual([18, 65]);
 		});
 	});
 
@@ -630,9 +687,7 @@ describe("SQL", () => {
 			};
 
 			const result = toSQL(ast);
-			expect(result.sql).toBe(
-				"((age >= $1 AND verified = $2) AND (role = $3 OR role = $4))",
-			);
+			expect(result.sql).toBe("((age >= $1 AND verified = $2) AND (role = $3 OR role = $4))");
 			expect(result.params).toEqual([18, true, "admin", "moderator"]);
 		});
 
@@ -665,15 +720,8 @@ describe("SQL", () => {
 			};
 
 			const result = toSQL(ast, { parameterStyle: "question" });
-			expect(result.sql).toBe(
-				"((price <= ? AND name LIKE ?) AND category IN (?, ?))",
-			);
-			expect(result.params).toEqual([
-				100,
-				"laptop",
-				"electronics",
-				"computers",
-			]);
+			expect(result.sql).toBe("((price <= ? AND name LIKE ?) AND category IN (?, ?))");
+			expect(result.params).toEqual([100, "laptop", "electronics", "computers"]);
 		});
 
 		test("nested NOT with complex conditions", () => {
@@ -702,9 +750,7 @@ describe("SQL", () => {
 			};
 
 			const result = toSQL(ast);
-			expect(result.sql).toBe(
-				"(status = $1 AND NOT ((suspended = $2 OR deleted = $3)))",
-			);
+			expect(result.sql).toBe("(status = $1 AND NOT ((suspended = $2 OR deleted = $3)))");
 			expect(result.params).toEqual(["active", true, true]);
 		});
 	});

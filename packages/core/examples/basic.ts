@@ -41,14 +41,10 @@ function error(message: string) {
 
 // Helper to print info
 function info(label: string, value: string) {
-	console.log(
-		`${colors.gray}${label}:${colors.reset} ${colors.yellow}${value}${colors.reset}`,
-	);
+	console.log(`${colors.gray}${label}:${colors.reset} ${colors.yellow}${value}${colors.reset}`);
 }
 
-console.log(
-	`${colors.bright}${colors.magenta}=== Filtron Parser Examples ===${colors.reset}\n`,
-);
+console.log(`${colors.bright}${colors.magenta}=== Filtron Parser Examples ===${colors.reset}\n`);
 
 // Example 1: Simple comparison
 section(1, "Simple comparison");
@@ -84,9 +80,7 @@ console.log();
 
 // Example 5: Complex nested query
 section(5, "Complex nested query");
-const result5 = parse(
-	'(role = "admin" OR role = "moderator") AND status = "active"',
-);
+const result5 = parse('(role = "admin" OR role = "moderator") AND status = "active"');
 if (result5.success) {
 	printJSON(result5.ast);
 }
@@ -94,9 +88,7 @@ console.log();
 
 // Example 6: Dotted field names
 section(6, "Dotted field names");
-const result6 = parse(
-	"user.profile.age >= 18 AND user.settings.notifications = true",
-);
+const result6 = parse("user.profile.age >= 18 AND user.settings.notifications = true");
 if (result6.success) {
 	printJSON(result6.ast);
 }
@@ -125,9 +117,7 @@ try {
 	parseOrThrow("invalid query ===");
 } catch (e) {
 	error("Caught exception");
-	console.log(
-		`${colors.dim}${e instanceof Error ? e.message : e}${colors.reset}`,
-	);
+	console.log(`${colors.dim}${e instanceof Error ? e.message : e}${colors.reset}`);
 }
 console.log();
 
@@ -144,4 +134,13 @@ const result10 = parse(userQuery);
 if (result10.success) {
 	success("Valid query parsed successfully");
 	info("AST node type", result10.ast.type);
+}
+console.log();
+
+// Example 11: Range expressions
+section(11, "Range expressions (BETWEEN syntax)");
+const result11 = parse("age = 18..65 AND salary = 50000..150000");
+if (result11.success) {
+	success("Range query parsed successfully");
+	printJSON(result11.ast);
 }

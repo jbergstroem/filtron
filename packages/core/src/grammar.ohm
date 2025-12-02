@@ -11,8 +11,10 @@ Filtron {
   PrimaryExpression = "(" OrExpression ")" -- parens
                     | FieldExpression
 
-  // Most common cases first to reduce backtracking
-  FieldExpression = FieldName ComparisonOp Value -- comparison
+  // Range must come before comparison since both use "="
+  // The RangeLiteral requirement (number..number) disambiguates
+  FieldExpression = FieldName "=" RangeLiteral -- range
+                  | FieldName ComparisonOp Value -- comparison
                   | FieldName oneOfOp "[" NonemptyListOf<Value, ","> "]" -- oneOf
                   | FieldName notOneOfOp "[" NonemptyListOf<Value, ","> "]" -- notOneOf
                   | FieldName "?" -- existsQuestion
@@ -27,6 +29,16 @@ Filtron {
   // Two-char operators first, then single-char by frequency
   ComparisonOp = "!=" | ">=" | "<=" | "=" | ">" | "<" | "~" | ":"
 
+  // Range literal: number..number (only works with numbers)
+  // The ".." operator disambiguates this from a regular comparison
+  RangeLiteral = RangeNumber ".." RangeNumber
+
+  // Numbers for range expressions
+  // Note: No negative lookahead needed here because RangeLiteral expects ".." after first number
+  // Float must come before int so "1.5" doesn't match as just "1"
+  RangeNumber = "-"? digit+ "." digit+ -- float
+              | "-"? digit+ -- int
+
   Value = stringLiteral
         | numberLiteral
         | booleanLiteral
@@ -36,6 +48,7 @@ Filtron {
   stringChar = ~("\"" | "\\") any -- nonEscaped
              | "\\" any -- escaped
 
+  // Regular number literals need ~"." lookahead to prevent "1.5" matching as just "1"
   numberLiteral = "-"? digit+ "." digit+ -- float
                 | "-"? digit+ ~"." -- int
 

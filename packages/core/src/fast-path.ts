@@ -8,6 +8,7 @@ import type {
 	ExistsExpression,
 	OneOfExpression,
 	NotOneOfExpression,
+	RangeExpression,
 	Value,
 	ComparisonOperator,
 } from "./types";
@@ -23,30 +24,51 @@ const SIMPLE_COMPARISON_REGEX =
 	/^([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*)(\s*)(!=|>=|<=|=|>|<|~|:)(\s*)(.+)$/;
 
 // Pattern: simple field name (for boolean field shorthand)
-const SIMPLE_FIELD_REGEX =
-	/^[a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*$/;
+const SIMPLE_FIELD_REGEX = /^[a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*$/;
 
 // Pattern: field? (exists check with question mark)
-const EXISTS_QUESTION_REGEX =
-	/^([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*)\?$/;
+const EXISTS_QUESTION_REGEX = /^([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*)\?$/;
 
 // Pattern: field exists (exists check with keyword)
-const EXISTS_KEYWORD_REGEX =
-	/^([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*)\s+exists$/i;
+const EXISTS_KEYWORD_REGEX = /^([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*)\s+exists$/i;
 
 // Pattern: NOT expression (simple negation)
 const NOT_REGEX = /^NOT\s+(.+)$/i;
 
 // Pattern: field : [values] (oneOf)
-const ONE_OF_REGEX =
-	/^([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*)\s*:\s*\[([^\]]+)\]$/;
+const ONE_OF_REGEX = /^([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*)\s*:\s*\[([^\]]+)\]$/;
 
 // Pattern: field !: [values] (notOneOf)
 const NOT_ONE_OF_REGEX =
 	/^([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*)\s*!:\s*\[([^\]]+)\]$/;
 
+// Pattern: field = min..max (range expression, numbers only)
+const RANGE_REGEX =
+	/^([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*)\s*=\s*(-?\d+(?:\.\d+)?)\s*\.\.\s*(-?\d+(?:\.\d+)?)$/;
+
 // Reserved keywords that cannot be used as bare field names
 const KEYWORDS = new Set(["and", "or", "not", "exists", "true", "false"]);
+
+/**
+ * Check if quotes exist outside of array literals (:[...] or !:[...])
+ * Quotes inside arrays are safe because they can't contain AND/OR keywords
+ * that would break splitting. Quotes in string comparisons like 'name = "foo AND bar"'
+ * are dangerous and need the full parser.
+ *
+ * @param query - The query string to check
+ * @returns true if there are quotes outside array literals (unsafe for splitting)
+ */
+function hasQuotesOutsideArrays(query: string): boolean {
+	// If no quotes at all, it's safe
+	if (!query.includes('"')) {
+		return false;
+	}
+
+	// Remove all array literals (:[...] and !:[...]) from the query
+	// then check if any quotes remain
+	const withoutArrays = query.replace(/!?:\s*\[[^\]]*\]/g, "");
+	return withoutArrays.includes('"');
+}
 
 /**
  * Parse a simple value (string, number, boolean, or identifier)
@@ -158,9 +180,7 @@ function parseValueArray(valuesStr: string): Value[] | null {
  *
  * Returns null if pattern doesn't match or value is too complex
  */
-export function parseSimpleComparison(
-	query: string,
-): ComparisonExpression | null {
+export function parseSimpleComparison(query: string): ComparisonExpression | null {
 	const match = SIMPLE_COMPARISON_REGEX.exec(query);
 	if (!match) {
 		return null;
@@ -200,9 +220,7 @@ export function parseSimpleComparison(
  *
  * Returns null if pattern doesn't match or is a keyword
  */
-export function parseSimpleBooleanField(
-	query: string,
-): BooleanFieldExpression | null {
+export function parseSimpleBooleanField(query: string): BooleanFieldExpression | null {
 	const trimmed = query.trim();
 
 	// Check if it's a keyword (case-insensitive)
@@ -347,6 +365,41 @@ export function parseNotOneOf(query: string): NotOneOfExpression | null {
 }
 
 /**
+ * Fast path: Parse range expression
+ * Handles: age = 18..65, price = 0..100, score = -10..10
+ *
+ * Returns null if pattern doesn't match
+ */
+export function parseRange(query: string): RangeExpression | null {
+	const trimmed = query.trim();
+	const match = RANGE_REGEX.exec(trimmed);
+
+	if (!match) {
+		return null;
+	}
+
+	const field = match[1];
+	const minStr = match[2];
+	const maxStr = match[3];
+
+	// Check if field is a keyword
+	if (KEYWORDS.has(field.toLowerCase())) {
+		return null;
+	}
+
+	// Parse numbers
+	const min = minStr.includes(".") ? Number.parseFloat(minStr) : Number.parseInt(minStr, 10);
+	const max = maxStr.includes(".") ? Number.parseFloat(maxStr) : Number.parseInt(maxStr, 10);
+
+	return {
+		type: "range",
+		field,
+		min,
+		max,
+	};
+}
+
+/**
  * Fast path: Parse NOT expression (single negation)
  * Handles: NOT verified, NOT (field = value), NOT status : ["active"]
  *
@@ -370,7 +423,8 @@ export function parseSimpleNot(query: string): NotExpression | null {
 		parseExistsQuestion(innerQuery) ||
 		parseExistsKeyword(innerQuery) ||
 		parseOneOf(innerQuery) ||
-		parseNotOneOf(innerQuery);
+		parseNotOneOf(innerQuery) ||
+		parseRange(innerQuery);
 
 	if (!inner) {
 		return null; // Inner expression too complex, fallback
@@ -390,10 +444,11 @@ export function parseSimpleNot(query: string): NotExpression | null {
  * Returns null if pattern doesn't match or expressions are complex
  */
 export function parseSimpleAnd(query: string): AndExpression | null {
-	// Reject queries with string literals to avoid incorrect splitting
+	// Reject queries with string literals outside arrays to avoid incorrect splitting
 	// (splitting on AND would break strings like 'name = "foo AND bar"')
-	if (query.includes('"')) {
-		return null; // Has string literals, use full parser
+	// But quotes inside arrays like 'role : ["admin", "user"]' are safe
+	if (hasQuotesOutsideArrays(query)) {
+		return null; // Has string literals outside arrays, use full parser
 	}
 
 	// Split on AND (case-insensitive, with word boundaries)
@@ -414,6 +469,7 @@ export function parseSimpleAnd(query: string): AndExpression | null {
 
 		// Try all simple fast-path patterns (but not other AND/OR to avoid complexity)
 		const expr =
+			parseRange(trimmed) ||
 			parseSimpleComparison(trimmed) ||
 			parseSimpleBooleanField(trimmed) ||
 			parseExistsQuestion(trimmed) ||
@@ -451,10 +507,11 @@ export function parseSimpleAnd(query: string): AndExpression | null {
  * Returns null if pattern doesn't match or expressions are complex
  */
 export function parseSimpleOr(query: string): OrExpression | null {
-	// Reject queries with string literals to avoid incorrect splitting
+	// Reject queries with string literals outside arrays to avoid incorrect splitting
 	// (splitting on OR would break strings like 'status = "pending OR active"')
-	if (query.includes('"')) {
-		return null; // Has string literals, use full parser
+	// But quotes inside arrays like 'role : ["admin", "user"]' are safe
+	if (hasQuotesOutsideArrays(query)) {
+		return null; // Has string literals outside arrays, use full parser
 	}
 
 	// Must not contain AND at the same level (would need parentheses)
@@ -487,7 +544,8 @@ export function parseSimpleOr(query: string): OrExpression | null {
 			parseExistsKeyword(trimmed) ||
 			parseOneOf(trimmed) ||
 			parseNotOneOf(trimmed) ||
-			parseSimpleNot(trimmed);
+			parseSimpleNot(trimmed) ||
+			parseRange(trimmed);
 
 		if (!expr) {
 			return null; // One part is too complex, fallback
@@ -608,6 +666,15 @@ export function tryFastPath(query: string): ASTNode | null {
 	const boolField = parseSimpleBooleanField(trimmed);
 	if (boolField) {
 		return boolField;
+	}
+
+	// Fast path 10: Range expression (least common, check last)
+	// Examples: age = 18..65, price = 0..100
+	if (trimmed.includes("..")) {
+		const range = parseRange(trimmed);
+		if (range) {
+			return range;
+		}
 	}
 
 	// No fast path matched - fallback to full Ohm.js parser

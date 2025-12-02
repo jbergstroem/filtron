@@ -200,7 +200,7 @@ const users = await db.query(`SELECT * FROM users WHERE ${sql}`, params);
 
 ```typescript
 const query =
-  'price <= 100 AND name ~ "laptop" AND category : ["electronics", "computers"]';
+  'price = 50..500 AND name ~ "laptop" AND category : ["electronics", "computers"]';
 const ast = parseOrThrow(query);
 
 const { sql, params } = toSQL(ast, {

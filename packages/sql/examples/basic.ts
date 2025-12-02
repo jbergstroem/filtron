@@ -32,16 +32,12 @@ function error(message: string) {
 
 // Helper to print info
 function info(label: string, value: string) {
-	console.log(
-		`${colors.gray}${label}:${colors.reset} ${colors.yellow}${value}${colors.reset}`,
-	);
+	console.log(`${colors.gray}${label}:${colors.reset} ${colors.yellow}${value}${colors.reset}`);
 }
 
 // Helper to print SQL output
 function printSQL(label: string, value: string) {
-	console.log(
-		`${colors.gray}${label}:${colors.reset} ${colors.blue}${value}${colors.reset}`,
-	);
+	console.log(`${colors.gray}${label}:${colors.reset} ${colors.blue}${value}${colors.reset}`);
 }
 
 console.log(
@@ -82,8 +78,7 @@ console.log();
 
 // Example 4: Complex nested query
 section(4, "Complex Nested Query");
-const query4 =
-	'(role = "admin" OR role = "moderator") AND NOT suspended AND email?';
+const query4 = '(role = "admin" OR role = "moderator") AND NOT suspended AND email?';
 const ast4 = parseOrThrow(query4);
 const result4 = toSQL(ast4);
 info("Query", query4);
@@ -122,9 +117,7 @@ const result6b = toSQL(ast6b);
 info("Query", query6b);
 printSQL("SQL", result6b.sql);
 info("Params", JSON.stringify(result6b.params));
-console.log(
-	`${colors.dim}Manual approach: wildcards included in query string${colors.reset}`,
-);
+console.log(`${colors.dim}Manual approach: wildcards included in query string${colors.reset}`);
 console.log();
 
 // Example 7: Real-world scenario - User search
@@ -139,9 +132,7 @@ info("Query", userQuery);
 printSQL("SQL", userResult.sql);
 info("Params", JSON.stringify(userResult.params));
 console.log(`${colors.dim}Full query:${colors.reset}`);
-console.log(
-	`  ${colors.blue}SELECT * FROM users WHERE ${userResult.sql};${colors.reset}`,
-);
+console.log(`  ${colors.blue}SELECT * FROM users WHERE ${userResult.sql};${colors.reset}`);
 console.log();
 
 // Example 8: Error handling
@@ -173,10 +164,7 @@ const filterResult = toSQL(filterAst, {
 info("Base query", baseQuery);
 info("Filter query", filterQuery);
 printSQL("Combined SQL", `${baseResult.sql} AND ${filterResult.sql}`);
-info(
-	"Combined Params",
-	JSON.stringify([...baseResult.params, ...filterResult.params]),
-);
+info("Combined Params", JSON.stringify([...baseResult.params, ...filterResult.params]));
 console.log();
 
 // Example 10: Field mapper with escaping/quoting
@@ -192,6 +180,15 @@ printSQL("SQL", result10.sql);
 info("Params", JSON.stringify(result10.params));
 console.log();
 
-console.log(
-	`${colors.bright}${colors.green}=== Examples Complete ===${colors.reset}`,
-);
+// Example 11: Range expressions (BETWEEN)
+section(11, "Range Expressions (BETWEEN)");
+const query11 = "age = 18..65 AND salary = 50000..150000";
+const ast11 = parseOrThrow(query11);
+const result11 = toSQL(ast11);
+info("Query", query11);
+printSQL("SQL", result11.sql);
+info("Params", JSON.stringify(result11.params));
+console.log(`${colors.dim}Range syntax "min..max" converts to SQL BETWEEN${colors.reset}`);
+console.log();
+
+console.log(`${colors.bright}${colors.green}=== Examples Complete ===${colors.reset}`);

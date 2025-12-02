@@ -19,6 +19,7 @@ export interface FiltronActionDict<T> extends BaseActionDict<T> {
   NotExpression?: (this: NonterminalNode, arg0: NonterminalNode) => T;
   PrimaryExpression_parens?: (this: NonterminalNode, arg0: TerminalNode, arg1: NonterminalNode, arg2: TerminalNode) => T;
   PrimaryExpression?: (this: NonterminalNode, arg0: NonterminalNode) => T;
+  FieldExpression_range?: (this: NonterminalNode, arg0: NonterminalNode, arg1: TerminalNode, arg2: NonterminalNode) => T;
   FieldExpression_comparison?: (this: NonterminalNode, arg0: NonterminalNode, arg1: NonterminalNode, arg2: NonterminalNode) => T;
   FieldExpression_oneOf?: (this: NonterminalNode, arg0: NonterminalNode, arg1: NonterminalNode, arg2: TerminalNode, arg3: NonterminalNode, arg4: TerminalNode) => T;
   FieldExpression_notOneOf?: (this: NonterminalNode, arg0: NonterminalNode, arg1: NonterminalNode, arg2: TerminalNode, arg3: NonterminalNode, arg4: TerminalNode) => T;
@@ -30,6 +31,10 @@ export interface FiltronActionDict<T> extends BaseActionDict<T> {
   oneOfOp?: (this: NonterminalNode, arg0: TerminalNode) => T;
   notOneOfOp?: (this: NonterminalNode, arg0: TerminalNode) => T;
   ComparisonOp?: (this: NonterminalNode, arg0: TerminalNode) => T;
+  RangeLiteral?: (this: NonterminalNode, arg0: NonterminalNode, arg1: TerminalNode, arg2: NonterminalNode) => T;
+  RangeNumber_float?: (this: NonterminalNode, arg0: IterationNode, arg1: IterationNode, arg2: TerminalNode, arg3: IterationNode) => T;
+  RangeNumber_int?: (this: NonterminalNode, arg0: IterationNode, arg1: IterationNode) => T;
+  RangeNumber?: (this: NonterminalNode, arg0: NonterminalNode) => T;
   Value_dottedIdent?: (this: NonterminalNode, arg0: NonterminalNode, arg1: IterationNode, arg2: IterationNode) => T;
   Value?: (this: NonterminalNode, arg0: NonterminalNode) => T;
   stringLiteral?: (this: NonterminalNode, arg0: TerminalNode, arg1: IterationNode, arg2: TerminalNode) => T;

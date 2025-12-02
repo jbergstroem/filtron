@@ -43,6 +43,7 @@ describe("Elysia E2E Tests", () => {
 
 		expect(response.status).toBe(200);
 		expect(data.success).toBe(true);
+		expect(data.count).toBe(361);
 		expect(data.data.every((u: any) => u.status === "active")).toBe(true);
 	});
 
@@ -54,9 +55,8 @@ describe("Elysia E2E Tests", () => {
 
 		expect(response.status).toBe(200);
 		expect(data.success).toBe(true);
-		expect(
-			data.data.every((u: any) => u.status === "active" && u.verified),
-		).toBe(true);
+		expect(data.count).toBe(253);
+		expect(data.data.every((u: any) => u.status === "active" && u.verified)).toBe(true);
 	});
 
 	test("should filter with one-of operator", async () => {
@@ -67,45 +67,40 @@ describe("Elysia E2E Tests", () => {
 
 		expect(response.status).toBe(200);
 		expect(data.success).toBe(true);
-		expect(
-			data.data.every((u: any) => u.role === "admin" || u.role === "moderator"),
-		).toBe(true);
+		expect(data.count).toBe(320);
+		expect(data.data.every((u: any) => u.role === "admin" || u.role === "moderator")).toBe(true);
 	});
 
 	test("should filter with comparison operators", async () => {
-		const response1 = await fetch(
-			`${BASE_URL}/users?filter=${encodeURIComponent("age >= 30")}`,
-		);
+		const response1 = await fetch(`${BASE_URL}/users?filter=${encodeURIComponent("age >= 30")}`);
 		const data1 = await response1.json();
+		expect(data1.count).toBe(369);
 		expect(data1.data.every((u: any) => u.age >= 30)).toBe(true);
 
-		const response2 = await fetch(
-			`${BASE_URL}/users?filter=${encodeURIComponent("age < 30")}`,
-		);
+		const response2 = await fetch(`${BASE_URL}/users?filter=${encodeURIComponent("age < 30")}`);
 		const data2 = await response2.json();
+		expect(data2.count).toBe(131);
 		expect(data2.data.every((u: any) => u.age < 30)).toBe(true);
 	});
 
-	test("should filter with range query", async () => {
-		const response = await fetch(
-			`${BASE_URL}/users?filter=${encodeURIComponent("age >= 30 AND age <= 40")}`,
-		);
+	test("should filter with range expression syntax", async () => {
+		const response = await fetch(`${BASE_URL}/users?filter=${encodeURIComponent("age = 30..40")}`);
 		const data = await response.json();
 
 		expect(response.status).toBe(200);
 		expect(data.success).toBe(true);
+		expect(data.count).toBe(121);
 		expect(data.data.every((u: any) => u.age >= 30 && u.age <= 40)).toBe(true);
+		expect(data.filter.sql).toContain("BETWEEN");
 	});
 
 	test("should filter with contains operator", async () => {
-		const response = await fetch(
-			`${BASE_URL}/users?filter=${encodeURIComponent('name ~ "%a%"')}`,
-		);
+		const response = await fetch(`${BASE_URL}/users?filter=${encodeURIComponent('name ~ "%a%"')}`);
 		const data = await response.json();
 
 		expect(response.status).toBe(200);
 		expect(data.success).toBe(true);
-		expect(data.count).toBeGreaterThan(0);
+		expect(data.count).toBe(370);
 	});
 
 	test("should filter with complex nested query", async () => {
@@ -116,15 +111,12 @@ describe("Elysia E2E Tests", () => {
 
 		expect(response.status).toBe(200);
 		expect(data.success).toBe(true);
-		expect(
-			data.data.every((u: any) => (u.age < 25 || u.age > 50) && u.verified),
-		).toBe(true);
+		expect(data.count).toBe(163);
+		expect(data.data.every((u: any) => (u.age < 25 || u.age > 50) && u.verified)).toBe(true);
 	});
 
 	test("should handle invalid filter syntax", async () => {
-		const response = await fetch(
-			`${BASE_URL}/users?filter=${encodeURIComponent("age >> 30")}`,
-		);
+		const response = await fetch(`${BASE_URL}/users?filter=${encodeURIComponent("age >> 30")}`);
 		const data = await response.json();
 
 		expect(response.status).toBe(400);

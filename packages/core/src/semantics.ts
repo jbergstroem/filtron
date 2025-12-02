@@ -1,5 +1,8 @@
 import type { FiltronActionDict } from "./grammar.ohm-bundle.js";
-import type { ASTNode, Value } from "./types";
+import type { ASTNode, RangeExpression, Value } from "./types";
+
+// Return type for semantic actions includes all possible return types
+type SemanticReturnType = ASTNode | Value | Value[] | string | number | [number, number];
 
 /**
  * Unescape a single escape sequence character
@@ -24,9 +27,7 @@ function unescapeChar(escapedChar: string): string {
 /**
  * Semantic actions for converting Ohm parse tree to Filtron AST
  */
-export const semanticActions: FiltronActionDict<
-	ASTNode | Value | Value[] | string
-> = {
+export const semanticActions: FiltronActionDict<SemanticReturnType> = {
 	Query(orExpr: any): ASTNode {
 		return orExpr.toAST();
 	},
@@ -100,13 +101,7 @@ export const semanticActions: FiltronActionDict<
 		};
 	},
 
-	FieldExpression_notOneOf(
-		field: any,
-		_op: any,
-		_open: any,
-		values: any,
-		_close: any,
-	): ASTNode {
+	FieldExpression_notOneOf(field: any, _op: any, _open: any, values: any, _close: any): ASTNode {
 		const children = values.asIteration().children;
 		const len = children.length;
 		const valueArray: Value[] = [];
@@ -122,13 +117,7 @@ export const semanticActions: FiltronActionDict<
 		};
 	},
 
-	FieldExpression_oneOf(
-		field: any,
-		_op: any,
-		_open: any,
-		values: any,
-		_close: any,
-	): ASTNode {
+	FieldExpression_oneOf(field: any, _op: any, _open: any, values: any, _close: any): ASTNode {
 		const children = values.asIteration().children;
 		const len = children.length;
 		const valueArray: Value[] = [];
@@ -141,6 +130,16 @@ export const semanticActions: FiltronActionDict<
 			type: "oneOf",
 			field: field.toAST(),
 			values: valueArray,
+		};
+	},
+
+	FieldExpression_range(field: any, _eq: any, rangeLiteral: any): RangeExpression {
+		const [min, max] = rangeLiteral.toAST();
+		return {
+			type: "range",
+			field: field.toAST(),
+			min,
+			max,
 		};
 	},
 
@@ -220,13 +219,7 @@ export const semanticActions: FiltronActionDict<
 		return { type: "string", value: result };
 	},
 
-	numberLiteral_float(
-		this: any,
-		_sign: any,
-		_whole: any,
-		_dot: any,
-		_frac: any,
-	): Value {
+	numberLiteral_float(this: any, _sign: any, _whole: any, _dot: any, _frac: any): Value {
 		const value = Number.parseFloat(this.sourceString);
 		return { type: "number", value };
 	},
@@ -300,5 +293,17 @@ export const semanticActions: FiltronActionDict<
 
 	ComparisonOp(_op: any): any {
 		return _op;
+	},
+
+	RangeLiteral(min: any, _dots: any, max: any): [number, number] {
+		return [min.toAST(), max.toAST()];
+	},
+
+	RangeNumber_float(this: any, _sign: any, _whole: any, _dot: any, _frac: any): number {
+		return Number.parseFloat(this.sourceString);
+	},
+
+	RangeNumber_int(this: any, _sign: any, _digits: any): number {
+		return Number.parseInt(this.sourceString, 10);
 	},
 };

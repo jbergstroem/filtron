@@ -72,10 +72,7 @@ export interface ParseOptions {
  * const result = parse('(age > 18 OR verified) AND NOT banned', { fastPath: false });
  * ```
  */
-export const parse = (
-	query: string,
-	options: ParseOptions = {},
-): ParseResult => {
+export const parse = (query: string, options: ParseOptions = {}): ParseResult => {
 	const { fastPath = true } = options;
 
 	// Try fast path first for common patterns if enabled
@@ -143,10 +140,7 @@ export const parse = (
  * const ast = parseOrThrow('status = "active"', { fastPath: true });
  * ```
  */
-export const parseOrThrow = (
-	query: string,
-	options: ParseOptions = {},
-): ASTNode => {
+export const parseOrThrow = (query: string, options: ParseOptions = {}): ASTNode => {
 	const result = parse(query, options);
 
 	if (result.success) {

@@ -284,9 +284,7 @@ describe("Core", () => {
 			if (result.success) {
 				const expr = result.ast as NotExpression;
 				expect(expr.type).toBe("not");
-				expect((expr.expression as BooleanFieldExpression).type).toBe(
-					"booleanField",
-				);
+				expect((expr.expression as BooleanFieldExpression).type).toBe("booleanField");
 			}
 		});
 
@@ -406,9 +404,7 @@ describe("Core", () => {
 			if (result.success) {
 				const expr = result.ast as AndExpression;
 				expect((expr.left as BooleanFieldExpression).type).toBe("booleanField");
-				expect((expr.right as BooleanFieldExpression).type).toBe(
-					"booleanField",
-				);
+				expect((expr.right as BooleanFieldExpression).type).toBe("booleanField");
 			}
 		});
 
@@ -476,9 +472,7 @@ describe("Core", () => {
 		});
 
 		test("one-of with escaped quotes in strings", () => {
-			const result = parse(
-				'message : ["He said \\"Hello\\"", "She said \\"Goodbye\\""]',
-			);
+			const result = parse('message : ["He said \\"Hello\\"", "She said \\"Goodbye\\""]');
 			expect(result.success).toBe(true);
 			if (result.success) {
 				const expr = result.ast as OneOfExpression;
@@ -497,9 +491,7 @@ describe("Core", () => {
 		});
 
 		test("one-of with backslashes and escaped quotes", () => {
-			const result = parse(
-				'path : ["C:\\\\Users\\\\Documents", "D:\\\\Program Files\\\\App"]',
-			);
+			const result = parse('path : ["C:\\\\Users\\\\Documents", "D:\\\\Program Files\\\\App"]');
 			expect(result.success).toBe(true);
 			if (result.success) {
 				const expr = result.ast as OneOfExpression;
@@ -529,9 +521,7 @@ describe("Core", () => {
 		});
 
 		test("one-of with mixed escaped and normal strings", () => {
-			const result = parse(
-				'text : ["normal", "with \\"quotes\\"", "also normal"]',
-			);
+			const result = parse('text : ["normal", "with \\"quotes\\"", "also normal"]');
 			expect(result.success).toBe(true);
 			if (result.success) {
 				const expr = result.ast as OneOfExpression;
@@ -583,18 +573,57 @@ describe("Core", () => {
 		});
 	});
 
+	describe("Range Expressions", () => {
+		test("basic integer range", () => {
+			const result = parse("age = 18..65");
+			expect(result.success).toBe(true);
+			if (result.success) {
+				const expr = result.ast as any;
+				expect(expr.type).toBe("range");
+				expect(expr.field).toBe("age");
+				expect(expr.min).toBe(18);
+				expect(expr.max).toBe(65);
+			}
+		});
+
+		test("float range", () => {
+			const result = parse("price = 9.99..99.99");
+			expect(result.success).toBe(true);
+			if (result.success) {
+				const expr = result.ast as any;
+				expect(expr.type).toBe("range");
+				expect(expr.field).toBe("price");
+				expect(expr.min).toBe(9.99);
+				expect(expr.max).toBe(99.99);
+			}
+		});
+
+		test("negative number range", () => {
+			const result = parse("temperature = -20..40");
+			expect(result.success).toBe(true);
+			if (result.success) {
+				const expr = result.ast as any;
+				expect(expr.type).toBe("range");
+				expect(expr.field).toBe("temperature");
+				expect(expr.min).toBe(-20);
+				expect(expr.max).toBe(40);
+			}
+		});
+
+		test("range with parentheses", () => {
+			const result = parse("(age = 18..30 OR age = 50..65) AND verified");
+			expect(result.success).toBe(true);
+		});
+	});
+
 	describe("Complex Queries", () => {
 		test("query with multiple conditions", () => {
-			const result = parse(
-				'status = "active" AND age >= 18 AND verified = true',
-			);
+			const result = parse('status = "active" AND age >= 18 AND verified = true');
 			expect(result.success).toBe(true);
 		});
 
 		test("nested conditions with parentheses", () => {
-			const result = parse(
-				'(role = "admin" OR role = "moderator") AND status = "active"',
-			);
+			const result = parse('(role = "admin" OR role = "moderator") AND status = "active"');
 			expect(result.success).toBe(true);
 		});
 
@@ -609,9 +638,7 @@ describe("Core", () => {
 		});
 
 		test("dotted fields with complex logic", () => {
-			const result = parse(
-				"user.profile.age >= 18 AND user.settings.notifications = true",
-			);
+			const result = parse("user.profile.age >= 18 AND user.settings.notifications = true");
 			expect(result.success).toBe(true);
 		});
 	});
@@ -688,9 +715,7 @@ describe("Core", () => {
 		});
 
 		test("multiple comments", () => {
-			const result = parse(
-				"age = 18 // first\nAND // second\nstatus = active // third",
-			);
+			const result = parse("age = 18 // first\nAND // second\nstatus = active // third");
 			expect(result.success).toBe(true);
 		});
 	});
@@ -864,9 +889,7 @@ describe("Core", () => {
 
 	describe("Real-world Query Examples", () => {
 		test("user authentication query", () => {
-			const result = parse(
-				'email? AND verified = true AND status : ["active", "premium"]',
-			);
+			const result = parse('email? AND verified = true AND status : ["active", "premium"]');
 			expect(result.success).toBe(true);
 		});
 
@@ -878,9 +901,7 @@ describe("Core", () => {
 		});
 
 		test("admin dashboard access query", () => {
-			const result = parse(
-				'(role : ["admin", "superadmin"]) AND (NOT suspended) AND last_login?',
-			);
+			const result = parse('(role : ["admin", "superadmin"]) AND (NOT suspended) AND last_login?');
 			expect(result.success).toBe(true);
 		});
 

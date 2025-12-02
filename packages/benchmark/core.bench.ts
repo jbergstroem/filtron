@@ -89,6 +89,17 @@ bench
 	});
 
 bench
+	.add("range: simple integer", () => {
+		parse("age = 18..65");
+	})
+	.add("range: with AND", () => {
+		parse("age = 18..65 AND verified");
+	})
+	.add("range: with parentheses", () => {
+		parse("(age = 18..30 OR age = 50..65) AND verified");
+	});
+
+bench
 	.add("error: invalid syntax", () => {
 		parse("this is not valid");
 	})

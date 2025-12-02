@@ -50,6 +50,27 @@ const RANGE_REGEX =
 const KEYWORDS = new Set(["and", "or", "not", "exists", "true", "false"]);
 
 /**
+ * Check if quotes exist outside of array literals (:[...] or !:[...])
+ * Quotes inside arrays are safe because they can't contain AND/OR keywords
+ * that would break splitting. Quotes in string comparisons like 'name = "foo AND bar"'
+ * are dangerous and need the full parser.
+ *
+ * @param query - The query string to check
+ * @returns true if there are quotes outside array literals (unsafe for splitting)
+ */
+function hasQuotesOutsideArrays(query: string): boolean {
+	// If no quotes at all, it's safe
+	if (!query.includes('"')) {
+		return false;
+	}
+
+	// Remove all array literals (:[...] and !:[...]) from the query
+	// then check if any quotes remain
+	const withoutArrays = query.replace(/!?:\s*\[[^\]]*\]/g, "");
+	return withoutArrays.includes('"');
+}
+
+/**
  * Parse a simple value (string, number, boolean, or identifier)
  * Returns null if value is complex and needs full parser
  */
@@ -423,10 +444,11 @@ export function parseSimpleNot(query: string): NotExpression | null {
  * Returns null if pattern doesn't match or expressions are complex
  */
 export function parseSimpleAnd(query: string): AndExpression | null {
-	// Reject queries with string literals to avoid incorrect splitting
+	// Reject queries with string literals outside arrays to avoid incorrect splitting
 	// (splitting on AND would break strings like 'name = "foo AND bar"')
-	if (query.includes('"')) {
-		return null; // Has string literals, use full parser
+	// But quotes inside arrays like 'role : ["admin", "user"]' are safe
+	if (hasQuotesOutsideArrays(query)) {
+		return null; // Has string literals outside arrays, use full parser
 	}
 
 	// Split on AND (case-insensitive, with word boundaries)
@@ -485,10 +507,11 @@ export function parseSimpleAnd(query: string): AndExpression | null {
  * Returns null if pattern doesn't match or expressions are complex
  */
 export function parseSimpleOr(query: string): OrExpression | null {
-	// Reject queries with string literals to avoid incorrect splitting
+	// Reject queries with string literals outside arrays to avoid incorrect splitting
 	// (splitting on OR would break strings like 'status = "pending OR active"')
-	if (query.includes('"')) {
-		return null; // Has string literals, use full parser
+	// But quotes inside arrays like 'role : ["admin", "user"]' are safe
+	if (hasQuotesOutsideArrays(query)) {
+		return null; // Has string literals outside arrays, use full parser
 	}
 
 	// Must not contain AND at the same level (would need parentheses)

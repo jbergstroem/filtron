@@ -292,8 +292,42 @@ describe("Fast Path", () => {
 			expect(parseSimpleAnd("a = 1 OR b = 2")).toBeNull(); // OR
 			expect(parseSimpleAnd("(a = 1) AND (b = 2)")).toBeNull(); // parentheses
 			expect(parseSimpleAnd("a=1 AND b=2 AND c=3 AND d=4 AND e=5 AND f=6")).toBeNull(); // >5 terms
-			expect(parseSimpleAnd('role = "admin" AND age > 18')).toBeNull(); // string literals
-			expect(parseSimpleAnd('verified AND status : ["active"]')).toBeNull(); // array literals
+			expect(parseSimpleAnd('role = "admin" AND age > 18')).toBeNull(); // string literals outside arrays
+		});
+
+		test("handles array literals in AND expressions", () => {
+			// Array literals are safe because they can't contain AND/OR keywords that would break splitting
+			expect(parseSimpleAnd('verified AND status : ["active"]')).toMatchObject({
+				type: "and",
+				left: { type: "booleanField", field: "verified" },
+				right: { type: "oneOf", field: "status" },
+			});
+
+			expect(parseSimpleAnd('role : ["admin", "user"] AND verified')).toMatchObject({
+				type: "and",
+				left: { type: "oneOf", field: "role" },
+				right: { type: "booleanField", field: "verified" },
+			});
+
+			// Multiple arrays
+			expect(parseSimpleAnd('status : ["active"] AND role : ["admin", "user"]')).toMatchObject({
+				type: "and",
+				left: { type: "oneOf", field: "status" },
+				right: { type: "oneOf", field: "role" },
+			});
+
+			// Array with NOT
+			expect(
+				parseSimpleAnd('verified = true AND role : ["user", "premium"] AND NOT suspended'),
+			).toMatchObject({
+				type: "and",
+				left: {
+					type: "and",
+					left: { type: "comparison" },
+					right: { type: "oneOf" },
+				},
+				right: { type: "not" },
+			});
 		});
 	});
 
@@ -331,26 +365,54 @@ describe("Fast Path", () => {
 			expect(parseSimpleOr("a = 1 AND b = 2 OR c = 3")).toBeNull(); // mixed AND/OR
 			expect(parseSimpleOr("verified")).toBeNull(); // no OR
 			expect(parseSimpleOr("a=1 OR b=2 OR c=3 OR d=4 OR e=5 OR f=6")).toBeNull(); // >5 terms
-			expect(parseSimpleOr('role = "admin" OR role = "moderator"')).toBeNull(); // string literals
+			expect(parseSimpleOr('role = "admin" OR role = "moderator"')).toBeNull(); // string literals outside arrays
+		});
+
+		test("handles array literals in OR expressions", () => {
+			// Array literals are safe because they can't contain AND/OR keywords that would break splitting
+			expect(parseSimpleOr('status : ["active"] OR verified')).toMatchObject({
+				type: "or",
+				left: { type: "oneOf", field: "status" },
+				right: { type: "booleanField", field: "verified" },
+			});
+
+			expect(parseSimpleOr('role : ["admin"] OR role : ["user"]')).toMatchObject({
+				type: "or",
+				left: { type: "oneOf", field: "role" },
+				right: { type: "oneOf", field: "role" },
+			});
 		});
 	});
 
 	describe("String Literal Safety", () => {
-		test("parseSimpleAnd rejects queries with string literals", () => {
-			// These should be rejected to avoid incorrect splitting
+		test("parseSimpleAnd rejects queries with string literals outside arrays", () => {
+			// These should be rejected to avoid incorrect splitting on AND inside strings
 			expect(parseSimpleAnd('name = "ANDY" AND age > 18')).toBeNull();
 			expect(parseSimpleAnd('title = "SENIOR ANALYST" AND verified')).toBeNull();
 			expect(parseSimpleAnd('text = "foo AND bar" AND status = "active"')).toBeNull();
 			expect(parseSimpleAnd('description = "Do NOT use" AND verified')).toBeNull();
 			expect(parseSimpleAnd('status = "pending OR active" AND verified')).toBeNull();
+			// Mixed: string literal outside array should still reject
+			expect(parseSimpleAnd('name = "test" AND role : ["admin"]')).toBeNull();
 		});
 
-		test("parseSimpleOr rejects queries with string literals", () => {
-			// These should be rejected to avoid incorrect splitting
+		test("parseSimpleOr rejects queries with string literals outside arrays", () => {
+			// These should be rejected to avoid incorrect splitting on OR inside strings
 			expect(parseSimpleOr('role = "admin" OR role = "moderator"')).toBeNull();
 			expect(parseSimpleOr('title = "HISTORY" OR status = "active"')).toBeNull();
 			expect(parseSimpleOr('name = "CANDY" OR name = "SANDY"')).toBeNull();
 			expect(parseSimpleOr('text = "foo OR bar" OR verified')).toBeNull();
+			// Mixed: string literal outside array should still reject
+			expect(parseSimpleOr('name = "test" OR role : ["admin"]')).toBeNull();
+		});
+
+		test("parseSimpleAnd/Or allows string literals inside arrays", () => {
+			// Quotes inside arrays are safe - they can't contain AND/OR that would break splitting
+			expect(parseSimpleAnd('role : ["admin", "user"] AND verified')).not.toBeNull();
+			expect(parseSimpleAnd('status : ["active"] AND role : ["admin"]')).not.toBeNull();
+			expect(parseSimpleOr('role : ["admin"] OR role : ["user"]')).not.toBeNull();
+			// notOneOf arrays too
+			expect(parseSimpleAnd('role !: ["banned"] AND verified')).not.toBeNull();
 		});
 
 		test("full parser correctly handles AND/OR in string literals", () => {

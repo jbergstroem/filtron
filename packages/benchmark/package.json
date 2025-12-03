@@ -6,13 +6,15 @@
   "description": "Continuous performance benchmarks for Filtron using tinybench + CodSpeed",
   "type": "module",
   "scripts": {
-    "bench": "bun run bench:core && bun run bench:sql",
+    "bench": "bun run bench:core && bun run bench:sql && bun run bench:js",
     "bench:core": "node core.bench.ts",
-    "bench:sql": "node sql.bench.ts"
+    "bench:sql": "node sql.bench.ts",
+    "bench:js": "node js.bench.ts"
   },
   "dependencies": {
     "@codspeed/tinybench-plugin": "5.0.1",
     "@filtron/core": "workspace:*",
+    "@filtron/js": "workspace:*",
     "@filtron/sql": "workspace:*",
     "tinybench": "5.1.0"
   },

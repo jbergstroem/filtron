@@ -1,19 +1,16 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "name": "@filtron/sql",
+  "name": "@filtron/js",
   "version": "1.0.0",
-  "description": "SQL WHERE clause generator for Filtron AST with parameterized queries",
+  "description": "In-memory JavaScript array filtering using Filtron AST",
   "keywords": [
     "filtron",
-    "sql",
-    "where-clause",
-    "query-builder",
+    "filter",
+    "javascript",
+    "array",
+    "predicate",
     "ast",
-    "typescript",
-    "duckdb",
-    "postgresql",
-    "mysql",
-    "sqlite"
+    "typescript"
   ],
   "homepage": "https://github.com/jbergstroem/filtron#readme",
   "bugs": {
@@ -22,7 +19,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jbergstroem/filtron.git",
-    "directory": "packages/sql"
+    "directory": "packages/js"
   },
   "license": "MIT",
   "author": "Johan Bergström <bugs@bergstroem.nu>",
@@ -51,7 +48,7 @@
   },
   "peerDependencies": {
     "@filtron/core": "workspace:*",
-    "typescript": ">=5.0.0"
+    "typescript": "catalog:"
   },
   "peerDependenciesMeta": {
     "typescript": {
@@ -61,8 +58,7 @@
   "devDependencies": {
     "@filtron/core": "workspace:*",
     "@types/bun": "catalog:",
-    "mitata": "catalog:",
-    "typescript": "catalog:"
+    "mitata": "catalog:"
   },
   "engines": {
     "node": ">=20.0.0",

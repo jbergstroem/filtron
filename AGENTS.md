@@ -20,6 +20,7 @@
 | Recursive descent parser | `packages/core/src/rd-parser.ts` |
 | Parser API | `packages/core/src/parser.ts` |
 | AST types | `packages/core/src/types.ts` |
+| JS filter | `packages/js/src/filter.ts` |
 | SQL generator | `packages/sql/src/sql.ts` |
 | Benchmarks | `packages/benchmark/*.bench.ts` |
 
@@ -55,9 +56,9 @@
 
 Filtron uses a **hand-written recursive descent parser** for maximum performance:
 
-1. **Lexer** (`lexer.ts`) - Tokenizes input into tokens (STRING, NUMBER, IDENT, operators, etc.)
-2. **Parser** (`rd-parser.ts`) - Recursive descent parser that builds AST during parsing
-3. **API** (`parser.ts`) - Public `parse()` and `parseOrThrow()` functions
+1. **Lexer** (`packages/core/lexer.ts`) - Tokenizes input into tokens (STRING, NUMBER, IDENT, operators, etc.)
+2. **Parser** (`packages/core/rd-parser.ts`) - Recursive descent parser that builds AST during parsing
+3. **API** (`packages/core/parser.ts`) - Public `parse()` and `parseOrThrow()` functions
 
 ### Grammar (in precedence order, lowest to highest)
 

@@ -18,6 +18,7 @@
     "packages": [
       "packages/core",
       "packages/sql",
+      "packages/js",
       "packages/benchmark",
       "examples/elysia-sqlite"
     ],

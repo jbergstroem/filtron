@@ -5,7 +5,7 @@ This document describes the core workflows and principles for working on the Fil
 1. **Performance** - This parser is designed for real-time API usage where query parsing happens on every request and its performance is mission-critical
 2. **Correctness** - The parser must accurately parse all valid queries and reject invalid ones with clear error messages
 
-Filtron source code is maintained at Github: https://github.com/jbergstroem/filtron. For additional context on contributing, see [./CONTRIBUTING.md](./CONTRIBUTING.md).
+Filtron source code is maintained at GitHub: https://github.com/jbergstroem/filtron. For additional context on contributing, see [./CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Project Architecture
 
@@ -33,10 +33,10 @@ You can additionally use bun's monorepo tooling (`--filter 'package'` or `--filt
 
 All grammar lives in `packages/core`.
 
-- Start by updating the PEG grammar. Consider how common the pattern is when choosing where in the document to insert it. A common pitfall is evaluating lesser common scenarios prior common ones
+- Start by updating the PEG grammar. Consider how common the pattern is when choosing where in the document to insert it. A common pitfall is evaluating less common scenarios prior to more common ones
 - Consider adding fast-path support for the grammar
 - Run benchmarks to compare performance and explore ways of making it faster
-- Add support to the syntax in the `package/sql` repository after performance is optimized.
+- Add support to the syntax in the `packages/sql` repository after performance is optimized.
 - Add tests (100% coverage for all grammar) - as few as needed. Do not consider every possible variation outside coverage
 - Update the documentation in each README.md but stick to as little information as possible
 
@@ -44,4 +44,4 @@ All grammar lives in `packages/core`.
 
 We maintain examples in the `examples` folder:
 
-- **`examples/elysia-sqlite`**: An example API using [elysia-js](https://elysiajs.com/llms.txt).
+- **`examples/elysia-sqlite`**: An example API using [elysia-js](https://elysiajs.com/llms.txt) and SQLite, accepting filtron filters over a querystring. This example has an end-to-end suite

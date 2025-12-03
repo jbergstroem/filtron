@@ -17,7 +17,7 @@
     "tinybench": "5.1.0"
   },
   "devDependencies": {
-    "@types/bun": "catalog:",
+    "@types/bun": "catalog:"
   },
   "engines": {
     "node": ">=20.0.0",

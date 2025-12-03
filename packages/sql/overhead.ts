@@ -141,18 +141,3 @@ const parameterStyleResults = [
 ];
 
 console.table(parameterStyleResults);
-
-const difference = Math.abs(numberedTime - questionTime);
-const faster = numberedTime < questionTime ? "Numbered" : "Question";
-console.log(
-	`\n${faster} is ${(difference * 1000).toFixed(2)} μs faster (${((difference / Math.max(numberedTime, questionTime)) * 100).toFixed(1)}% difference)`,
-);
-
-console.log("\n=== Key Takeaways ===\n");
-console.log(`✓ SQL conversion adds only ~${(avgOverhead * 1000).toFixed(2)} μs overhead`);
-console.log("✓ Impact is less than 1% of total query processing time");
-console.log(
-	`✓ Can process ${Math.round(1000 / (avgOverhead + 0.06)).toLocaleString()}+ queries/sec end-to-end`,
-);
-console.log("✓ Overhead is negligible for real-time API usage");
-console.log("✓ Both parameter styles perform nearly identically");

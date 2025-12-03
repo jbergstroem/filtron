@@ -49,7 +49,8 @@
     "build": "bun run build:grammar && bun build --minify --splitting --sourcemap=linked --outdir=dist --external ohm-js index.ts && tsc --emitDeclarationOnly --declaration --declarationMap --outDir dist --skipLibCheck",
     "build:grammar": "bun run ohm generateBundles --withTypes --esm src/grammar.ohm",
     "prepublishOnly": "bun run build && bun test",
-    "test": "bun test"
+    "test": "bun test",
+    "typecheck": "tsc --noemit"
   },
   "dependencies": {
     "ohm-js": "17.2.1"

@@ -38,7 +38,14 @@ All grammar lives in `packages/core`.
 - Run benchmarks to compare performance and explore ways of making it faster
 - Add support to the syntax in the `packages/sql` repository after performance is optimized.
 - Add tests (100% coverage for all grammar) - as few as needed. Do not consider every possible variation outside coverage
-- Update the documentation in each README.md but stick to as little information as possible
+- Update the documentation in each README.md but stick to as concrete information as possible
+
+## Modifying the SQL generator
+
+- Ensure that syntax emitted follows general SQL syntax. If there is database-specific syntax, provide an option to choose which syntax to use
+- All parameters needs to be passed separately from the SQL query for safety
+- Keep business rules out of logic, such as comparing min/max in a BETWEEN (`..`) query
+- Run `bun run overhead.ts` or the benchmark (`bun run bench`) in `packages/sql` to measure performance impact
 
 ## "Real life" examples
 

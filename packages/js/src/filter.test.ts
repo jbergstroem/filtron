@@ -366,13 +366,13 @@ describe("toFilter", () => {
 		});
 
 		test("validates all expression types", () => {
-			expect(() =>
-				toFilter({ type: "exists", field: "x" }, { allowedFields: [] }),
-			).toThrow('Field "x" is not allowed');
+			expect(() => toFilter({ type: "exists", field: "x" }, { allowedFields: [] })).toThrow(
+				'Field "x" is not allowed',
+			);
 
-			expect(() =>
-				toFilter({ type: "booleanField", field: "x" }, { allowedFields: [] }),
-			).toThrow('Field "x" is not allowed');
+			expect(() => toFilter({ type: "booleanField", field: "x" }, { allowedFields: [] })).toThrow(
+				'Field "x" is not allowed',
+			);
 
 			expect(() =>
 				toFilter({ type: "oneOf", field: "x", values: [] }, { allowedFields: [] }),

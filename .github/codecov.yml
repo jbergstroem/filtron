@@ -18,7 +18,7 @@ component_management:
       paths:
         - ^packages/sql/.*
     - component_id: js
-      name: Javascript Filter
+      name: JavaScript Filter
       paths:
         - ^packages/js/.*
     - component_id: elysia-example

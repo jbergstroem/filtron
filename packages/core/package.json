@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@filtron/core",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A fast, type-safe query language parser for filtering data in real-time APIs",
   "keywords": [
     "filtron",
@@ -9,12 +9,10 @@
     "parser",
     "filter",
     "query-language",
-    "ast",
     "typescript",
     "filtering",
     "search",
-    "query-parser",
-    "sql-where"
+    "query-parser"
   ],
   "homepage": "https://github.com/jbergstroem/filtron#readme",
   "bugs": {

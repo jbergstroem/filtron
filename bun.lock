@@ -56,13 +56,14 @@
     "packages/js": {
       "name": "@filtron/js",
       "version": "1.0.0",
-      "devDependencies": {
+      "dependencies": {
         "@filtron/core": "workspace:*",
+      },
+      "devDependencies": {
         "@types/bun": "catalog:",
         "mitata": "catalog:",
       },
       "peerDependencies": {
-        "@filtron/core": "workspace:*",
         "typescript": "catalog:",
       },
       "optionalPeers": [
@@ -72,14 +73,15 @@
     "packages/sql": {
       "name": "@filtron/sql",
       "version": "1.0.0",
-      "devDependencies": {
+      "dependencies": {
         "@filtron/core": "workspace:*",
+      },
+      "devDependencies": {
         "@types/bun": "catalog:",
         "mitata": "catalog:",
         "typescript": "catalog:",
       },
       "peerDependencies": {
-        "@filtron/core": "workspace:*",
         "typescript": ">=5.0.0",
       },
       "optionalPeers": [

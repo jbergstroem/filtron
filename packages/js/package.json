@@ -46,8 +46,10 @@
     "test": "bun test",
     "typecheck": "tsc --noemit"
   },
+  "dependencies": {
+    "@filtron/core": "workspace:*"
+  },
   "peerDependencies": {
-    "@filtron/core": "workspace:*",
     "typescript": "catalog:"
   },
   "peerDependenciesMeta": {
@@ -56,7 +58,6 @@
     }
   },
   "devDependencies": {
-    "@filtron/core": "workspace:*",
     "@types/bun": "catalog:",
     "mitata": "catalog:"
   },

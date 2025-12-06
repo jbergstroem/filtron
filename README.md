@@ -78,8 +78,11 @@ if (result.success) {
 
 ..or use the @filtron/js package to filter JavaScript arrays in-memory:
 
-```typescript
+```bash
 bun add @filtron/js
+```
+
+```typescript
 import { parse } from "@filtron/core";
 import { toFilter } from "@filtron/js";
 

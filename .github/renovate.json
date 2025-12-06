@@ -25,6 +25,11 @@
     {
       "matchDepTypes": ["engines", "peerDependencies"],
       "enabled": false
+    },
+    {
+      "matchFileNames": [".github/workflows/benchmarks.yml"],
+      "matchPackageNames": ["node"],
+      "enabled": false
     }
   ],
   "customManagers": [

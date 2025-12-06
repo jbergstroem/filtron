@@ -15,7 +15,7 @@
  *   RangeSuffix   = '..' NUMBER
  */
 
-import { Lexer, LexerError, type Token, type TokenType } from "./lexer";
+import { Lexer, type Token, type TokenType } from "./lexer";
 import type {
 	ASTNode,
 	Value,

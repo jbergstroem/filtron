@@ -21,7 +21,7 @@
 | Parser API | `packages/core/src/parser.ts` |
 | AST types | `packages/core/src/types.ts` |
 | JS filter | `packages/js/src/filter.ts` |
-| SQL generator | `packages/sql/src/sql.ts` |
+| SQL generator | `packages/sql/src/converter.ts` |
 | Benchmarks | `packages/benchmark/*.bench.ts` |
 
 ## Commands

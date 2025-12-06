@@ -30,6 +30,7 @@
       "dependencies": {
         "@codspeed/tinybench-plugin": "5.0.1",
         "@filtron/core": "workspace:*",
+        "@filtron/js": "workspace:*",
         "@filtron/sql": "workspace:*",
         "tinybench": "5.1.0",
       },
@@ -52,18 +53,36 @@
         "typescript",
       ],
     },
+    "packages/js": {
+      "name": "@filtron/js",
+      "version": "1.0.0",
+      "dependencies": {
+        "@filtron/core": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "catalog:",
+        "mitata": "catalog:",
+      },
+      "peerDependencies": {
+        "typescript": "catalog:",
+      },
+      "optionalPeers": [
+        "typescript",
+      ],
+    },
     "packages/sql": {
       "name": "@filtron/sql",
       "version": "1.0.0",
-      "devDependencies": {
+      "dependencies": {
         "@filtron/core": "workspace:*",
+      },
+      "devDependencies": {
         "@types/bun": "catalog:",
         "mitata": "catalog:",
         "typescript": "catalog:",
       },
       "peerDependencies": {
-        "@filtron/core": "workspace:*",
-        "typescript": ">=5.0.0",
+        "typescript": "catalog:",
       },
       "optionalPeers": [
         "typescript",
@@ -87,6 +106,8 @@
     "@filtron/benchmark": ["@filtron/benchmark@workspace:packages/benchmark"],
 
     "@filtron/core": ["@filtron/core@workspace:packages/core"],
+
+    "@filtron/js": ["@filtron/js@workspace:packages/js"],
 
     "@filtron/sql": ["@filtron/sql@workspace:packages/sql"],
 

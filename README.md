@@ -6,6 +6,7 @@ Fast, type-safe query language parser for filtering data in real-time APIs.
 
 - **[@filtron/core](./packages/core)** - Core query language parser
 - **[@filtron/sql](./packages/sql)** - SQL WHERE clause generator
+- **[@filtron/js](./packages/js)** - In-memory JavaScript array filtering
 - **[@filtron/benchmark](./packages/benchmark)** - Benchmarks for CI (private package)
 
 [![npm version](https://img.shields.io/npm/v/@filtron/core.svg)](https://www.npmjs.com/package/@filtron/core)
@@ -72,6 +73,31 @@ if (result.success) {
   // params: [18, "active"]
 
   const users = await db.query(`SELECT * FROM users WHERE ${sql}`, params);
+}
+```
+
+..or use the @filtron/js package to filter JavaScript arrays in-memory:
+
+```bash
+bun add @filtron/js
+```
+
+```typescript
+import { parse } from "@filtron/core";
+import { toFilter } from "@filtron/js";
+
+const result = parse('age > 18 AND status = "active"');
+
+if (result.success) {
+  const filter = toFilter(result.ast);
+
+  const users = [
+    { name: "Alice", age: 25, status: "active" },
+    { name: "Bob", age: 16, status: "active" },
+  ];
+
+  const filtered = users.filter(filter);
+  // [{ name: "Alice", age: 25, status: "active" }]
 }
 ```
 

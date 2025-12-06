@@ -106,7 +106,7 @@ const filter = toFilter(ast, {
     user_id: "id",
     user_email: "email",
   },
-  allowedFields: ["user_id", "user_email"], // Validation uses mapped names
+  allowedFields: ["user_id", "user_email"], // Validation uses query field names (before mapping)
   caseInsensitive: true,
 });
 ```

@@ -9,6 +9,7 @@
     "declaration": true,
     "emitDeclarationOnly": true,
     "outDir": "./dist",
+    "rootDir": ".",
     "isolatedModules": true
   },
   "include": ["index.ts", "src/**/*.ts"],

@@ -9,7 +9,7 @@ Fast, type-safe query language parser for filtering data in real-time APIs.
 - **[@filtron/js](./packages/js)** - In-memory JavaScript array filtering
 - **[@filtron/benchmark](./packages/benchmark)** - Benchmarks for CI (private package)
 
-[![npm version](https://img.shields.io/npm/v/@filtron/core.svg)](https://www.npmjs.com/package/@filtron/core)
+[![CodSpeed](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://codspeed.io/jbergstroem/filtron?utm_source=badge)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 
 ## Features

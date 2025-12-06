@@ -5,6 +5,29 @@
  */
 
 /**
+ * Fast character type checking using char codes
+ */
+const isDigit = (char: string): boolean => {
+	const code = char.charCodeAt(0);
+	return code >= 48 && code <= 57; // 0-9
+};
+
+const isAlpha = (char: string): boolean => {
+	const code = char.charCodeAt(0);
+	return (code >= 65 && code <= 90) || // A-Z
+		(code >= 97 && code <= 122) || // a-z
+		code === 95; // _
+};
+
+const isAlphaNum = (char: string): boolean => {
+	const code = char.charCodeAt(0);
+	return (code >= 48 && code <= 57) || // 0-9
+		(code >= 65 && code <= 90) || // A-Z
+		(code >= 97 && code <= 122) || // a-z
+		code === 95; // _
+};
+
+/**
  * Token types produced by the lexer
  */
 export type TokenType =
@@ -116,20 +139,19 @@ export class Lexer {
 	 */
 	private skipWhitespaceAndComments(): void {
 		while (this.pos < this.length) {
-			const char = this.peek();
+			const code = this.input.charCodeAt(this.pos);
 
-			// Skip whitespace
-			if (char === " " || char === "\t" || char === "\n" || char === "\r") {
-				this.advance();
+			// Skip whitespace (space=32, tab=9, newline=10, carriage=13)
+			if (code === 32 || code === 9 || code === 10 || code === 13) {
+				this.pos++;
 				continue;
 			}
 
 			// Skip single-line comments: // ...
-			if (char === "/" && this.peekNext() === "/") {
-				this.advance(); // skip /
-				this.advance(); // skip /
-				while (this.pos < this.length && this.peek() !== "\n") {
-					this.advance();
+			if (code === 47 && this.pos + 1 < this.length && this.input.charCodeAt(this.pos + 1) === 47) {
+				this.pos += 2; // skip //
+				while (this.pos < this.length && this.input.charCodeAt(this.pos) !== 10) {
+					this.pos++;
 				}
 				continue;
 			}
@@ -143,44 +165,61 @@ export class Lexer {
 	 */
 	private readString(): Token {
 		const start = this.pos;
-		this.advance(); // skip opening quote
+		this.pos++; // skip opening quote
 
-		let value = "";
+		const chars: string[] = [];
+		let lastPos = this.pos;
+
 		while (this.pos < this.length) {
-			const char = this.peek();
+			const char = this.input[this.pos];
 
 			if (char === '"') {
-				this.advance(); // skip closing quote
-				return { type: "STRING", value, start, end: this.pos };
+				// Flush remaining characters
+				if (lastPos < this.pos) {
+					chars.push(this.input.slice(lastPos, this.pos));
+				}
+				this.pos++; // skip closing quote
+				return { 
+					type: "STRING", 
+					value: chars.join(""), 
+					start, 
+					end: this.pos 
+				};
 			}
 
 			if (char === "\\") {
-				this.advance(); // skip backslash
-				const escaped = this.advance();
+				// Flush accumulated characters before escape
+				if (lastPos < this.pos) {
+					chars.push(this.input.slice(lastPos, this.pos));
+				}
+				this.pos++; // skip backslash
+
+				const escaped = this.input[this.pos++];
 				switch (escaped) {
 					case "n":
-						value += "\n";
+						chars.push("\n");
 						break;
 					case "t":
-						value += "\t";
+						chars.push("\t");
 						break;
 					case "r":
-						value += "\r";
+						chars.push("\r");
 						break;
 					case "\\":
-						value += "\\";
+						chars.push("\\");
 						break;
 					case '"':
-						value += '"';
+						chars.push('"');
 						break;
 					default:
 						// Keep unknown escapes as-is
-						value += escaped;
+						chars.push(escaped);
 				}
+				lastPos = this.pos;
 				continue;
 			}
 
-			value += this.advance();
+			this.pos++;
 		}
 
 		throw new LexerError("Unterminated string literal", start);
@@ -191,28 +230,38 @@ export class Lexer {
 	 */
 	private readNumber(): Token {
 		const start = this.pos;
-		let numStr = "";
 
 		// Handle negative sign
 		if (this.peek() === "-") {
-			numStr += this.advance();
+			this.pos++;
 		}
 
 		// Read integer part
-		while (/[0-9]/.test(this.peek())) {
-			numStr += this.advance();
+		while (this.pos < this.length && isDigit(this.input[this.pos])) {
+			this.pos++;
 		}
 
 		// Check for decimal part
-		if (this.peek() === "." && /[0-9]/.test(this.peekNext())) {
-			numStr += this.advance(); // the dot
-			while (/[0-9]/.test(this.peek())) {
-				numStr += this.advance();
+		if (this.pos < this.length && this.input[this.pos] === "." && 
+		    this.pos + 1 < this.length && isDigit(this.input[this.pos + 1])) {
+			this.pos++; // skip dot
+			while (this.pos < this.length && isDigit(this.input[this.pos])) {
+				this.pos++;
 			}
-			return { type: "NUMBER", value: parseFloat(numStr), start, end: this.pos };
+			return { 
+				type: "NUMBER", 
+				value: parseFloat(this.input.slice(start, this.pos)), 
+				start, 
+				end: this.pos 
+			};
 		}
 
-		return { type: "NUMBER", value: parseInt(numStr, 10), start, end: this.pos };
+		return { 
+			type: "NUMBER", 
+			value: parseInt(this.input.slice(start, this.pos), 10), 
+			start, 
+			end: this.pos 
+		};
 	}
 
 	/**
@@ -220,16 +269,13 @@ export class Lexer {
 	 */
 	private readIdentifier(): Token {
 		const start = this.pos;
-		let ident = "";
 
-		while (this.pos < this.length) {
-			const char = this.peek();
-			if (/[a-zA-Z0-9_]/.test(char)) {
-				ident += this.advance();
-			} else {
-				break;
-			}
+		// Read all alphanumeric characters
+		while (this.pos < this.length && isAlphaNum(this.input[this.pos])) {
+			this.pos++;
 		}
+
+		const ident = this.input.slice(start, this.pos);
 
 		// Check if it's a keyword
 		const lower = ident.toLowerCase();
@@ -337,12 +383,12 @@ export class Lexer {
 		}
 
 		// Number (including negative numbers)
-		if (/[0-9]/.test(char) || (char === "-" && /[0-9]/.test(this.peekNext()))) {
+		if (isDigit(char) || (char === "-" && this.pos + 1 < this.length && isDigit(this.input[this.pos + 1]))) {
 			return this.readNumber();
 		}
 
 		// Identifier or keyword
-		if (/[a-zA-Z_]/.test(char)) {
+		if (isAlpha(char)) {
 			return this.readIdentifier();
 		}
 

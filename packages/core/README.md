@@ -2,8 +2,9 @@
 
 Fast, type-safe query language parser for filtering data in real-time APIs.
 
-[![npm version](https://img.shields.io/npm/v/@filtron/core.svg)](https://www.npmjs.com/package/@filtron/core)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+![npm version](https://img.shields.io/npm/v/@filtron/core.svg)
+![npm bundle size](https://img.shields.io/bundlephobia/min/%40filtron%core)
+![codecov](https://codecov.io/gh/jbergstroem/filtron/graph/badge.svg?token=FXIWJKJ9RI&component=core)
 
 ## Features
 

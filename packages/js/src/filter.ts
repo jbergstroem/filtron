@@ -58,6 +58,24 @@ export interface FilterOptions {
 	 * @default false
 	 */
 	caseInsensitive?: boolean;
+
+	/**
+	 * Maps query field names to object property names
+	 * Useful for exposing different field names in queries than in your data model
+	 * @default undefined (no mapping)
+	 *
+	 * @example
+	 * ```typescript
+	 * // Allow queries to use 'email' but map to 'emailAddress' in objects
+	 * toFilter(ast, {
+	 *   fieldMapping: {
+	 *     'email': 'emailAddress',
+	 *     'name': 'fullName'
+	 *   }
+	 * })
+	 * ```
+	 */
+	fieldMapping?: Record<string, string>;
 }
 
 /**
@@ -67,6 +85,7 @@ interface GeneratorState {
 	allowedFields?: Set<string>;
 	fieldAccessor: (obj: Record<string, unknown>, field: string) => unknown;
 	caseInsensitive: boolean;
+	fieldMapping?: Record<string, string>;
 }
 
 /**
@@ -104,9 +123,17 @@ export function toFilter<T extends Record<string, unknown> = Record<string, unkn
 		allowedFields: options.allowedFields ? new Set(options.allowedFields) : undefined,
 		fieldAccessor: options.fieldAccessor ?? ((obj, field) => obj[field]),
 		caseInsensitive: options.caseInsensitive ?? false,
+		fieldMapping: options.fieldMapping,
 	};
 
 	return generateFilter(ast, state) as FilterPredicate<T>;
+}
+
+/**
+ * Resolves a field name using fieldMapping if provided
+ */
+function resolveFieldName(field: string, state: GeneratorState): string {
+	return state.fieldMapping?.[field] ?? field;
 }
 
 /**
@@ -196,11 +223,12 @@ function generateComparison(
 	state: GeneratorState,
 ): FilterPredicate<Record<string, unknown>> {
 	validateField(node.field, state);
+	const mappedField = resolveFieldName(node.field, state);
 	const value = extractValue(node.value);
 	const compareFn = getComparisonFunction(node.operator, value, state);
 
 	return (item) => {
-		const fieldValue = state.fieldAccessor(item, node.field);
+		const fieldValue = state.fieldAccessor(item, mappedField);
 		return compareFn(fieldValue, value);
 	};
 }
@@ -213,6 +241,7 @@ function generateOneOf(
 	state: GeneratorState,
 ): FilterPredicate<Record<string, unknown>> {
 	validateField(node.field, state);
+	const mappedField = resolveFieldName(node.field, state);
 	const values = node.values.map((v: Value) => extractValue(v));
 
 	if (values.length === 0) {
@@ -225,16 +254,24 @@ function generateOneOf(
 			typeof v === "string" ? v.toLowerCase() : v,
 		);
 		return (item) => {
-			const fieldValue = state.fieldAccessor(item, node.field);
+			const fieldValue = state.fieldAccessor(item, mappedField);
 			const compareValue = typeof fieldValue === "string" ? fieldValue.toLowerCase() : fieldValue;
 			return lowerValues.some((v: string | number | boolean) => v === compareValue);
+		};
+	}
+
+	// For small arrays (<=4 items), Array.includes is faster than Set lookup
+	if (values.length <= 4) {
+		return (item) => {
+			const fieldValue = state.fieldAccessor(item, mappedField);
+			return values.includes(fieldValue as string | number | boolean);
 		};
 	}
 
 	// Use Set for O(1) lookup on larger lists
 	const valueSet = new Set(values);
 	return (item) => {
-		const fieldValue = state.fieldAccessor(item, node.field);
+		const fieldValue = state.fieldAccessor(item, mappedField);
 		return valueSet.has(fieldValue as string | number | boolean);
 	};
 }
@@ -247,6 +284,7 @@ function generateNotOneOf(
 	state: GeneratorState,
 ): FilterPredicate<Record<string, unknown>> {
 	validateField(node.field, state);
+	const mappedField = resolveFieldName(node.field, state);
 	const values = node.values.map((v: Value) => extractValue(v));
 
 	if (values.length === 0) {
@@ -259,16 +297,24 @@ function generateNotOneOf(
 			typeof v === "string" ? v.toLowerCase() : v,
 		);
 		return (item) => {
-			const fieldValue = state.fieldAccessor(item, node.field);
+			const fieldValue = state.fieldAccessor(item, mappedField);
 			const compareValue = typeof fieldValue === "string" ? fieldValue.toLowerCase() : fieldValue;
 			return !lowerValues.some((v: string | number | boolean) => v === compareValue);
+		};
+	}
+
+	// For small arrays (<=4 items), Array.includes is faster than Set lookup
+	if (values.length <= 4) {
+		return (item) => {
+			const fieldValue = state.fieldAccessor(item, mappedField);
+			return !values.includes(fieldValue as string | number | boolean);
 		};
 	}
 
 	// Use Set for O(1) lookup on larger lists
 	const valueSet = new Set(values);
 	return (item) => {
-		const fieldValue = state.fieldAccessor(item, node.field);
+		const fieldValue = state.fieldAccessor(item, mappedField);
 		return !valueSet.has(fieldValue as string | number | boolean);
 	};
 }
@@ -281,8 +327,9 @@ function generateExists(
 	state: GeneratorState,
 ): FilterPredicate<Record<string, unknown>> {
 	validateField(node.field, state);
+	const mappedField = resolveFieldName(node.field, state);
 	return (item) => {
-		const fieldValue = state.fieldAccessor(item, node.field);
+		const fieldValue = state.fieldAccessor(item, mappedField);
 		return fieldValue !== null && fieldValue !== undefined;
 	};
 }
@@ -295,8 +342,9 @@ function generateBooleanField(
 	state: GeneratorState,
 ): FilterPredicate<Record<string, unknown>> {
 	validateField(node.field, state);
+	const mappedField = resolveFieldName(node.field, state);
 	return (item) => {
-		const fieldValue = state.fieldAccessor(item, node.field);
+		const fieldValue = state.fieldAccessor(item, mappedField);
 		return fieldValue === true;
 	};
 }
@@ -309,8 +357,9 @@ function generateRange(
 	state: GeneratorState,
 ): FilterPredicate<Record<string, unknown>> {
 	validateField(node.field, state);
+	const mappedField = resolveFieldName(node.field, state);
 	return (item) => {
-		const fieldValue = state.fieldAccessor(item, node.field);
+		const fieldValue = state.fieldAccessor(item, mappedField);
 		if (typeof fieldValue !== "number") {
 			return false;
 		}
@@ -444,8 +493,16 @@ function extractValue(value: Value): string | number | boolean {
 export function nestedAccessor(
 	separator: string = ".",
 ): (obj: Record<string, unknown>, field: string) => unknown {
+	// Memoize field splits to avoid repeated string splitting
+	const fieldPartsCache = new Map<string, string[]>();
+
 	return (obj: Record<string, unknown>, field: string): unknown => {
-		const parts = field.split(separator);
+		let parts = fieldPartsCache.get(field);
+		if (!parts) {
+			parts = field.split(separator);
+			fieldPartsCache.set(field, parts);
+		}
+
 		let current: unknown = obj;
 
 		for (const part of parts) {

@@ -474,4 +474,144 @@ describe("toFilter", () => {
 			expect(adults[0].name).toBe("Alice");
 		});
 	});
+
+	describe("Field Mapping Option", () => {
+		test("maps single field name", () => {
+			const ast: ComparisonExpression = {
+				type: "comparison",
+				field: "email",
+				operator: "=",
+				value: { type: "string", value: "test@example.com" },
+			};
+			const filter = toFilter(ast, {
+				fieldMapping: {
+					email: "emailAddress",
+				},
+			});
+			expect(filter({ emailAddress: "test@example.com" })).toBe(true);
+			expect(filter({ emailAddress: "other@example.com" })).toBe(false);
+		});
+
+		test("maps multiple fields", () => {
+			const ast: AndExpression = {
+				type: "and",
+				left: {
+					type: "comparison",
+					field: "first_name",
+					operator: "=",
+					value: { type: "string", value: "John" },
+				},
+				right: {
+					type: "comparison",
+					field: "last_name",
+					operator: "=",
+					value: { type: "string", value: "Doe" },
+				},
+			};
+			const filter = toFilter(ast, {
+				fieldMapping: {
+					first_name: "firstName",
+					last_name: "lastName",
+				},
+			});
+			expect(filter({ firstName: "John", lastName: "Doe" })).toBe(true);
+			expect(filter({ firstName: "Jane", lastName: "Doe" })).toBe(false);
+		});
+
+		test("works with oneOf expression", () => {
+			const ast: OneOfExpression = {
+				type: "oneOf",
+				field: "user_status",
+				values: [
+					{ type: "string", value: "active" },
+					{ type: "string", value: "pending" },
+				],
+			};
+			const filter = toFilter(ast, {
+				fieldMapping: {
+					user_status: "status",
+				},
+			});
+			expect(filter({ status: "active" })).toBe(true);
+			expect(filter({ status: "inactive" })).toBe(false);
+		});
+
+		test("works with exists expression", () => {
+			const ast: ExistsExpression = {
+				type: "exists",
+				field: "user_email",
+			};
+			const filter = toFilter(ast, {
+				fieldMapping: {
+					user_email: "email",
+				},
+			});
+			expect(filter({ email: "test@example.com" })).toBe(true);
+			expect(filter({ email: null })).toBe(false);
+		});
+
+		test("works with range expression", () => {
+			const ast: RangeExpression = {
+				type: "range",
+				field: "user_age",
+				min: 18,
+				max: 65,
+			};
+			const filter = toFilter(ast, {
+				fieldMapping: {
+					user_age: "age",
+				},
+			});
+			expect(filter({ age: 30 })).toBe(true);
+			expect(filter({ age: 17 })).toBe(false);
+		});
+
+		test("unmapped fields use original name", () => {
+			const ast: ComparisonExpression = {
+				type: "comparison",
+				field: "status",
+				operator: "=",
+				value: { type: "string", value: "active" },
+			};
+			const filter = toFilter(ast, {
+				fieldMapping: {
+					email: "emailAddress",
+				},
+			});
+			expect(filter({ status: "active" })).toBe(true);
+		});
+
+		test("works with allowedFields", () => {
+			const ast: ComparisonExpression = {
+				type: "comparison",
+				field: "email",
+				operator: "=",
+				value: { type: "string", value: "test@example.com" },
+			};
+			const filter = toFilter(ast, {
+				fieldMapping: {
+					email: "emailAddress",
+				},
+				allowedFields: ["email"],
+			});
+			expect(filter({ emailAddress: "test@example.com" })).toBe(true);
+		});
+
+		test("works with nested accessor", () => {
+			const ast: ComparisonExpression = {
+				type: "comparison",
+				field: "user_name",
+				operator: "=",
+				value: { type: "string", value: "Alice" },
+			};
+			const filter = toFilter(ast, {
+				fieldMapping: {
+					user_name: "user.profile.name",
+				},
+				fieldAccessor: nestedAccessor(),
+			});
+			expect(filter({ user: { profile: { name: "Alice" } } })).toBe(true);
+			expect(filter({ user: { profile: { name: "Bob" } } })).toBe(false);
+		});
+	});
 });

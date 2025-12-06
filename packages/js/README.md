@@ -44,6 +44,7 @@ Converts a Filtron AST to a predicate function for use with `Array.filter()`.
 | `allowedFields` | `string[]` | Restrict queryable fields (throws if field not in list) |
 | `fieldAccessor` | `(obj, field) => unknown` | Custom field value accessor |
 | `caseInsensitive` | `boolean` | Case-insensitive string comparisons (default: `false`) |
+| `fieldMapping` | `Record<string, string>` | Map query field names to object property names |
 
 ```typescript
 const filter = toFilter(ast, {
@@ -65,6 +66,49 @@ const filter = toFilter(ast, {
 
 // Query: "user.profile.age > 18"
 // Matches: { user: { profile: { age: 25 } } }
+```
+
+## Advanced Usage
+
+### Field Mapping
+
+Map query field names to different object property names. This is useful when you want to expose a different API in your queries than your internal data structure:
+
+```typescript
+import { parse } from "@filtron/core";
+import { toFilter } from "@filtron/js";
+
+const result = parse('email = "user@example.com" AND age > 18');
+
+if (result.success) {
+  const filter = toFilter(result.ast, {
+    fieldMapping: {
+      email: "emailAddress",
+      age: "userAge",
+    },
+  });
+
+  const users = [
+    { emailAddress: "user@example.com", userAge: 25 },
+    { emailAddress: "other@example.com", userAge: 16 },
+  ];
+
+  const filtered = users.filter(filter);
+  // [{ emailAddress: "user@example.com", userAge: 25 }]
+}
+```
+
+Field mapping works with all expression types and can be combined with other options:
+
+```typescript
+const filter = toFilter(ast, {
+  fieldMapping: {
+    user_id: "id",
+    user_email: "email",
+  },
+  allowedFields: ["user_id", "user_email"], // Validation uses mapped names
+  caseInsensitive: true,
+});
 ```
 
 ## Security

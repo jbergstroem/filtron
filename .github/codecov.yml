@@ -6,3 +6,22 @@ coverage:
       default:
         target: 90%
     patch: off
+
+component_management:
+  individual_components:
+    - component_id: core
+      name: Core
+      paths:
+        - ^packages/core/.*
+    - component_id: sql
+      name: SQL
+      paths:
+        - ^packages/sql/.*
+    - component_id: js
+      name: JavaScript Filter
+      paths:
+        - ^packages/js/.*
+    - component_id: elysia-example
+      name: Elysia E2E Example
+      paths:
+        - ^examples/elysia-sqlite/.*

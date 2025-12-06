@@ -3,7 +3,7 @@
 In-memory JavaScript array filtering using [Filtron](https://github.com/jbergstroem/filtron) AST.
 
 ![npm version](https://img.shields.io/npm/v/@filtron/js.svg)
-![npm bundle size](https://img.shields.io/bundlephobia/min/%40filtron%js)
+![npm bundle size](https://img.shields.io/bundlephobia/min/%40filtron%2Fjs)
 ![codecov](https://codecov.io/gh/jbergstroem/filtron/graph/badge.svg?token=FXIWJKJ9RI&component=js)
 
 ## Installation

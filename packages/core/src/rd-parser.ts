@@ -47,6 +47,7 @@ export class ParseError extends Error {
 class Parser {
 	private lexer: Lexer;
 	private current: Token;
+	private nextToken: Token | null = null;
 
 	constructor(input: string) {
 		this.lexer = new Lexer(input);
@@ -58,7 +59,12 @@ class Parser {
 	 */
 	private advance(): Token {
 		const prev = this.current;
-		this.current = this.lexer.next();
+		if (this.nextToken) {
+			this.current = this.nextToken;
+			this.nextToken = null;
+		} else {
+			this.current = this.lexer.next();
+		}
 		return prev;
 	}
 
@@ -71,9 +77,14 @@ class Parser {
 
 	/**
 	 * Check if current token matches any of the given types
+	 * Note: Prefer explicit checks over this method for better performance
 	 */
 	private checkAny(...types: TokenType[]): boolean {
-		return types.includes(this.current.type);
+		const currentType = this.current.type;
+		for (let i = 0; i < types.length; i++) {
+			if (currentType === types[i]) return true;
+		}
+		return false;
 	}
 
 	/**
@@ -234,24 +245,29 @@ class Parser {
 	/**
 	 * Check if the token after the current one is LBRACKET
 	 * (used to distinguish : as oneOf vs : as comparison operator)
-	 *
-	 * Note: We manually save/restore lexer state because this.current is already
-	 * one token ahead of the lexer's position, and we need to peek further ahead.
 	 */
 	private peekNextIsLBracket(): boolean {
-		const savedPos = this.lexer["pos"];
-		const savedCurrent = this.current;
-		const next = this.lexer.next();
-		this.lexer["pos"] = savedPos;
-		this.current = savedCurrent;
-		return next.type === "LBRACKET";
+		if (!this.nextToken) {
+			this.nextToken = this.lexer.next();
+		}
+		return this.nextToken.type === "LBRACKET";
 	}
 
 	/**
 	 * Check if current token is a comparison operator
 	 */
 	private isComparisonOperator(): boolean {
-		return this.checkAny("EQ", "NEQ", "GT", "GTE", "LT", "LTE", "LIKE", "COLON");
+		const t = this.current.type;
+		return (
+			t === "EQ" ||
+			t === "NEQ" ||
+			t === "GT" ||
+			t === "GTE" ||
+			t === "LT" ||
+			t === "LTE" ||
+			t === "LIKE" ||
+			t === "COLON"
+		);
 	}
 
 	/**

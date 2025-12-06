@@ -258,9 +258,16 @@ class Parser {
 	 */
 	private isComparisonOperator(): boolean {
 		const t = this.current.type;
-		return t === "EQ" || t === "NEQ" || t === "GT" || 
-		       t === "GTE" || t === "LT" || t === "LTE" || 
-		       t === "LIKE" || t === "COLON";
+		return (
+			t === "EQ" ||
+			t === "NEQ" ||
+			t === "GT" ||
+			t === "GTE" ||
+			t === "LT" ||
+			t === "LTE" ||
+			t === "LIKE" ||
+			t === "COLON"
+		);
 	}
 
 	/**

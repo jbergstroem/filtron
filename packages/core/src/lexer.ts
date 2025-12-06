@@ -14,17 +14,21 @@ const isDigit = (char: string): boolean => {
 
 const isAlpha = (char: string): boolean => {
 	const code = char.charCodeAt(0);
-	return (code >= 65 && code <= 90) || // A-Z
+	return (
+		(code >= 65 && code <= 90) || // A-Z
 		(code >= 97 && code <= 122) || // a-z
-		code === 95; // _
+		code === 95
+	); // _
 };
 
 const isAlphaNum = (char: string): boolean => {
 	const code = char.charCodeAt(0);
-	return (code >= 48 && code <= 57) || // 0-9
+	return (
+		(code >= 48 && code <= 57) || // 0-9
 		(code >= 65 && code <= 90) || // A-Z
 		(code >= 97 && code <= 122) || // a-z
-		code === 95; // _
+		code === 95
+	); // _
 };
 
 /**
@@ -179,11 +183,11 @@ export class Lexer {
 					chars.push(this.input.slice(lastPos, this.pos));
 				}
 				this.pos++; // skip closing quote
-				return { 
-					type: "STRING", 
-					value: chars.join(""), 
-					start, 
-					end: this.pos 
+				return {
+					type: "STRING",
+					value: chars.join(""),
+					start,
+					end: this.pos,
 				};
 			}
 
@@ -242,25 +246,29 @@ export class Lexer {
 		}
 
 		// Check for decimal part
-		if (this.pos < this.length && this.input[this.pos] === "." && 
-		    this.pos + 1 < this.length && isDigit(this.input[this.pos + 1])) {
+		if (
+			this.pos < this.length &&
+			this.input[this.pos] === "." &&
+			this.pos + 1 < this.length &&
+			isDigit(this.input[this.pos + 1])
+		) {
 			this.pos++; // skip dot
 			while (this.pos < this.length && isDigit(this.input[this.pos])) {
 				this.pos++;
 			}
-			return { 
-				type: "NUMBER", 
-				value: parseFloat(this.input.slice(start, this.pos)), 
-				start, 
-				end: this.pos 
+			return {
+				type: "NUMBER",
+				value: parseFloat(this.input.slice(start, this.pos)),
+				start,
+				end: this.pos,
 			};
 		}
 
-		return { 
-			type: "NUMBER", 
-			value: parseInt(this.input.slice(start, this.pos), 10), 
-			start, 
-			end: this.pos 
+		return {
+			type: "NUMBER",
+			value: parseInt(this.input.slice(start, this.pos), 10),
+			start,
+			end: this.pos,
 		};
 	}
 
@@ -383,7 +391,10 @@ export class Lexer {
 		}
 
 		// Number (including negative numbers)
-		if (isDigit(char) || (char === "-" && this.pos + 1 < this.length && isDigit(this.input[this.pos + 1]))) {
+		if (
+			isDigit(char) ||
+			(char === "-" && this.pos + 1 < this.length && isDigit(this.input[this.pos + 1]))
+		) {
 			return this.readNumber();
 		}
 

@@ -26,6 +26,11 @@ Filtron uses oxlint (including the experimental tsgolint) and oxfmt. Run it all 
 bun run lint
 ```
 
+## Getting Help
+
+- **Issues**: [GitHub Issues](https://github.com/jbergstroem/filtron/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/jbergstroem/filtron/discussions)
+
 ## Development Workflow
 
 ### Making Changes
@@ -33,13 +38,13 @@ bun run lint
 1. **Create a branch**
 
    ```bash
-   git checkout -b feature/my-feature
+   git switch -c feature/my-feature
    ```
 
 2. **Make your changes**
    - Edit source files in `packages/core/src/` or `packages/sql/src/`
    - Add or update tests in the respective package
-   - Update documentation if needed
+   - Update documentation as needed
 
 3. **Test your changes**
 
@@ -54,7 +59,14 @@ bun run lint
    cd packages/core && bun run examples/basic.ts
    ```
 
-5. **Commit your changes**
+5. **Update documentation**
+   - **README.md** - Quick start and overview
+   - **packages/*/README.md** - Package-specific documentation
+   - **CONTRIBUTING.md** - Development guide
+   - **AGENTS.md** - Agent collaboration guide
+   - **JSDoc comments** - In-code documentation
+
+6. **Commit your changes**
    Follow [Conventional Commits](https://www.conventionalcommits.org/) and the guidelines below
    ```bash
    git add .
@@ -87,32 +99,16 @@ Closes: https://github.com/jbergstroem/filtron/issues/122
 
 ### Running Benchmarks
 
+As you make changes, compare the before/after. We also keep tabs on this in CI when you open a PR.
+If you are creating a new package, also add a benchmark in `packages/benchmark`, similar to how
+the other benchmarks are maintained.
+
 ```bash
 # Core parser benchmarks
 cd packages/core && bun run bench
 
 # SQL converter benchmarks
 cd packages/sql && bun run bench
-
-# With memory stats
-cd packages/core && MIMALLOC_SHOW_STATS=1 bun run bench
-```
-
-### Performance Regression Testing
-
-Before submitting changes that could affect performance:
-
-```bash
-# Run benchmarks before changes (from package directory)
-cd packages/core && bun run bench > before.txt
-
-# Make your changes
-
-# Run benchmarks after changes
-cd packages/core && bun run bench > after.txt
-
-# Compare results
-diff before.txt after.txt
 ```
 
 ## Building
@@ -122,20 +118,8 @@ diff before.txt after.txt
 ```bash
 # Full build (all packages)
 bun run build
-
-# Just rebuild core grammar bundle
-cd packages/core && bun run build:grammar
-```
-
-### Verifying the Build
-
-```bash
-# Verify core bundle works
-cd packages/core
-node -e "import('./dist/index.js').then(m => console.log(m.parse('age>18')))"
-
-# Or with Bun
-bun -e "import('./dist/index.js').then(m => console.log(m.parse('age>18')))"
+# Only build one package
+bun run build --filter='@filtron/core'
 ```
 
 ## Submitting Changes
@@ -146,40 +130,12 @@ bun -e "import('./dist/index.js').then(m => console.log(m.parse('age>18')))"
 
 - [ ] All tests pass: `bun test`
 - [ ] Code builds: `bun run build`
-- [ ] Types are correct: `bunx tsc --noEmit`
-- [ ] Examples work: `bun run examples/basic.ts`
-- [ ] Grammar bundle regenerated (if grammar changed)
+- [ ] Types are correct: `bun run typecheck`
+- [ ] Linting passes: `bun run lint`
 - [ ] Documentation updated (if API changed)
-- [ ] Benchmarks run (if performance changed)
+- [ ] Benchmarks run (if performance-sensitive code changed)
 - [ ] Commit messages follow conventions
 
-### Creating a Pull Request
-
-1. **Push your branch**
-
-   ```bash
-   git push origin feature/my-feature
-   ```
-
-2. **Create PR on GitHub**
-   - Provide clear description
-   - Reference any related issues
-   - Include examples if adding features
-   - Note any breaking changes
-
-### Which Docs to Update
-
-- **README.md** - Quick start and overview
-- **CONTRIBUTING.md** - Development guide
-- **AGENTS.md** - Agent collaboration guide
-- **examples/** - Usage examples
-- **JSDoc comments** - In-code documentation
-
-## Getting Help
-
-- **Issues**: [GitHub Issues](https://github.com/jbergstroem/filtron/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/jbergstroem/filtron/discussions)
-- **Documentation**: Check [README.md](./README.md) and [AGENTS.md](./AGENTS.md)
 
 ## Code of Conduct
 
@@ -188,7 +144,3 @@ Be respectful and constructive in all interactions. We're all here to build grea
 ## License
 
 By contributing to Filtron, you agree that your contributions will be licensed under the MIT License.
-
----
-
-Thank you for contributing to Filtron! 🎉

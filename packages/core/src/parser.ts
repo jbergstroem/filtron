@@ -1,14 +1,12 @@
-import type { ASTNode } from "./types";
-import { tryFastPath } from "./fast-path";
-import grammarBundle from "./grammar.ohm-bundle.js";
-import { semanticActions } from "./semantics";
+/**
+ * Filtron Parser
+ *
+ * High-performance recursive descent parser for Filtron query language.
+ */
 
-// Create semantics with proper typing from generated bundle
-// Note: We use 'as any' here because the generated types are too restrictive for runtime usage
-// The generated types are still useful for compile-time checking in semantics.ts
-const grammar = grammarBundle as any;
-const semantics = grammar.createSemantics();
-semantics.addOperation("toAST", semanticActions);
+import type { ASTNode } from "./types";
+import { LexerError } from "./lexer";
+import { parseQuery, ParseError as RDParseError } from "./rd-parser";
 
 /**
  * Result of a successful parse operation
@@ -33,27 +31,9 @@ export interface ParseError {
 export type ParseResult = ParseSuccess | ParseError;
 
 /**
- * Options for configuring the parser behavior
- */
-export interface ParseOptions {
-	/**
-	 * Enable fast-path optimization for simple queries.
-	 * When enabled, simple queries (like "field = value" or "field1 = 1 AND field2 = 2")
-	 * bypass the full parser using optimized regex patterns for better performance.
-	 *
-	 * Fast-path automatically falls back to the full parser when patterns don't match,
-	 * so there's no downside to keeping it enabled (default).
-	 *
-	 * @default true
-	 */
-	fastPath?: boolean;
-}
-
-/**
  * Parses a Filtron query string into an Abstract Syntax Tree (AST).
  *
  * @param query - The Filtron query string to parse
- * @param options - Optional configuration for parser behavior
  * @returns A ParseResult containing either the AST or an error message
  *
  * @example
@@ -65,48 +45,25 @@ export interface ParseOptions {
  *   console.error(result.error);
  * }
  * ```
- *
- * @example
- * ```typescript
- * // Disable fast-path to skip the check entirely (query will go directly to full parser)
- * const result = parse('(age > 18 OR verified) AND NOT banned', { fastPath: false });
- * ```
  */
-export const parse = (query: string, options: ParseOptions = {}): ParseResult => {
-	const { fastPath = true } = options;
-
-	// Try fast path first for common patterns if enabled
-	// Fast paths bypass the full grammar parser for significant speedup
-	if (fastPath) {
-		const fastPathResult = tryFastPath(query);
-		if (fastPathResult) {
-			return {
-				success: true,
-				ast: fastPathResult,
-			};
-		}
-	}
-
-	// Use full grammar parser
+export const parse = (query: string): ParseResult => {
 	try {
-		const matchResult = grammar.match(query);
-
-		if (matchResult.failed()) {
-			return {
-				success: false,
-				error: matchResult.message ?? "Parse error",
-				message: matchResult.message ?? "Parse error",
-			};
-		}
-
-		const ast = semantics(matchResult).toAST() as ASTNode;
-
+		const ast = parseQuery(query);
 		return {
 			success: true,
 			ast,
 		};
 	} catch (error) {
-		const message = error instanceof Error ? error.message : String(error);
+		let message: string;
+
+		if (error instanceof RDParseError || error instanceof LexerError) {
+			message = error.message;
+		} else if (error instanceof Error) {
+			message = error.message;
+		} else {
+			message = String(error);
+		}
+
 		return {
 			success: false,
 			error: message,
@@ -120,7 +77,6 @@ export const parse = (query: string, options: ParseOptions = {}): ParseResult =>
  * Use this when you want to handle errors with try/catch instead of checking the result.
  *
  * @param query - The Filtron query string to parse
- * @param options - Optional configuration for parser behavior
  * @returns The parsed AST
  * @throws Error if parsing fails
  *
@@ -133,15 +89,9 @@ export const parse = (query: string, options: ParseOptions = {}): ParseResult =>
  *   console.error('Parse failed:', error.message);
  * }
  * ```
- *
- * @example
- * ```typescript
- * // Enable fast-path for simple queries
- * const ast = parseOrThrow('status = "active"', { fastPath: true });
- * ```
  */
-export const parseOrThrow = (query: string, options: ParseOptions = {}): ASTNode => {
-	const result = parse(query, options);
+export const parseOrThrow = (query: string): ASTNode => {
+	const result = parse(query);
 
 	if (result.success) {
 		return result.ast;

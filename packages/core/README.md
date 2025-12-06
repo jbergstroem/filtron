@@ -3,7 +3,7 @@
 Fast, type-safe query language parser for filtering data in real-time APIs.
 
 ![npm version](https://img.shields.io/npm/v/@filtron/core.svg)
-![npm bundle size](https://img.shields.io/bundlephobia/min/%40filtron%core)
+![npm bundle size](https://img.shields.io/bundlephobia/min/%40filtron%2Fcore)
 ![codecov](https://codecov.io/gh/jbergstroem/filtron/graph/badge.svg?token=FXIWJKJ9RI&component=core)
 
 ## Features

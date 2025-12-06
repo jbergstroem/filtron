@@ -54,7 +54,7 @@
 
 ## Parser Architecture
 
-Filtron uses a **hand-written recursive descent parser** for maximum performance:
+Filtron uses a hand-written recursive descent parser for performance:
 
 1. **Lexer** (`packages/core/lexer.ts`) - Tokenizes input into tokens (STRING, NUMBER, IDENT, operators, etc.)
 2. **Parser** (`packages/core/rd-parser.ts`) - Recursive descent parser that builds AST during parsing
@@ -88,3 +88,11 @@ Value           = STRING | NUMBER | BOOLEAN | DottedIdent
 2. All values must be parameterized—never concatenate
 3. Run `bun run bench` in `packages/benchmark`
 4. Add tests in `packages/sql/src/*.test.ts`
+
+## Checklist: Modifying JS Filter
+
+1. Performance is critical—measure filter creation and execution overhead
+2. All field access must respect `fieldMapping` option if provided
+3. Optimize for common cases (small arrays, repeated field access)
+4. Run `bun run bench` in `packages/js`
+5. Add tests in `packages/js/src/*.test.ts`

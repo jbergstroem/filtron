@@ -76,13 +76,10 @@ if (result.success) {
 }
 ```
 
-..or use the `@filtron/js` package to filter JavaScript arrays in-memory:
-
-```bash
-bun add @filtron/js
-```
+..or use the @filtron/js package to filter JavaScript arrays in-memory:
 
 ```typescript
+bun add @filtron/js
 import { parse } from "@filtron/core";
 import { toFilter } from "@filtron/js";
 

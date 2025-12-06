@@ -1,6 +1,6 @@
 # Filtron
 
-Fast, type-safe query language parser for filtering data in real-time APIs. Built with [Ohm.js](https://ohmjs.org/).
+Fast, type-safe query language parser for filtering data in real-time APIs.
 
 **Monorepo containing:**
 
@@ -13,10 +13,9 @@ Fast, type-safe query language parser for filtering data in real-time APIs. Buil
 
 ## Features
 
-- **Fast**: 200-900ns for simple queries (fast-path), 2-240μs for complex queries, 84K+ parses/sec
-- **Small**: 15 KB minified, 56 KB installed
+- **Fast**: High-performance recursive descent parser — 250ns-3μs per query
+- **Small**: ~8 KB minified, zero runtime dependencies
 - **Type-safe**: Full TypeScript support with discriminated union AST
-- **Snack-sized dependencies**: Only `ohm-js` runtime required
 
 ## Installation
 
@@ -166,6 +165,18 @@ function handleAST(node: ASTNode) {
   }
 }
 ```
+
+## Performance
+
+Filtron uses a hand-written recursive descent parser optimized for speed:
+
+| Query Type | Parse Time    | Throughput       |
+| ---------- | ------------- | ---------------- |
+| Simple     | ~250-350ns    | 3-4M ops/sec     |
+| Medium     | ~600-1700ns   | 600K-1.6M ops/sec |
+| Complex    | ~1.5-3μs      | 350-700K ops/sec |
+
+Run benchmarks: `bun run bench`
 
 ## Contributing
 

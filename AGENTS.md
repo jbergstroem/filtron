@@ -1,54 +1,89 @@
-# Filtron - Agent Workflows
+# Filtron - Agent Guidelines
 
-This document describes the core workflows and principles for working on the Filtron query language parser. The two goals of this library are:
+## Goals
 
-1. **Performance** - This parser is designed for real-time API usage where query parsing happens on every request and its performance is mission-critical
-2. **Correctness** - The parser must accurately parse all valid queries and reject invalid ones with clear error messages
+1. **Performance** - Query parsing is mission-critical; measure all changes
+2. **Correctness** - Parse valid queries, reject invalid ones with clear errors
 
-Filtron source code is maintained at GitHub: https://github.com/jbergstroem/filtron. For additional context on contributing, see [./CONTRIBUTING.md](./CONTRIBUTING.md).
+## Rules
 
-## Project Architecture
+- Do NOT add dependencies without explicit approval
+- Do NOT expose internal functions in public API
+- Do NOT write tests beyond what's needed for coverage
+- Keep README updates factual; no marketing language
 
-Filtron is organized as a **monorepo** with multiple packages.
+## Key Files
 
-- **`@filtron/core`** - Core query parser using [Ohm.js](https://ohmjs.org/)
-- **`@filtron/sql`** - SQL WHERE clause generator that converts Filtron AST to SQL
-- **`@filtron/benchmark`** - A set of benchmarks run in CI and analyzed by CodSpeed
+| Purpose | Path |
+|---------|------|
+| Lexer (tokenizer) | `packages/core/src/lexer.ts` |
+| Recursive descent parser | `packages/core/src/rd-parser.ts` |
+| Parser API | `packages/core/src/parser.ts` |
+| AST types | `packages/core/src/types.ts` |
+| SQL generator | `packages/sql/src/sql.ts` |
+| Benchmarks | `packages/benchmark/*.bench.ts` |
 
-## Project dependencies
+## Commands
 
-- Filtron uses Bun for package management, testing and library transpilation
-- Filtron relies on [ohm-js](https://ohmjs.org/docs/api-reference) for parsing PEG grammar
+| Task | Command |
+|------|---------|
+| Run tests | `bun test` |
+| Run benchmarks | `bun run bench` |
+| Lint/format | `bun run lint` |
+| Type check | `bun run typecheck` |
 
-## Workflows
+## Performance Requirements
 
-- Run tests with `bun test` in the root folder or in each subsequent package folder
-- Measure changes made to the libraries with `bun run bench`
-- Validate and format syntax with `bun run lint` from the root folder
-- Verify typescript in each package by running `bun run typecheck`
+- Parser changes must not regress simple query parsing beyond 5%
+- Run `bun run bench` before and after changes
 
-You can additionally use bun's monorepo tooling (`--filter 'package'` or `--filter '**'`) to run commands.
+## Testing
 
-## Adding new grammar
+- One test file per source file: `foo.ts` → `foo.test.ts`
+- Target 100% coverage with minimal tests
+- No snapshot tests
+- No mocking unless absolutely required
 
-All grammar lives in `packages/core`.
+## Code Style
 
-- Start by updating the PEG grammar. Consider how common the pattern is when choosing where in the document to insert it. A common pitfall is evaluating less common scenarios prior to more common ones
-- Consider adding fast-path support for the grammar
-- Run benchmarks to compare performance and explore ways of making it faster
-- Add support to the syntax in the `packages/sql` repository after performance is optimized.
-- Add tests (100% coverage for all grammar) - as few as needed. Do not consider every possible variation outside coverage
-- Update the documentation in each README.md but stick to as concrete information as possible
+- No default exports
+- No `any` types
+- No classes—use functions (except Lexer/Parser which use classes for state)
+- Prefer `switch` with exhaustiveness checks over `if/else` chains
 
-## Modifying the SQL generator
+## Parser Architecture
 
-- Ensure that syntax emitted follows general SQL syntax. If there is database-specific syntax, provide an option to choose which syntax to use
-- All parameters needs to be passed separately from the SQL query for safety
-- Keep business rules out of logic, such as comparing min/max in a BETWEEN (`..`) query
-- Run `bun run overhead.ts` or the benchmark (`bun run bench`) in `packages/sql` to measure performance impact
+Filtron uses a **hand-written recursive descent parser** for maximum performance:
 
-## "Real life" examples
+1. **Lexer** (`lexer.ts`) - Tokenizes input into tokens (STRING, NUMBER, IDENT, operators, etc.)
+2. **Parser** (`rd-parser.ts`) - Recursive descent parser that builds AST during parsing
+3. **API** (`parser.ts`) - Public `parse()` and `parseOrThrow()` functions
 
-We maintain examples in the `examples` folder:
+### Grammar (in precedence order, lowest to highest)
 
-- **`examples/elysia-sqlite`**: An example API using [elysia-js](https://elysiajs.com/llms.txt) and SQLite, accepting filtron filters over a querystring. This example has an end-to-end suite
+```
+Query           = OrExpression
+OrExpression    = AndExpression (OR AndExpression)*
+AndExpression   = NotExpression (AND NotExpression)*
+NotExpression   = NOT NotExpression | PrimaryExpression
+PrimaryExpression = '(' OrExpression ')' | FieldExpression
+FieldExpression = FieldName ('?' | EXISTS | ComparisonOp Value | OneOfOp '[' Values ']')?
+FieldName       = IDENT ('.' IDENT)*
+Value           = STRING | NUMBER | BOOLEAN | DottedIdent
+```
+
+## Checklist: Modifying Parser
+
+1. Edit `packages/core/src/lexer.ts` if new tokens needed
+2. Edit `packages/core/src/rd-parser.ts` for grammar changes
+3. Add types to `packages/core/src/types.ts`
+4. Run `bun run bench` — compare results
+5. Add tests in `packages/core/src/*.test.ts`
+6. Update README.md in affected packages
+
+## Checklist: Modifying SQL Generator
+
+1. Ensure syntax follows standard SQL; use options for database-specific syntax
+2. All values must be parameterized—never concatenate
+3. Run `bun run bench` in `packages/benchmark`
+4. Add tests in `packages/sql/src/*.test.ts`

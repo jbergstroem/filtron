@@ -9,7 +9,8 @@
     "bench": "bun run bench:core && bun run bench:sql && bun run bench:js",
     "bench:core": "node core.bench.ts",
     "bench:sql": "node sql.bench.ts",
-    "bench:js": "node js.bench.ts"
+    "bench:js": "node js.bench.ts",
+    "bench:zerkel": "node --import tsx zerkel.bench.ts"
   },
   "dependencies": {
     "@codspeed/tinybench-plugin": "5.0.1",

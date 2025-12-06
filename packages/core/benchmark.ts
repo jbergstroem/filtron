@@ -4,7 +4,6 @@
  * Run with: bun bench
  */
 
-import { heapStats } from "bun:jsc";
 import { bench, group, run, do_not_optimize } from "mitata";
 import { parse } from "./dist/index";
 

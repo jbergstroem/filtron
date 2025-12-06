@@ -44,7 +44,7 @@ export class ParseError extends Error {
 /**
  * Recursive descent parser for Filtron queries
  */
-export class Parser {
+class Parser {
 	private lexer: Lexer;
 	private current: Token;
 
@@ -234,6 +234,9 @@ export class Parser {
 	/**
 	 * Check if the token after the current one is LBRACKET
 	 * (used to distinguish : as oneOf vs : as comparison operator)
+	 *
+	 * Note: We manually save/restore lexer state because this.current is already
+	 * one token ahead of the lexer's position, and we need to peek further ahead.
 	 */
 	private peekNextIsLBracket(): boolean {
 		const savedPos = this.lexer["pos"];

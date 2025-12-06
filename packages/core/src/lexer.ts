@@ -348,14 +348,4 @@ export class Lexer {
 
 		throw new LexerError(`Unexpected character: '${char}'`, this.pos);
 	}
-
-	/**
-	 * Peek at the next token without consuming it
-	 */
-	peek_token(): Token {
-		const savedPos = this.pos;
-		const token = this.next();
-		this.pos = savedPos;
-		return token;
-	}
 }

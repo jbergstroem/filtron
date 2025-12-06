@@ -66,7 +66,7 @@ bun run lint
    - **AGENTS.md** - Agent collaboration guide
    - **JSDoc comments** - In-code documentation
 
-5. **Commit your changes**
+6. **Commit your changes**
    Follow [Conventional Commits](https://www.conventionalcommits.org/) and the guidelines below
    ```bash
    git add .

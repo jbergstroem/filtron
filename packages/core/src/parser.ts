@@ -5,8 +5,8 @@
  */
 
 import type { ASTNode } from "./types";
-import { parseQuery, ParseError as RDParseError } from "./rd-parser";
 import { LexerError } from "./lexer";
+import { parseQuery, ParseError as RDParseError } from "./rd-parser";
 
 /**
  * Result of a successful parse operation

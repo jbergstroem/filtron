@@ -15,7 +15,6 @@
  *   RangeSuffix   = '..' NUMBER
  */
 
-import { Lexer, type Token, type TokenType } from "./lexer";
 import type {
 	ASTNode,
 	Value,
@@ -27,6 +26,7 @@ import type {
 	BooleanFieldExpression,
 	RangeExpression,
 } from "./types";
+import { Lexer, type Token, type TokenType } from "./lexer";
 
 /**
  * Parser error with position information
@@ -298,7 +298,10 @@ export class Parser {
 	 * Parse oneOf/notOneOf array
 	 * '[' Values ']'
 	 */
-	private parseOneOfArray(field: string, type: "oneOf" | "notOneOf"): OneOfExpression | NotOneOfExpression {
+	private parseOneOfArray(
+		field: string,
+		type: "oneOf" | "notOneOf",
+	): OneOfExpression | NotOneOfExpression {
 		this.expect("LBRACKET", "Expected '[' after operator");
 
 		const values: Value[] = [];

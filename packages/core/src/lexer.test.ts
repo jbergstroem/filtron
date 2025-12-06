@@ -51,15 +51,7 @@ describe("Lexer", () => {
 
 	describe("Operators", () => {
 		test("comparison operators", () => {
-			expect(tokenTypes("= != > >= < <=")).toEqual([
-				"EQ",
-				"NEQ",
-				"GT",
-				"GTE",
-				"LT",
-				"LTE",
-				"EOF",
-			]);
+			expect(tokenTypes("= != > >= < <=")).toEqual(["EQ", "NEQ", "GT", "GTE", "LT", "LTE", "EOF"]);
 		});
 
 		test("like operator", () => {
@@ -252,11 +244,7 @@ describe("Lexer", () => {
 		});
 
 		test("multiple comments", () => {
-			expect(tokenTypes("a // comment 1\n// comment 2\nb")).toEqual([
-				"IDENT",
-				"IDENT",
-				"EOF",
-			]);
+			expect(tokenTypes("a // comment 1\n// comment 2\nb")).toEqual(["IDENT", "IDENT", "EOF"]);
 		});
 	});
 

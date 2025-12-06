@@ -1,5 +1,4 @@
 import { describe, test, expect } from "bun:test";
-import { parseQuery, ParseError } from "./rd-parser";
 import type {
 	ComparisonExpression,
 	OrExpression,
@@ -11,6 +10,7 @@ import type {
 	NotOneOfExpression,
 	RangeExpression,
 } from "./types";
+import { parseQuery, ParseError } from "./rd-parser";
 
 describe("Recursive Descent Parser", () => {
 	describe("Field Expressions", () => {
@@ -323,7 +323,9 @@ describe("Recursive Descent Parser", () => {
 		});
 
 		test("admin dashboard access", () => {
-			const ast = parseQuery('(role : ["admin", "superadmin"]) AND (NOT suspended) AND last_login?');
+			const ast = parseQuery(
+				'(role : ["admin", "superadmin"]) AND (NOT suspended) AND last_login?',
+			);
 			expect(ast.type).toBe("and");
 		});
 

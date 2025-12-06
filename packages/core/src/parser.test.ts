@@ -143,15 +143,15 @@ describe("Parser API", () => {
 
 		test("handles all expression types", () => {
 			const queries = [
-				"field",                                    // booleanField
-				"field?",                                   // exists
-				"field = value",                            // comparison
-				'field : ["a", "b"]',                       // oneOf
-				'field !: ["a", "b"]',                      // notOneOf
-				"field = 1..10",                            // range
-				"a AND b",                                  // and
-				"a OR b",                                   // or
-				"NOT a",                                    // not
+				"field", // booleanField
+				"field?", // exists
+				"field = value", // comparison
+				'field : ["a", "b"]', // oneOf
+				'field !: ["a", "b"]', // notOneOf
+				"field = 1..10", // range
+				"a AND b", // and
+				"a OR b", // or
+				"NOT a", // not
 			];
 
 			for (const query of queries) {

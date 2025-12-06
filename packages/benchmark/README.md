@@ -12,7 +12,7 @@ This package contains the benchmark suite for tracking Filtron's performance ove
 - `@filtron/sql` - SQL generation overhead
 - `@filtron/js` - Filter creation and array filtering
 
-**Note**: Benchmarks run via CodSpeed needs Node.js
+**Note**: Benchmarks run via CodSpeed need Node.js
 
 ```bash
 bun run bench

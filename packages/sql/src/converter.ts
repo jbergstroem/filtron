@@ -11,8 +11,6 @@ import type {
 	AndExpression,
 	NotExpression,
 	ComparisonExpression,
-	OneOfExpression,
-	NotOneOfExpression,
 	ExistsExpression,
 	BooleanFieldExpression,
 	RangeExpression,
@@ -132,9 +130,9 @@ function generateSQL(node: ASTNode, state: GeneratorState): string {
 		case "comparison":
 			return generateComparison(node, state);
 		case "oneOf":
-			return generateOneOf(node, state);
+			return generateInClause(state.fieldMapper(node.field), node.values, state, false);
 		case "notOneOf":
-			return generateNotOneOf(node, state);
+			return generateInClause(state.fieldMapper(node.field), node.values, state, true);
 		case "exists":
 			return generateExists(node, state);
 		case "booleanField":
@@ -193,35 +191,28 @@ function generateComparison(node: ComparisonExpression, state: GeneratorState): 
 }
 
 /**
- * Generates SQL for one-of expression (IN clause)
+ * Helper function to generate SQL for IN and NOT IN clauses
  */
-function generateOneOf(node: OneOfExpression, state: GeneratorState): string {
-	const field = state.fieldMapper(node.field);
-	const values = node.values.map((v) => extractValue(v));
+function generateInClause(
+	field: string,
+	values: Value[],
+	state: GeneratorState,
+	negate: boolean,
+): string {
+	const len = values.length;
 
-	if (values.length === 0) {
-		// Empty IN clause - always false
-		return "1 = 0";
+	if (len === 0) {
+		// Empty IN clause - always false, empty NOT IN clause - always true
+		return negate ? "1 = 1" : "1 = 0";
 	}
 
-	const placeholders = values.map((value) => addParameter(value, state));
-	return `${field} IN (${placeholders.join(", ")})`;
-}
-
-/**
- * Generates SQL for not-one-of expression (NOT IN clause)
- */
-function generateNotOneOf(node: NotOneOfExpression, state: GeneratorState): string {
-	const field = state.fieldMapper(node.field);
-	const values = node.values.map((v) => extractValue(v));
-
-	if (values.length === 0) {
-		// Empty NOT IN clause - always true
-		return "1 = 1";
+	const placeholders: string[] = [];
+	for (let i = 0; i < len; i++) {
+		placeholders.push(addParameter(extractValue(values[i]), state));
 	}
 
-	const placeholders = values.map((value) => addParameter(value, state));
-	return `${field} NOT IN (${placeholders.join(", ")})`;
+	const operator = negate ? "NOT IN" : "IN";
+	return `${field} ${operator} (${placeholders.join(", ")})`;
 }
 
 /**
@@ -304,9 +295,7 @@ function addParameter(value: unknown, state: GeneratorState): string {
 	state.params.push(value);
 
 	if (state.parameterStyle === "numbered") {
-		const placeholder = `$${state.paramIndex}`;
-		state.paramIndex++;
-		return placeholder;
+		return `$${state.paramIndex++}`;
 	}
 
 	return "?";
@@ -326,10 +315,13 @@ function addParameter(value: unknown, state: GeneratorState): string {
  * ```
  */
 export function escapeLike(value: string): string {
-	return value
-		.replace(/\\/g, "\\\\") // Escape backslashes first
-		.replace(/%/g, "\\%") // Escape % wildcard
-		.replace(/_/g, "\\_"); // Escape _ single-char wildcard
+	// Fast path: if no special chars, return as-is
+	if (!/[\\%_]/.test(value)) {
+		return value;
+	}
+
+	// Single pass replace with callback
+	return value.replace(/[\\%_]/g, (char) => "\\" + char);
 }
 
 /**

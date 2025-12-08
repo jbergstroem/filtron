@@ -16,7 +16,7 @@
     "@filtron/core": "workspace:*",
     "@filtron/js": "workspace:*",
     "@filtron/sql": "workspace:*",
-    "tinybench": "5.1.0"
+    "tinybench": "6.0.0"
   },
   "devDependencies": {
     "@types/bun": "catalog:"

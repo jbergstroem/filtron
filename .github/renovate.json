@@ -6,7 +6,8 @@
   "extends": [
     ":dependencyDashboard",
     ":disableRateLimiting",
-    ":semanticCommits"
+    ":semanticCommits",
+    "helpers:pinGitHubActionDigests"
   ],
   "rangeStrategy": "pin",
   "enabledManagers": ["github-actions", "custom.regex", "npm"],

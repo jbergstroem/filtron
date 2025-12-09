@@ -37,12 +37,12 @@ Converts a Filtron AST to a parameterized SQL WHERE clause.
 
 **Options:**
 
-| Option | Type | Description |
-|--------|------|-------------|
-| `parameterStyle` | `'numbered'` \| `'question'` | Placeholder style: `$1` (default) or `?` |
-| `fieldMapper` | `(field) => string` | Transform field names to column names |
-| `valueMapper` | `(value) => value` | Transform values (useful for LIKE wildcards) |
-| `startIndex` | `number` | Starting parameter index (default: `1`) |
+| Option           | Type                         | Description                                  |
+| ---------------- | ---------------------------- | -------------------------------------------- |
+| `parameterStyle` | `'numbered'` \| `'question'` | Placeholder style: `$1` (default) or `?`     |
+| `fieldMapper`    | `(field) => string`          | Transform field names to column names        |
+| `valueMapper`    | `(value) => value`           | Transform values (useful for LIKE wildcards) |
+| `startIndex`     | `number`                     | Starting parameter index (default: `1`)      |
 
 ```typescript
 const { sql, params } = toSQL(ast, {

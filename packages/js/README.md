@@ -43,12 +43,12 @@ Converts a Filtron AST to a predicate function for use with `Array.filter()`.
 
 **Options:**
 
-| Option | Type | Description |
-|--------|------|-------------|
-| `allowedFields` | `string[]` | Restrict queryable fields (throws if field not in list) |
-| `fieldAccessor` | `(obj, field) => unknown` | Custom field value accessor |
-| `caseInsensitive` | `boolean` | Case-insensitive string comparisons (default: `false`) |
-| `fieldMapping` | `Record<string, string>` | Map query field names to object property names |
+| Option            | Type                      | Description                                             |
+| ----------------- | ------------------------- | ------------------------------------------------------- |
+| `allowedFields`   | `string[]`                | Restrict queryable fields (throws if field not in list) |
+| `fieldAccessor`   | `(obj, field) => unknown` | Custom field value accessor                             |
+| `caseInsensitive` | `boolean`                 | Case-insensitive string comparisons (default: `false`)  |
+| `fieldMapping`    | `Record<string, string>`  | Map query field names to object property names          |
 
 ```typescript
 const filter = toFilter(ast, {

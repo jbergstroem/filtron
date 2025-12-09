@@ -151,11 +151,11 @@ function handleAST(node: ASTNode) {
 
 Filtron uses a hand-written recursive descent parser optimized for speed:
 
-| Query Type | Parse Time    | Throughput       |
-| ---------- | ------------- | ---------------- |
-| Simple     | ~250-350ns    | 3-4M ops/sec     |
-| Medium     | ~600-1700ns   | 600K-1.6M ops/sec |
-| Complex    | ~1.5-3μs      | 350-700K ops/sec |
+| Query Type | Parse Time  | Throughput        |
+| ---------- | ----------- | ----------------- |
+| Simple     | ~250-350ns  | 3-4M ops/sec      |
+| Medium     | ~600-1700ns | 600K-1.6M ops/sec |
+| Complex    | ~1.5-3μs    | 350-700K ops/sec  |
 
 Run benchmarks: `bun run bench`
 

@@ -1,5 +1,4 @@
 {
-<<<<<<< HEAD
 	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
 	"baseBranchPatterns": ["main"],
 	"timezone": "Europe/Lisbon",

@@ -1,53 +1,53 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "baseBranchPatterns": ["main"],
-  "timezone": "Europe/Lisbon",
-  "schedule": ["before 9pm on sunday"],
-  "extends": [
-    ":dependencyDashboard",
-    ":disableRateLimiting",
-    ":semanticCommits",
-    "helpers:pinGitHubActionDigests"
-  ],
-  "rangeStrategy": "pin",
-  "enabledManagers": ["github-actions", "custom.regex", "npm"],
-  "commitMessageAction": "",
-  "commitMessageTopic": "{{depName}}",
-  "commitMessageExtra": "{{#if isPinDigest}}{{{newDigestShort}}}{{else}}{{#if isMajor}}{{prettyNewMajor}}{{else}}{{#if isSingleVersion}}{{prettyNewVersion}}{{else}}{{#if newValue}}{{{newValue}}}{{else}}{{{newDigestShort}}}{{/if}}{{/if}}{{/if}}{{/if}}",
-  "packageRules": [
-    {
-      "matchManagers": ["github-actions"],
-      "commitMessageTopic": "{{depName}}"
-    },
-    {
-      "commitMessageTopic": "actionlint",
-      "matchPackageNames": ["/actionlint/"]
-    },
-    {
-      "matchDepTypes": ["engines", "peerDependencies"],
-      "enabled": false
-    },
-    {
-      "matchFileNames": [".github/workflows/benchmarks.yml"],
-      "matchPackageNames": ["node"],
-      "enabled": false
-    }
-  ],
-  "customManagers": [
-    {
-      "customType": "regex",
-      "managerFilePatterns": ["/^\\.github/workflows/[^/]+\\.yml$/"],
-      "matchStrings": [
-        "version: \"(?<currentValue>.*?)\"\\s+run: curl -Ls( -o \\w+)? \"https://github.com/(?<depName>.*?)/releases/download.*",
-        "https://github\\.com/(?<depName>.*?)/archive/refs/tags/v(?<currentValue>.*?)\\.tar\\.gz"
-      ],
-      "datasourceTemplate": "github-releases",
-      "extractVersionTemplate": "^v(?<version>.*)$"
-    }
-  ],
-  "rebaseWhen": "never",
-  "labels": ["Dependencies"],
-  "prBodyTemplate": "{{{header}}}{{{table}}}{{{notes}}}{{{changelogs}}}{{{controls}}}{{{footer}}}",
-  "prHeader": "",
-  "prFooter": ""
+	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
+	"baseBranchPatterns": ["main"],
+	"timezone": "Europe/Lisbon",
+	"schedule": ["before 9pm on sunday"],
+	"extends": [
+		":dependencyDashboard",
+		":disableRateLimiting",
+		":semanticCommits",
+		"helpers:pinGitHubActionDigests"
+	],
+	"rangeStrategy": "pin",
+	"enabledManagers": ["github-actions", "custom.regex", "npm"],
+	"commitMessageAction": "",
+	"commitMessageTopic": "{{depName}}",
+	"commitMessageExtra": "{{#if isPinDigest}}{{{newDigestShort}}}{{else}}{{#if isMajor}}{{prettyNewMajor}}{{else}}{{#if isSingleVersion}}{{prettyNewVersion}}{{else}}{{#if newValue}}{{{newValue}}}{{else}}{{{newDigestShort}}}{{/if}}{{/if}}{{/if}}{{/if}}",
+	"packageRules": [
+		{
+			"matchManagers": ["github-actions"],
+			"commitMessageTopic": "{{depName}}"
+		},
+		{
+			"commitMessageTopic": "actionlint",
+			"matchPackageNames": ["/actionlint/"]
+		},
+		{
+			"matchDepTypes": ["engines", "peerDependencies"],
+			"enabled": false
+		},
+		{
+			"matchFileNames": [".github/workflows/benchmarks.yml"],
+			"matchPackageNames": ["node"],
+			"enabled": false
+		}
+	],
+	"customManagers": [
+		{
+			"customType": "regex",
+			"managerFilePatterns": ["/^\\.github/workflows/[^/]+\\.yml$/"],
+			"matchStrings": [
+				"version: \"(?<currentValue>.*?)\"\\s+run: curl -Ls( -o \\w+)? \"https://github.com/(?<depName>.*?)/releases/download.*",
+				"https://github\\.com/(?<depName>.*?)/archive/refs/tags/v(?<currentValue>.*?)\\.tar\\.gz"
+			],
+			"datasourceTemplate": "github-releases",
+			"extractVersionTemplate": "^v(?<version>.*)$"
+		}
+	],
+	"rebaseWhen": "never",
+	"labels": ["Dependencies"],
+	"prBodyTemplate": "{{{header}}}{{{table}}}{{{notes}}}{{{changelogs}}}{{{controls}}}{{{footer}}}",
+	"prHeader": "",
+	"prFooter": ""
 }

@@ -14,24 +14,24 @@
 
 ## Key Files
 
-| Purpose | Path |
-|---------|------|
-| Lexer (tokenizer) | `packages/core/src/lexer.ts` |
+| Purpose                  | Path                             |
+| ------------------------ | -------------------------------- |
+| Lexer (tokenizer)        | `packages/core/src/lexer.ts`     |
 | Recursive descent parser | `packages/core/src/rd-parser.ts` |
-| Parser API | `packages/core/src/parser.ts` |
-| AST types | `packages/core/src/types.ts` |
-| JS filter | `packages/js/src/filter.ts` |
-| SQL generator | `packages/sql/src/converter.ts` |
-| Benchmarks | `packages/benchmark/*.bench.ts` |
+| Parser API               | `packages/core/src/parser.ts`    |
+| AST types                | `packages/core/src/types.ts`     |
+| JS filter                | `packages/js/src/filter.ts`      |
+| SQL generator            | `packages/sql/src/converter.ts`  |
+| Benchmarks               | `packages/benchmark/*.bench.ts`  |
 
 ## Commands
 
-| Task | Command |
-|------|---------|
-| Run tests | `bun test` |
-| Run benchmarks | `bun run bench` |
-| Lint/format | `bun run lint` |
-| Type check | `bun run typecheck` |
+| Task           | Command             |
+| -------------- | ------------------- |
+| Run tests      | `bun test`          |
+| Run benchmarks | `bun run bench`     |
+| Lint/format    | `bun run lint`      |
+| Type check     | `bun run typecheck` |
 
 ## Performance Requirements
 

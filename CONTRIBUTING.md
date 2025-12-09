@@ -61,7 +61,7 @@ bun run lint
 
 5. **Update documentation**
    - **README.md** - Quick start and overview
-   - **packages/*/README.md** - Package-specific documentation
+   - **packages/\*/README.md** - Package-specific documentation
    - **CONTRIBUTING.md** - Development guide
    - **AGENTS.md** - Agent collaboration guide
    - **JSDoc comments** - In-code documentation
@@ -135,7 +135,6 @@ bun run build --filter='@filtron/core'
 - [ ] Documentation updated (if API changed)
 - [ ] Benchmarks run (if performance-sensitive code changed)
 - [ ] Commit messages follow conventions
-
 
 ## Code of Conduct
 

@@ -1,47 +1,47 @@
 {
-  "$schema": "https://json.schemastore.org/package.json",
-  "name": "filtron",
-  "version": "1.0.0",
-  "private": true,
-  "description": "Fast, type-safe query language parser for filtering data in real-time APIs",
-  "homepage": "https://github.com/jbergstroem/filtron#readme",
-  "bugs": {
-    "url": "https://github.com/jbergstroem/filtron/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/jbergstroem/filtron.git"
-  },
-  "license": "MIT",
-  "author": "Johan Bergström <bugs@bergstroem.nu>",
-  "workspaces": {
-    "packages": [
-      "packages/core",
-      "packages/sql",
-      "packages/js",
-      "packages/benchmark",
-      "examples/elysia-sqlite"
-    ],
-    "catalog": {
-      "@types/bun": "1.3.3",
-      "mitata": "1.0.34",
-      "typescript": "5.9.3"
-    }
-  },
-  "scripts": {
-    "bench": "cd packages/core && bun run bench",
-    "build": "bun run --filter '@filtron/core' build && bun run --filter '!@filtron/core' build",
-    "lint": "oxlint && oxfmt --check",
-    "test": "bun test"
-  },
-  "devDependencies": {
-    "oxfmt": "0.16.0",
-    "oxlint": "1.31.0",
-    "oxlint-tsgolint": "0.8.3"
-  },
-  "engines": {
-    "node": ">=20.0.0",
-    "bun": ">=1.1.0"
-  },
-  "packageManager": "bun@1.3.3"
+	"$schema": "https://json.schemastore.org/package.json",
+	"name": "filtron",
+	"version": "1.0.0",
+	"private": true,
+	"description": "Fast, type-safe query language parser for filtering data in real-time APIs",
+	"homepage": "https://github.com/jbergstroem/filtron#readme",
+	"bugs": {
+		"url": "https://github.com/jbergstroem/filtron/issues"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/jbergstroem/filtron.git"
+	},
+	"license": "MIT",
+	"author": "Johan Bergström <bugs@bergstroem.nu>",
+	"workspaces": {
+		"packages": [
+			"packages/core",
+			"packages/sql",
+			"packages/js",
+			"packages/benchmark",
+			"examples/elysia-sqlite"
+		],
+		"catalog": {
+			"@types/bun": "1.3.4",
+			"mitata": "1.0.34",
+			"typescript": "5.9.3"
+		}
+	},
+	"scripts": {
+		"bench": "cd packages/core && bun run bench",
+		"build": "bun run --filter '@filtron/core' build && bun run --filter '!@filtron/core' build",
+		"lint": "oxlint && oxfmt --check",
+		"test": "bun test"
+	},
+	"devDependencies": {
+		"oxfmt": "0.17.0",
+		"oxlint": "1.32.0",
+		"oxlint-tsgolint": "0.8.4"
+	},
+	"engines": {
+		"node": ">=20.0.0",
+		"bun": ">=1.1.0"
+	},
+	"packageManager": "bun@1.3.3"
 }

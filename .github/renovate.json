@@ -29,7 +29,7 @@
 		},
 		{
 			"matchFileNames": [".github/workflows/benchmarks.yml"],
-			"matchPackageNames": ["node"],
+			"matchDepNames": ["node"],
 			"enabled": false
 		}
 	],

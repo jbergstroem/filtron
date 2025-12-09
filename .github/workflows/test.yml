@@ -13,20 +13,20 @@ jobs:
   unit:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+      - uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2
         with:
           bun-version-file: package.json
       - run: bun install
       - run: bun run build
       - run: bun test --reporter=junit --reporter-outfile=junit.xml --coverage --coverage-reporter=lcov --coverage-dir=coverage
-      - uses: codecov/codecov-action@v5
+      - uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5
         if: ${{ !cancelled() }}
         with:
           use_oidc: true
           files: ./coverage/lcov.info
           disable_search: true
-      - uses: codecov/test-results-action@v1
+      - uses: codecov/test-results-action@47f89e9acb64b76debcd5ea40642d25a4adced9f # v1
         if: ${{ !cancelled() }}
         with:
           use_oidc: true
@@ -61,10 +61,10 @@ jobs:
             test_cmd: deno eval
     name: e2e (${{ matrix.setup }} ${{ matrix.version }})
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
       - name: Setup Bun (for building)
-        uses: oven-sh/setup-bun@v2
+        uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2
         with:
           bun-version-file: package.json
 
@@ -72,12 +72,12 @@ jobs:
       - run: bun run build
 
       - if: matrix.setup == 'node'
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6
         with:
           node-version: ${{ matrix.version }}
 
       - if: matrix.setup == 'bun'
-        uses: oven-sh/setup-bun@v2
+        uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2
         with:
           bun-version: ${{ matrix.version }}
 

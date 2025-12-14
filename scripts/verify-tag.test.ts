@@ -28,19 +28,19 @@ describe("parseTag", () => {
 
 	test("throws error for invalid tag format", () => {
 		expect(() => parseTag("invalid-tag")).toThrow(
-			"Tag 'invalid-tag' does not match pattern 'package@version'",
+			"Tag 'invalid-tag' does not match pattern '@filtron/{package}@{version}'",
 		);
 	});
 
 	test("throws error for tag without version", () => {
 		expect(() => parseTag("@filtron/core")).toThrow(
-			"Tag '@filtron/core' does not match pattern 'package@version'",
+			"Tag '@filtron/core' does not match pattern '@filtron/{package}@{version}'",
 		);
 	});
 
 	test("throws error for tag with invalid version", () => {
 		expect(() => parseTag("@filtron/core@invalid")).toThrow(
-			"Tag '@filtron/core@invalid' does not match pattern 'package@version'",
+			"Tag '@filtron/core@invalid' does not match pattern '@filtron/{package}@{version}'",
 		);
 	});
 });

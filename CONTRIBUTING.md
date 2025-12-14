@@ -136,6 +136,33 @@ bun run build --filter='@filtron/core'
 - [ ] Benchmarks run (if performance-sensitive code changed)
 - [ ] Commit messages follow conventions
 
+## Releasing
+
+### Cutting a release
+
+Releases are automated via GitHub Actions when you push a tag matching the `package@version` pattern.
+
+1. **Update the package version**
+
+   ```bash
+   cd packages/core
+   # Edit package.json and update the version field
+   ```
+
+2. **Commit the version change**
+
+   ```bash
+   git add packages/core/package.json
+   git commit -m "chore: @filtron/core v1.2.0"
+   ```
+
+3. **Create a release using Github Releases**
+
+   If you're releasing multiple packages in one release,
+   make sure all tags are added as part of the release procedure.
+
+   Also, mention all package changes in the release notes.
+
 ## Code of Conduct
 
 Be respectful and constructive in all interactions. We're all here to build great software together.

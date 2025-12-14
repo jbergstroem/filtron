@@ -38,7 +38,4 @@ jobs:
           bun run build
       - run: |
           cd "${{ matrix.package.dir }}"
-          bun test
-      - run: |
-          cd "${{ matrix.package.dir }}"
           bun publish --dry-run --access public

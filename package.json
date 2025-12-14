@@ -37,7 +37,7 @@
 	"devDependencies": {
 		"oxfmt": "0.17.0",
 		"oxlint": "1.32.0",
-		"oxlint-tsgolint": "0.8.4"
+		"oxlint-tsgolint": "0.9.0"
 	},
 	"engines": {
 		"node": ">=20.0.0",

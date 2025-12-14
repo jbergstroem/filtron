@@ -36,7 +36,7 @@ export interface PackageInfo {
  * Parse a git tag into package name and version
  */
 export function parseTag(tag: string): { packageName: string; version: string } {
-	const match = tag.match(/^(.+)@([0-9]+\.[0-9]+\.[0-9]+.*)$/);
+	const match = tag.match(/^(.+)@v?((0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-.+)?(?:\+.+)?)$/);
 
 	if (!match) {
 		throw new Error(`Tag '${tag}' does not match pattern '@filtron/{package}@{version}'`);

@@ -22,8 +22,24 @@ describe("parseTag", () => {
 		});
 	});
 
+	test("parses tag with v prefix", () => {
+		const result = parseTag("@filtron/core@v1.1.0");
+		expect(result).toEqual({
+			packageName: "@filtron/core",
+			version: "1.1.0",
+		});
+	});
+
 	test("parses tag with prerelease version", () => {
 		const result = parseTag("@filtron/sql@2.0.0-beta.1");
+		expect(result).toEqual({
+			packageName: "@filtron/sql",
+			version: "2.0.0-beta.1",
+		});
+	});
+
+	test("parses tag with v prefix and prerelease version", () => {
+		const result = parseTag("@filtron/sql@v2.0.0-beta.1");
 		expect(result).toEqual({
 			packageName: "@filtron/sql",
 			version: "2.0.0-beta.1",

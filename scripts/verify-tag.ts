@@ -168,5 +168,5 @@ async function main() {
 
 // Only run main if this is the main module
 if (import.meta.main) {
-	main();
+	await main();
 }

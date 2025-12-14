@@ -78,6 +78,25 @@ describe("getPackageDirectory", () => {
 			"Package directory 'packages/nonexistent' does not exist",
 		);
 	});
+
+	test("throws error when path exists but is not a directory", async () => {
+		// Create a temporary file to test the isDirectory check
+		const testFile = "/tmp/test-filtron-file";
+		await Bun.write(testFile, "test");
+
+		// Mock join to return our test file path
+		const pathModule = await import("path");
+		const joinSpy = spyOn(pathModule, "join").mockReturnValue(testFile);
+
+		try {
+			expect(() => getPackageDirectory("@filtron/core")).toThrow(
+				`'${testFile}' is not a directory`,
+			);
+		} finally {
+			joinSpy.mockRestore();
+			await Bun.write(testFile, "").catch(() => {});
+		}
+	});
 });
 
 describe("readPackageJson", () => {
@@ -166,6 +185,17 @@ describe("verifyTag", () => {
 		await expect(verifyTag(packageJson.name, packageJson.version, "packages/core")).rejects.toThrow(
 			"already published on npm",
 		);
+	});
+
+	test("succeeds when all checks pass", async () => {
+		spyOn(Bun, "spawn").mockReturnValue({
+			exited: Promise.resolve(1),
+		} as any);
+
+		const packageJson = await readPackageJson("packages/core");
+		await expect(
+			verifyTag(packageJson.name, packageJson.version, "packages/core"),
+		).resolves.toBeUndefined();
 	});
 });
 

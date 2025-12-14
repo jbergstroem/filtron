@@ -58,9 +58,7 @@ describe("getPackageDirectory", () => {
 	});
 
 	test("throws error for unscoped package", () => {
-		expect(() => getPackageDirectory("package")).toThrow(
-			"Unknown package name pattern: package",
-		);
+		expect(() => getPackageDirectory("package")).toThrow("Unknown package name pattern: package");
 	});
 
 	test("throws error for non-existent package directory", () => {
@@ -95,16 +93,16 @@ describe("verifyTag", () => {
 
 	test("throws error for package name mismatch", async () => {
 		const packageJson = await readPackageJson("packages/core");
-		await expect(
-			verifyTag("@wrong/name", packageJson.version, "packages/core"),
-		).rejects.toThrow("Package name mismatch");
+		await expect(verifyTag("@wrong/name", packageJson.version, "packages/core")).rejects.toThrow(
+			"Package name mismatch",
+		);
 	});
 
 	test("throws error for version mismatch", async () => {
 		const packageJson = await readPackageJson("packages/core");
-		await expect(
-			verifyTag(packageJson.name, "9.9.9", "packages/core"),
-		).rejects.toThrow("Version mismatch");
+		await expect(verifyTag(packageJson.name, "9.9.9", "packages/core")).rejects.toThrow(
+			"Version mismatch",
+		);
 	});
 });
 
@@ -112,24 +110,20 @@ describe("end-to-end tag verification", () => {
 	test("successfully verifies valid tag for @filtron/core", async () => {
 		const packageJson = await readPackageJson("packages/core");
 		const tag = `${packageJson.name}@${packageJson.version}`;
-		
+
 		const { packageName, version } = parseTag(tag);
 		const packageDir = getPackageDirectory(packageName);
-		
-		await expect(
-			verifyTag(packageName, version, packageDir),
-		).resolves.toBeUndefined();
+
+		await expect(verifyTag(packageName, version, packageDir)).resolves.toBeUndefined();
 	});
 
 	test("successfully verifies valid tag for @filtron/sql", async () => {
 		const packageJson = await readPackageJson("packages/sql");
 		const tag = `${packageJson.name}@${packageJson.version}`;
-		
+
 		const { packageName, version } = parseTag(tag);
 		const packageDir = getPackageDirectory(packageName);
-		
-		await expect(
-			verifyTag(packageName, version, packageDir),
-		).resolves.toBeUndefined();
+
+		await expect(verifyTag(packageName, version, packageDir)).resolves.toBeUndefined();
 	});
 });

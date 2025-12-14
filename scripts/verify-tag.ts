@@ -2,25 +2,25 @@
 
 /**
  * Verify script for monorepo package publishing
- * 
+ *
  * This script:
  * 1. Extracts package name and version from a git tag (format: package@version)
  * 2. Verifies the tag matches the package.json
  * 3. Outputs package directory for the workflow to use
- * 
+ *
  * Usage:
  *   bun run scripts/verify-tag.ts <tag>
  *   Example: bun run scripts/verify-tag.ts @filtron/core@1.1.0
- * 
+ *
  * Outputs (via GITHUB_OUTPUT):
  *   - package_name: The package name from the tag
  *   - version: The version from the tag
  *   - package_dir: The directory containing the package
  */
 
-import { parseArgs } from "util";
-import { join } from "path";
 import { existsSync, statSync } from "fs";
+import { join } from "path";
+import { parseArgs } from "util";
 
 export interface PackageJson {
 	name: string;
@@ -33,7 +33,7 @@ export interface PackageJson {
  */
 export function parseTag(tag: string): { packageName: string; version: string } {
 	const match = tag.match(/^(.+)@([0-9]+\.[0-9]+\.[0-9]+.*)$/);
-	
+
 	if (!match) {
 		throw new Error(`Tag '${tag}' does not match pattern '@filtron/{package}@{version}'`);
 	}
@@ -48,13 +48,13 @@ export function parseTag(tag: string): { packageName: string; version: string } 
 export function getPackageDirectory(packageName: string): string {
 	// Handle scoped packages like @filtron/core -> packages/core
 	const scopedMatch = packageName.match(/^@filtron\/(.+)$/);
-	
+
 	if (!scopedMatch) {
 		throw new Error(`Unknown package name pattern: ${packageName}`);
 	}
 
 	const packageDir = join("packages", scopedMatch[1]);
-	
+
 	// Verify directory exists
 	if (!existsSync(packageDir)) {
 		throw new Error(`Package directory '${packageDir}' does not exist`);
@@ -72,7 +72,7 @@ export function getPackageDirectory(packageName: string): string {
  */
 export async function readPackageJson(packageDir: string): Promise<PackageJson> {
 	const packageJsonPath = join(process.cwd(), packageDir, "package.json");
-	
+
 	try {
 		const packageJson = await import(packageJsonPath, { with: { type: "json" } });
 		return packageJson.default as PackageJson;
@@ -113,8 +113,6 @@ async function verifyAndOutput(
 	packageDir: string,
 	githubOutput?: string,
 ): Promise<void> {
-	const packageJson = await readPackageJson(packageDir);
-
 	await verifyTag(packageName, version, packageDir);
 
 	// Output for GitHub Actions

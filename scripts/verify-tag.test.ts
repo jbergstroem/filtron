@@ -1,5 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import { parseTag, getPackageDirectory, readPackageJson, verifyTag } from "./verify-tag";
+import {
+	parseTag,
+	getPackageDirectory,
+	readPackageJson,
+	verifyTag,
+	type PackageInfo,
+} from "./verify-tag";
 
 describe("parseTag", () => {
 	test("parses valid scoped package tag", () => {
@@ -125,5 +131,55 @@ describe("end-to-end tag verification", () => {
 		const packageDir = getPackageDirectory(packageName);
 
 		await expect(verifyTag(packageName, version, packageDir)).resolves.toBeUndefined();
+	});
+});
+
+describe("multiple tags processing", () => {
+	test("processes multiple tags from newline-separated string", async () => {
+		const corePackageJson = await readPackageJson("packages/core");
+		const sqlPackageJson = await readPackageJson("packages/sql");
+
+		const tags = [
+			`${corePackageJson.name}@${corePackageJson.version}`,
+			`${sqlPackageJson.name}@${sqlPackageJson.version}`,
+		];
+
+		const packages: PackageInfo[] = [];
+
+		for (const tag of tags) {
+			const { packageName, version } = parseTag(tag);
+			const packageDir = getPackageDirectory(packageName);
+			await verifyTag(packageName, version, packageDir);
+			packages.push({ name: packageName, version, dir: packageDir });
+		}
+
+		expect(packages).toHaveLength(2);
+		expect(packages[0]).toEqual({
+			name: corePackageJson.name,
+			version: corePackageJson.version,
+			dir: "packages/core",
+		});
+		expect(packages[1]).toEqual({
+			name: sqlPackageJson.name,
+			version: sqlPackageJson.version,
+			dir: "packages/sql",
+		});
+	});
+
+	test("filters empty tags from input", () => {
+		const input = "@filtron/core@1.1.0\n\n@filtron/sql@2.0.0\n";
+		const tags = input.split("\n").filter((tag) => tag.trim().length > 0);
+
+		expect(tags).toHaveLength(2);
+		expect(tags[0]).toBe("@filtron/core@1.1.0");
+		expect(tags[1]).toBe("@filtron/sql@2.0.0");
+	});
+
+	test("handles single tag input", () => {
+		const input = "@filtron/core@1.1.0";
+		const tags = input.split("\n").filter((tag) => tag.trim().length > 0);
+
+		expect(tags).toHaveLength(1);
+		expect(tags[0]).toBe("@filtron/core@1.1.0");
 	});
 });

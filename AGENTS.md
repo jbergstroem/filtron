@@ -10,7 +10,7 @@
 - Do NOT add dependencies without explicit approval
 - Do NOT expose internal functions in public API
 - Do NOT write tests beyond what's needed for coverage
-- Keep README updates factual - no marketing language
+- Keep README updates factual; no marketing language
 
 ## Key Files
 
@@ -36,14 +36,15 @@
 ## Performance Requirements
 
 - Parser changes must not regress simple query parsing beyond 5%
-- Run `bun run bench` before and after changes
+- Run `bun run bench` before and after changes for the package that is modified
 
 ## Testing
 
 - One test file per source file: `foo.ts` → `foo.test.ts`
-- Target 100% coverage with minimal tests
+- Target 100% coverage with minimal testing.
 - No snapshot tests
 - No mocking unless absolutely required
+- Run `bun run lint` after writing code to catch issues early
 
 ## Code Style
 
@@ -101,3 +102,22 @@ Value           = STRING | NUMBER | BOOLEAN | DottedIdent
 3. Optimize for common cases (small arrays, repeated field access)
 4. Run `bun run bench` in `packages/js`
 5. Add tests in `packages/js/src/*.test.ts`
+
+## Documentation Guidelines
+
+- No emojis in code, comments, documentation, or commit messages
+- Keep updates factual; no marketing language or hyperbole
+- Use sentence case for headings (not Title Case)
+- Code examples should be minimal and runnable
+- Link to other docs using relative paths: `[Guide](./CONTRIBUTING.md)`
+- Tables for structured information (operators, commands, etc.)
+- Use TypeScript for all code examples
+- Show both success and error cases in examples where relevant
+
+## GitHub Actions Workflow Style
+
+- Use concise style: `uses:` and `run:` without `name:` unless clarity requires it
+- Pin action versions to full SHA with version comment: `actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6`
+- Use `ubuntu-24.04` as the default runner
+- Use `bun-version-file: package.json` for setup-bun
+- Use `bun ci` (alias for `bun install --frozen-lockfile`) for dependency installation

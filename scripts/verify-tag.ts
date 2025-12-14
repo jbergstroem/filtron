@@ -4,18 +4,16 @@
  * Verify script for monorepo package publishing
  *
  * This script:
- * 1. Extracts package name and version from a git tag (format: package@version)
- * 2. Verifies the tag matches the package.json
- * 3. Outputs package directory for the workflow to use
+ * 1. Extracts package name and version from git tags (format: package@version)
+ * 2. Verifies each tag matches the package.json
+ * 3. Outputs package directories for the workflow to use
  *
  * Usage:
- *   bun run scripts/verify-tag.ts <tag>
- *   Example: bun run scripts/verify-tag.ts @filtron/core@1.1.0
+ *   bun run scripts/verify-tag.ts <tags...>
+ *   Example: bun run scripts/verify-tag.ts @filtron/core@1.1.0 @filtron/sql@2.0.0
  *
  * Outputs (via GITHUB_OUTPUT):
- *   - package_name: The package name from the tag
- *   - version: The version from the tag
- *   - package_dir: The directory containing the package
+ *   - packages: JSON array of {name, version, dir} objects
  */
 
 import { existsSync, statSync } from "fs";
@@ -26,6 +24,12 @@ export interface PackageJson {
 	name: string;
 	version: string;
 	[key: string]: unknown;
+}
+
+export interface PackageInfo {
+	name: string;
+	version: string;
+	dir: string;
 }
 
 /**
@@ -105,22 +109,18 @@ export async function verifyTag(
 }
 
 /**
- * Verify tag matches package.json and output results
+ * Process a single tag and return package info
  */
-async function verifyAndOutput(
-	packageName: string,
-	version: string,
-	packageDir: string,
-	githubOutput?: string,
-): Promise<void> {
+async function processTag(tag: string): Promise<PackageInfo> {
+	const { packageName, version } = parseTag(tag);
+	const packageDir = getPackageDirectory(packageName);
 	await verifyTag(packageName, version, packageDir);
 
-	// Output for GitHub Actions
-	if (githubOutput) {
-		const output = `package_name=${packageName}\nversion=${version}\npackage_dir=${packageDir}\n`;
-		await Bun.write(githubOutput, output, { append: true });
-		console.log(`\nOutputs written to GITHUB_OUTPUT`);
-	}
+	return {
+		name: packageName,
+		version,
+		dir: packageDir,
+	};
 }
 
 /**
@@ -135,27 +135,40 @@ async function main() {
 		});
 
 		if (positionals.length === 0) {
-			console.error(`Usage: bun run scripts/verify-tag.ts <tag>`);
+			console.error(`Usage: bun run scripts/verify-tag.ts <tag> [<tag>...]`);
 			console.error(`Example: bun run scripts/verify-tag.ts @filtron/core@1.1.0`);
 			process.exit(1);
 		}
 
-		const tag = positionals[0];
+		const tags = positionals[0].split("\n").filter((tag) => tag.trim().length > 0);
+
+		if (tags.length === 0) {
+			console.error(`No valid tags provided`);
+			process.exit(1);
+		}
+
+		console.log(`\nVerifying ${tags.length} tag(s)...`);
+
+		const packages: PackageInfo[] = [];
+
+		for (const tag of tags) {
+			console.log(`\n  Tag: ${tag}`);
+			const pkg = await processTag(tag);
+			console.log(`    Package: ${pkg.name}`);
+			console.log(`    Version: ${pkg.version}`);
+			console.log(`    Directory: ${pkg.dir}`);
+			packages.push(pkg);
+		}
+
+		// Output for GitHub Actions
 		const githubOutput = Bun.env.GITHUB_OUTPUT;
+		if (githubOutput) {
+			const output = `packages=${JSON.stringify(packages)}\n`;
+			await Bun.write(githubOutput, output, { append: true });
+			console.log(`\nOutputs written to GITHUB_OUTPUT`);
+		}
 
-		console.log(`\nVerifying tag: ${tag}`);
-
-		// Parse tag
-		const { packageName, version } = parseTag(tag);
-		console.log(`   Package: ${packageName}`);
-		console.log(`   Version: ${version}`);
-
-		// Get package directory
-		const packageDir = getPackageDirectory(packageName);
-		console.log(`   Directory: ${packageDir}`);
-
-		// Verify package.json matches tag and output results
-		await verifyAndOutput(packageName, version, packageDir, githubOutput);
+		console.log(`\nVerification complete!\n`);
 	} catch (error) {
 		if (error instanceof Error) {
 			console.error(`\nError: ${error.message}`);

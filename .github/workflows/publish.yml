@@ -3,33 +3,42 @@ name: Publish Package
 on:
   push:
     tags:
-      - "*"
-  pull_request:
+      - "*@*"
 
 jobs:
-  publish:
+  verify:
     runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-      id-token: write
+    outputs:
+      packages: ${{ steps.verify.outputs.packages }}
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
       - uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2
         with:
           bun-version-file: package.json
-      - run: bun run scripts/verify-tag.ts "${GITHUB_REF#refs/tags/}"
+      - run: bun run scripts/verify-tag.ts "$(git tag --points-at HEAD"
         id: verify
 
+  publish:
+    needs: verify
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      matrix:
+        package: ${{ fromJson(needs.verify.outputs.packages) }}
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+      - uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2
+        with:
+          bun-version-file: package.json
       - run: bun ci
-
       - run: |
-          cd "${{ steps.verify.outputs.package_dir }}"
+          cd "${{ matrix.package.dir }}"
           bun run build
-
       - run: |
-          cd "${{ steps.verify.outputs.package_dir }}"
+          cd "${{ matrix.package.dir }}"
           bun test
-
       - run: |
-          cd "${{ steps.verify.outputs.package_dir }}"
-          bun publish --dry-run --provenance --access public
+          cd "${{ matrix.package.dir }}"
+          bun publish --dry-run --access public

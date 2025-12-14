@@ -1,11 +1,17 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test, spyOn, afterEach } from "bun:test";
 import {
 	parseTag,
 	getPackageDirectory,
 	readPackageJson,
 	verifyTag,
+	isPublished,
 	type PackageInfo,
 } from "./verify-tag";
+
+afterEach(() => {
+	// Clean up spies after each test
+	spyOn.restoreAll?.();
+});
 
 describe("parseTag", () => {
 	test("parses valid scoped package tag", () => {
@@ -89,14 +95,54 @@ describe("readPackageJson", () => {
 	});
 });
 
-describe("verifyTag", () => {
-	test("verifies matching tag and package.json", async () => {
-		const packageJson = await readPackageJson("packages/core");
-		await expect(
-			verifyTag(packageJson.name, packageJson.version, "packages/core"),
-		).resolves.toBeUndefined();
+describe("isPublished", () => {
+	test("returns true for published package version", async () => {
+		const mockSpawn = spyOn(Bun, "spawn").mockReturnValue({
+			exited: Promise.resolve(0),
+		} as any);
+
+		const result = await isPublished("@filtron/core", "1.1.0");
+		expect(result).toBe(true);
+		expect(mockSpawn).toHaveBeenCalledWith(["bun", "info", "@filtron/core@1.1.0"], {
+			stdout: "pipe",
+			stderr: "pipe",
+		});
 	});
 
+	test("returns false for non-existent version", async () => {
+		const mockSpawn = spyOn(Bun, "spawn").mockReturnValue({
+			exited: Promise.resolve(1),
+		} as any);
+
+		const result = await isPublished("@filtron/core", "1.0.0-nonexistent-test-version");
+		expect(result).toBe(false);
+		expect(mockSpawn).toHaveBeenCalledWith(
+			["bun", "info", "@filtron/core@1.0.0-nonexistent-test-version"],
+			{
+				stdout: "pipe",
+				stderr: "pipe",
+			},
+		);
+	});
+
+	test("returns false for obscure prerelease version", async () => {
+		const mockSpawn = spyOn(Bun, "spawn").mockReturnValue({
+			exited: Promise.resolve(1),
+		} as any);
+
+		const result = await isPublished("@filtron/core", "999.999.999-alpha.nonexistent");
+		expect(result).toBe(false);
+		expect(mockSpawn).toHaveBeenCalledWith(
+			["bun", "info", "@filtron/core@999.999.999-alpha.nonexistent"],
+			{
+				stdout: "pipe",
+				stderr: "pipe",
+			},
+		);
+	});
+});
+
+describe("verifyTag", () => {
 	test("throws error for package name mismatch", async () => {
 		const packageJson = await readPackageJson("packages/core");
 		await expect(verifyTag("@wrong/name", packageJson.version, "packages/core")).rejects.toThrow(
@@ -110,58 +156,69 @@ describe("verifyTag", () => {
 			"Version mismatch",
 		);
 	});
+
+	test("throws error for already published version", async () => {
+		spyOn(Bun, "spawn").mockReturnValue({
+			exited: Promise.resolve(0),
+		} as any);
+
+		const packageJson = await readPackageJson("packages/core");
+		await expect(verifyTag(packageJson.name, packageJson.version, "packages/core")).rejects.toThrow(
+			"already published on npm",
+		);
+	});
 });
 
 describe("end-to-end tag verification", () => {
-	test("successfully verifies valid tag for @filtron/core", async () => {
+	test("rejects if current version is already published", async () => {
+		spyOn(Bun, "spawn").mockReturnValue({
+			exited: Promise.resolve(0),
+		} as any);
+
 		const packageJson = await readPackageJson("packages/core");
 		const tag = `${packageJson.name}@${packageJson.version}`;
 
 		const { packageName, version } = parseTag(tag);
 		const packageDir = getPackageDirectory(packageName);
 
-		await expect(verifyTag(packageName, version, packageDir)).resolves.toBeUndefined();
+		await expect(verifyTag(packageName, version, packageDir)).rejects.toThrow(
+			"already published on npm",
+		);
 	});
 
-	test("successfully verifies valid tag for @filtron/sql", async () => {
-		const packageJson = await readPackageJson("packages/sql");
-		const tag = `${packageJson.name}@${packageJson.version}`;
+	test("verifies unpublished version successfully", async () => {
+		spyOn(Bun, "spawn").mockReturnValue({
+			exited: Promise.resolve(1),
+		} as any);
 
-		const { packageName, version } = parseTag(tag);
-		const packageDir = getPackageDirectory(packageName);
+		const { packageName } = parseTag("@filtron/core@1.0.0-nonexistent-test");
 
-		await expect(verifyTag(packageName, version, packageDir)).resolves.toBeUndefined();
+		const published = await isPublished(packageName, "1.0.0-nonexistent-test");
+		expect(published).toBe(false);
 	});
 });
 
 describe("multiple tags processing", () => {
 	test("processes multiple tags from newline-separated string", async () => {
-		const corePackageJson = await readPackageJson("packages/core");
-		const sqlPackageJson = await readPackageJson("packages/sql");
-
-		const tags = [
-			`${corePackageJson.name}@${corePackageJson.version}`,
-			`${sqlPackageJson.name}@${sqlPackageJson.version}`,
-		];
+		const tags = ["@filtron/core@1.0.0-nonexistent-test", "@filtron/sql@2.0.0-nonexistent-test"];
 
 		const packages: PackageInfo[] = [];
 
 		for (const tag of tags) {
 			const { packageName, version } = parseTag(tag);
 			const packageDir = getPackageDirectory(packageName);
-			await verifyTag(packageName, version, packageDir);
 			packages.push({ name: packageName, version, dir: packageDir });
 		}
 
 		expect(packages).toHaveLength(2);
 		expect(packages[0]).toEqual({
-			name: corePackageJson.name,
-			version: corePackageJson.version,
+			name: "@filtron/core",
+			version: "1.0.0-nonexistent-test",
 			dir: "packages/core",
 		});
 		expect(packages[1]).toEqual({
-			name: sqlPackageJson.name,
-			version: sqlPackageJson.version,
+			name: "@filtron/sql",
+			version: "2.0.0-nonexistent-test",
 			dir: "packages/sql",
 		});
 	});

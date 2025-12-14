@@ -86,6 +86,19 @@ export async function readPackageJson(packageDir: string): Promise<PackageJson> 
 }
 
 /**
+ * Check if a package version is already published on npm
+ */
+export async function isPublished(packageName: string, version: string): Promise<boolean> {
+	const proc = Bun.spawn(["bun", "info", `${packageName}@${version}`], {
+		stdout: "pipe",
+		stderr: "pipe",
+	});
+
+	const exitCode = await proc.exited;
+	return exitCode === 0;
+}
+
+/**
  * Verify tag matches package.json
  */
 export async function verifyTag(
@@ -105,6 +118,11 @@ export async function verifyTag(
 		throw new Error(
 			`Version mismatch! Tag specifies: ${version}, package.json has: ${packageJson.version}`,
 		);
+	}
+
+	const published = await isPublished(packageName, version);
+	if (published) {
+		throw new Error(`Version ${packageName}@${version} is already published on npm`);
 	}
 }
 

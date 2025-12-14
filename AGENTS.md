@@ -60,6 +60,11 @@ Filtron uses a hand-written recursive descent parser for performance:
 2. **Parser** (`packages/core/rd-parser.ts`) - Recursive descent parser that builds AST during parsing
 3. **API** (`packages/core/parser.ts`) - Public `parse()` and `parseOrThrow()` functions
 
+## Dependencies
+
+- Keep third party dependencies to an absolute minimum
+- If dependencies are added, pin the version
+
 ### Grammar (in precedence order, lowest to highest)
 
 ```

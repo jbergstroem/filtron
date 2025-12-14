@@ -17,7 +17,7 @@ jobs:
       - uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2
         with:
           bun-version-file: package.json
-      - run: bun install
+      - run: bun ci
       - run: bun run build
       - run: bun test --reporter=junit --reporter-outfile=junit.xml --coverage --coverage-reporter=lcov --coverage-dir=coverage
       - uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5
@@ -68,7 +68,7 @@ jobs:
         with:
           bun-version-file: package.json
 
-      - run: bun install
+      - run: bun ci
       - run: bun run build
 
       - if: matrix.setup == 'node'

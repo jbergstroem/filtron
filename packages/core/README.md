@@ -1,6 +1,6 @@
 # @filtron/core
 
-Fast, type-safe query language parser for filtering data in real-time APIs.
+A fast, type-safe query language suitable for filter-like patterns in real-time APIs.
 
 ![npm version](https://img.shields.io/npm/v/@filtron/core.svg)
 ![npm bundle size](https://img.shields.io/bundlephobia/min/%40filtron%2Fcore)
@@ -8,7 +8,7 @@ Fast, type-safe query language parser for filtering data in real-time APIs.
 
 ## Features
 
-- **Fast**: High-performance recursive descent parser — 250ns-3μs per query
+- **Fast**: High-performance recursive descent parser — 90ns-1.5μs per query
 - **Small**: ~8 KB minified, zero runtime dependencies
 - **Type-safe**: Full TypeScript support with discriminated union AST
 
@@ -151,11 +151,11 @@ function handleAST(node: ASTNode) {
 
 Filtron uses a hand-written recursive descent parser optimized for speed:
 
-| Query Type | Parse Time  | Throughput        |
-| ---------- | ----------- | ----------------- |
-| Simple     | ~250-350ns  | 3-4M ops/sec      |
-| Medium     | ~600-1700ns | 600K-1.6M ops/sec |
-| Complex    | ~1.5-3μs    | 350-700K ops/sec  |
+| Query Type | Parse Time | Throughput        |
+| ---------- | ---------- | ----------------- |
+| Simple     | ~90-250ns  | 4-11M ops/sec     |
+| Medium     | ~360-870ns | 1.1-2.8M ops/sec  |
+| Complex    | ~0.9-1.5μs | 650K-1.1M ops/sec |
 
 Run benchmarks: `bun run bench`
 

@@ -1,8 +1,8 @@
 {
 	"$schema": "https://json.schemastore.org/package.json",
 	"name": "@filtron/core",
-	"version": "1.1.0",
-	"description": "A fast, type-safe query language parser for filtering data in real-time APIs",
+	"version": "1.2.0",
+	"description": "A fast, type-safe query language suitable for filter-like patterns in real-time APIs",
 	"keywords": [
 		"filter",
 		"filtering",

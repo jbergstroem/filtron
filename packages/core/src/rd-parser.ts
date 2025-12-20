@@ -42,7 +42,7 @@ export class ParseError extends Error {
 }
 
 /**
- * Recursive descent parser for Filtron queries
+ * Parser for Filtron queries
  */
 class Parser {
 	private lexer: Lexer;
@@ -116,14 +116,14 @@ class Parser {
 	}
 
 	/**
-	 * Parse OR expression (lowest precedence)
+	 * Parse OR expression
 	 * OrExpression = AndExpression (OR AndExpression)*
 	 */
 	private parseOrExpression(): ASTNode {
 		let left = this.parseAndExpression();
 
 		while (this.check("OR")) {
-			this.advance(); // consume OR
+			this.advance();
 			const right = this.parseAndExpression();
 			left = { type: "or", left, right };
 		}
@@ -139,7 +139,7 @@ class Parser {
 		let left = this.parseNotExpression();
 
 		while (this.check("AND")) {
-			this.advance(); // consume AND
+			this.advance();
 			const right = this.parseNotExpression();
 			left = { type: "and", left, right };
 		}
@@ -153,7 +153,7 @@ class Parser {
 	 */
 	private parseNotExpression(): ASTNode {
 		if (this.check("NOT")) {
-			this.advance(); // consume NOT
+			this.advance();
 			const expression = this.parseNotExpression();
 			return { type: "not", expression };
 		}
@@ -168,7 +168,7 @@ class Parser {
 	private parsePrimaryExpression(): ASTNode {
 		// Parenthesized expression
 		if (this.check("LPAREN")) {
-			this.advance(); // consume (
+			this.advance();
 			const expr = this.parseOrExpression();
 			this.expect("RPAREN", "Expected closing parenthesis");
 			return expr;
@@ -186,25 +186,25 @@ class Parser {
 
 		// Exists check with ?
 		if (this.check("QUESTION")) {
-			this.advance(); // consume ?
+			this.advance();
 			return { type: "exists", field } as ExistsExpression;
 		}
 
 		// Exists check with EXISTS keyword
 		if (this.check("EXISTS")) {
-			this.advance(); // consume EXISTS
+			this.advance();
 			return { type: "exists", field } as ExistsExpression;
 		}
 
 		// OneOf: field : [values]
 		if (this.check("COLON") && this.peekNextIsLBracket()) {
-			this.advance(); // consume :
+			this.advance();
 			return this.parseOneOfArray(field, "oneOf");
 		}
 
 		// NotOneOf: field !: [values]
 		if (this.check("NOT_COLON")) {
-			this.advance(); // consume !:
+			this.advance();
 			return this.parseOneOfArray(field, "notOneOf");
 		}
 
@@ -219,7 +219,7 @@ class Parser {
 				const min = minToken.value as number;
 
 				if (this.check("DOTDOT")) {
-					this.advance(); // consume ..
+					this.advance();
 					const maxToken = this.expect("NUMBER", "Expected number after '..'");
 					const max = maxToken.value as number;
 					return { type: "range", field, min, max } as RangeExpression;
@@ -235,7 +235,12 @@ class Parser {
 			}
 
 			const value = this.parseValue();
-			return { type: "comparison", field, operator, value } as ComparisonExpression;
+			return {
+				type: "comparison",
+				field,
+				operator,
+				value,
+			} as ComparisonExpression;
 		}
 
 		// Boolean field shorthand (just the field name)

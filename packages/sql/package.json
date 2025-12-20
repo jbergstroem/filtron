@@ -4,29 +4,37 @@
 	"version": "1.1.0",
 	"description": "SQL WHERE clause generator for Filtron AST with parameterized queries",
 	"keywords": [
-		"filtron",
-		"sql",
-		"where-clause",
-		"query-builder",
 		"ast",
-		"typescript",
 		"duckdb",
-		"postgresql",
+		"filtron",
 		"mysql",
-		"sqlite"
+		"postgresql",
+		"query-builder",
+		"sql",
+		"sqlite",
+		"typescript",
+		"where-clause"
 	],
 	"homepage": "https://github.com/jbergstroem/filtron#readme",
 	"bugs": {
 		"url": "https://github.com/jbergstroem/filtron/issues"
 	},
+	"license": "MIT",
+	"author": "Johan Bergström <bugs@bergstroem.nu>",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/jbergstroem/filtron.git",
 		"directory": "packages/sql"
 	},
-	"license": "MIT",
-	"author": "Johan Bergström <bugs@bergstroem.nu>",
+	"files": [
+		"dist",
+		"LICENSE",
+		"README.md"
+	],
 	"type": "module",
+	"main": "./dist/index.js",
+	"module": "./dist/index.js",
+	"types": "./dist/index.d.ts",
 	"exports": {
 		".": {
 			"types": "./dist/index.d.ts",
@@ -34,14 +42,6 @@
 			"default": "./dist/index.js"
 		}
 	},
-	"main": "./dist/index.js",
-	"module": "./dist/index.js",
-	"types": "./dist/index.d.ts",
-	"files": [
-		"dist",
-		"README.md",
-		"LICENSE"
-	],
 	"scripts": {
 		"bench": "bun --expose-gc run benchmark.ts",
 		"build": "bun build --minify --splitting --sourcemap=linked --outdir=dist --external @filtron/core index.ts && tsc",
@@ -52,6 +52,11 @@
 	"dependencies": {
 		"@filtron/core": "workspace:*"
 	},
+	"devDependencies": {
+		"@types/bun": "catalog:",
+		"mitata": "catalog:",
+		"typescript": "catalog:"
+	},
 	"peerDependencies": {
 		"typescript": "catalog:"
 	},
@@ -60,14 +65,9 @@
 			"optional": true
 		}
 	},
-	"devDependencies": {
-		"@types/bun": "catalog:",
-		"mitata": "catalog:",
-		"typescript": "catalog:"
-	},
 	"engines": {
-		"node": ">=20.0.0",
-		"bun": ">=1.1.0"
+		"bun": ">=1.1.0",
+		"node": ">=20.0.0"
 	},
 	"packageManager": "bun@1.3.3"
 }

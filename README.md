@@ -14,7 +14,7 @@ Fast, type-safe query language parser for filtering data in real-time APIs.
 
 ## Features
 
-- **Fast**: High-performance recursive descent parser — 250ns-3μs per query
+- **Fast**: High-performance recursive descent parser — 90ns-1.5μs per query
 - **Small**: ~8 KB minified, zero runtime dependencies
 - **Type-safe**: Full TypeScript support with discriminated union AST
 
@@ -29,9 +29,9 @@ npm install @filtron/core
 ## Quick Start
 
 ```typescript
-import { parse } from "@filtron/core";
+import { parse, type ParseResult } from "@filtron/core";
 
-const result = parse('age > 18 AND status = "active"');
+const result: ParseResult = parse('age > 18 AND status = "active"');
 
 if (result.success) {
   console.log(result.ast);
@@ -44,10 +44,10 @@ if (result.success) {
 ..or use `parseOrThrow` for try/catch style error handling:
 
 ```typescript
-import { parseOrThrow } from "@filtron/core";
+import { parseOrThrow, type ASTNode } from "@filtron/core";
 
 try {
-  const ast = parseOrThrow('age > 18 AND status = "active"');
+  const ast: ASTNode = parseOrThrow('age > 18 AND status = "active"');
   console.log(ast);
   // Use AST to build SQL, filter data, etc.
 } catch (error) {
@@ -62,13 +62,13 @@ bun add @filtron/sql
 ```
 
 ```typescript
-import { parse } from "@filtron/core";
-import { toSQL } from "@filtron/sql";
+import { parse, type ParseResult } from "@filtron/core";
+import { toSQL, type SQLResult } from "@filtron/sql";
 
-const result = parse('age > 18 AND status = "active"');
+const result: ParseResult = parse('age > 18 AND status = "active"');
 
 if (result.success) {
-  const { sql, params } = toSQL(result.ast);
+  const { sql, params }: SQLResult = toSQL(result.ast);
   // sql: "(age > $1 AND status = $2)"
   // params: [18, "active"]
 
@@ -83,15 +83,21 @@ bun add @filtron/js
 ```
 
 ```typescript
-import { parse } from "@filtron/core";
+import { parse, type ParseResult } from "@filtron/core";
 import { toFilter } from "@filtron/js";
 
-const result = parse('age > 18 AND status = "active"');
+interface User {
+  name: string;
+  age: number;
+  status: string;
+}
+
+const result: ParseResult = parse('age > 18 AND status = "active"');
 
 if (result.success) {
-  const filter = toFilter(result.ast);
+  const filter = toFilter<User>(result.ast);
 
-  const users = [
+  const users: User[] = [
     { name: "Alice", age: 25, status: "active" },
     { name: "Bob", age: 16, status: "active" },
   ];
@@ -167,42 +173,24 @@ parse('age > 18 AND status = "active"')
 }
 ```
 
-## TypeScript
-
-Full type definitions included:
-
-```typescript
-import type {
-  ParseResult,
-  ASTNode,
-  ComparisonExpression,
-  // ... all types exported
-} from "@filtron/core";
-
-function handleAST(node: ASTNode) {
-  switch (node.type) {
-    case "comparison":
-      // TypeScript knows node.field, node.operator, node.value exist
-      break;
-    case "and":
-      // TypeScript knows node.left, node.right exist
-      break;
-    // ... fully typed
-  }
-}
-```
-
 ## Performance
 
 Filtron uses a hand-written recursive descent parser optimized for speed:
 
-| Query Type | Parse Time  | Throughput        |
-| ---------- | ----------- | ----------------- |
-| Simple     | ~250-350ns  | 3-4M ops/sec      |
-| Medium     | ~600-1700ns | 600K-1.6M ops/sec |
-| Complex    | ~1.5-3μs    | 350-700K ops/sec  |
+| Query Type | Parse Time | Throughput        |
+| ---------- | ---------- | ----------------- |
+| Simple     | ~90-250ns  | 4-11M ops/sec     |
+| Medium     | ~360-870ns | 1.1-2.8M ops/sec  |
+| Complex    | ~0.9-1.5μs | 650K-1.1M ops/sec |
 
-Run benchmarks: `bun run bench`
+**Additional package overhead:**
+
+| Package      | Overhead | Total Throughput |
+| ------------ | -------- | ---------------- |
+| @filtron/js  | ~0.2μs   | ~750K ops/sec    |
+| @filtron/sql | ~0.3μs   | ~740K ops/sec    |
+
+Run benchmarks: `bun run bench` in each package
 
 ## Contributing
 

@@ -140,7 +140,7 @@ bun run build --filter='@filtron/core'
 
 ### Cutting a release
 
-Releases are automated via GitHub Actions when you push a tag matching the `package@version` pattern.
+Releases are automated via GitHub Actions when you push a tag matching the `package-version` pattern (e.g., `core-1.2.0`, `sql-2.0.0`).
 
 1. **Update the package version**
 

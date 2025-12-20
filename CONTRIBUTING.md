@@ -156,7 +156,7 @@ Releases are automated via GitHub Actions when you push a tag matching the `pack
    git commit -m "chore: @filtron/core v1.2.0"
    ```
 
-3. **Create a release using Github Releases**
+3. **Create a release using GitHub Releases**
 
    If you're releasing multiple packages in one release,
    make sure all tags are added as part of the release procedure.

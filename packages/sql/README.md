@@ -1,6 +1,6 @@
 # @filtron/sql
 
-SQL WHERE clause generator for [Filtron](https://github.com/jbergstroem/filtron) AST with parameterized queries.
+Filtron helper: generate safe, parameterized SQL WHERE clauses from filter expressions.
 
 ![npm version](https://img.shields.io/npm/v/@filtron/sql.svg)
 ![npm bundle size](https://img.shields.io/bundlephobia/min/%40filtron%2Fsql)

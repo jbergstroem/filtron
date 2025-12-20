@@ -1,6 +1,6 @@
 # @filtron/js
 
-In-memory JavaScript array filtering using [Filtron](https://github.com/jbergstroem/filtron) AST.
+Filtron helper: transform filter expressions into JavaScript predicates for `Array.filter()`.
 
 ![npm version](https://img.shields.io/npm/v/@filtron/js.svg)
 ![npm bundle size](https://img.shields.io/bundlephobia/min/%40filtron%2Fjs)

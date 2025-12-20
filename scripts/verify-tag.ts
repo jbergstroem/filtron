@@ -77,7 +77,7 @@ export function getPackageDirectory(shortName: string): string {
  * Read and parse package.json using dynamic import
  */
 export async function readPackageJson(packageDir: string): Promise<PackageJson> {
-	const packageJsonPath = join(Bun.cwd(), packageDir, "package.json");
+	const packageJsonPath = join(process.cwd(), packageDir, "package.json");
 
 	try {
 		const packageJson = await import(packageJsonPath, {
@@ -165,18 +165,11 @@ async function processTag(tag: string): Promise<PackageInfo> {
  */
 async function main() {
 	try {
-		const args = Bun.argv.slice(2);
-
-		if (args.length === 0) {
-			console.error(`Usage: bun run scripts/verify-tag.ts <tag> [<tag>...]`);
-			console.error(`Example: bun run scripts/verify-tag.ts core-1.1.0 sql-2.0.0`);
-			process.exit(1);
-		}
-
-		const tags = args[0].split("\n").filter((tag) => tag.trim().length > 0);
+		const tags = Bun.argv.slice(2);
 
 		if (tags.length === 0) {
-			console.error(`No valid tags provided`);
+			console.error(`Usage: bun run scripts/verify-tag.ts <tag> [<tag>...]`);
+			console.error(`Example: bun run scripts/verify-tag.ts core-1.1.0 sql-2.0.0`);
 			process.exit(1);
 		}
 
@@ -198,10 +191,7 @@ async function main() {
 		if (githubOutput) {
 			const output = `packages=${JSON.stringify(packages)}\n`;
 			await Bun.write(githubOutput, output, { append: true });
-			console.log(`\nOutputs written to GITHUB_OUTPUT`);
 		}
-
-		console.log(`\nVerification complete!\n`);
 	} catch (error) {
 		if (error instanceof Error) {
 			console.error(`\nError: ${error.message}`);

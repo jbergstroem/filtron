@@ -15,7 +15,7 @@ jobs:
       - uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2
         with:
           bun-version-file: package.json
-      - run: bun run scripts/verify-tag.ts "$(git tag --points-at HEAD)"
+      - run: git tag --points-at HEAD | xargs bun run scripts/verify-tag.ts
         id: verify
 
   publish:

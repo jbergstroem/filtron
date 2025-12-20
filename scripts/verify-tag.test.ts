@@ -73,8 +73,8 @@ describe("getPackageDirectory", () => {
 		await Bun.write(testFile, "test");
 
 		// Mock join to return our test file path
-		const pathModule = await import("bun:path");
-		const joinSpy = spyOn(pathModule, "join").mockReturnValue(testFile);
+		const path = await import("path");
+		const joinSpy = spyOn(path, "join").mockReturnValue(testFile);
 
 		try {
 			expect(() => getPackageDirectory("core")).toThrow(`'${testFile}' is not a directory`);
@@ -218,7 +218,7 @@ describe("end-to-end tag verification", () => {
 });
 
 describe("multiple tags processing", () => {
-	test("processes multiple tags from newline-separated string", async () => {
+	test("processes multiple space-separated tags", async () => {
 		const tags = ["core-1.0.0", "sql-2.0.0"];
 
 		const packages: PackageInfo[] = [];
@@ -246,18 +246,8 @@ describe("multiple tags processing", () => {
 		});
 	});
 
-	test("filters empty tags from input", () => {
-		const input = "core-1.1.0\n\nsql-2.0.0\n";
-		const tags = input.split("\n").filter((tag) => tag.trim().length > 0);
-
-		expect(tags).toHaveLength(2);
-		expect(tags[0]).toBe("core-1.1.0");
-		expect(tags[1]).toBe("sql-2.0.0");
-	});
-
-	test("handles single tag input", () => {
-		const input = "core-1.1.0";
-		const tags = input.split("\n").filter((tag) => tag.trim().length > 0);
+	test("handles single tag", () => {
+		const tags = ["core-1.1.0"];
 
 		expect(tags).toHaveLength(1);
 		expect(tags[0]).toBe("core-1.1.0");

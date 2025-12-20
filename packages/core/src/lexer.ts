@@ -98,11 +98,20 @@ const enum CharClass {
 // Build lookup table at module load
 const charClass = new Uint8Array(128);
 for (let i = 0; i < 128; i++) {
-	if (i === CharCode.Space || i === CharCode.Tab || i === CharCode.Newline || i === CharCode.CarriageReturn) {
+	if (
+		i === CharCode.Space ||
+		i === CharCode.Tab ||
+		i === CharCode.Newline ||
+		i === CharCode.CarriageReturn
+	) {
 		charClass[i] = CharClass.Whitespace;
 	} else if (i >= CharCode.Zero && i <= CharCode.Nine) {
 		charClass[i] = CharClass.Digit;
-	} else if ((i >= CharCode.UpperA && i <= CharCode.UpperZ) || (i >= CharCode.LowerA && i <= CharCode.LowerZ) || i === CharCode.Underscore) {
+	} else if (
+		(i >= CharCode.UpperA && i <= CharCode.UpperZ) ||
+		(i >= CharCode.LowerA && i <= CharCode.LowerZ) ||
+		i === CharCode.Underscore
+	) {
 		charClass[i] = CharClass.Alpha;
 	}
 }
@@ -145,13 +154,22 @@ export class Lexer {
 			const code = input.charCodeAt(pos);
 
 			// Fast whitespace check
-			if (code === CharCode.Space || code === CharCode.Tab || code === CharCode.Newline || code === CharCode.CarriageReturn) {
+			if (
+				code === CharCode.Space ||
+				code === CharCode.Tab ||
+				code === CharCode.Newline ||
+				code === CharCode.CarriageReturn
+			) {
 				pos++;
 				continue;
 			}
 
 			// Comment check
-			if (code === CharCode.Slash && pos + 1 < length && input.charCodeAt(pos + 1) === CharCode.Slash) {
+			if (
+				code === CharCode.Slash &&
+				pos + 1 < length &&
+				input.charCodeAt(pos + 1) === CharCode.Slash
+			) {
 				pos += 2;
 				while (pos < length && input.charCodeAt(pos) !== CharCode.Newline) {
 					pos++;
@@ -268,11 +286,7 @@ export class Lexer {
 		}
 
 		// Check for decimal
-		if (
-			pos < length &&
-			input.charCodeAt(pos) === CharCode.Dot &&
-			pos + 1 < length
-		) {
+		if (pos < length && input.charCodeAt(pos) === CharCode.Dot && pos + 1 < length) {
 			const nextCode = input.charCodeAt(pos + 1);
 			if (nextCode >= CharCode.Zero && nextCode <= CharCode.Nine) {
 				pos++; // skip dot
@@ -340,12 +354,18 @@ export class Lexer {
 				// "and", "not"
 				if (firstCode === 97) {
 					// 'a'
-					if ((input.charCodeAt(start + 1) | 0x20) === 110 && (input.charCodeAt(start + 2) | 0x20) === 100) {
+					if (
+						(input.charCodeAt(start + 1) | 0x20) === 110 &&
+						(input.charCodeAt(start + 2) | 0x20) === 100
+					) {
 						return { type: "AND", value: "and", start, end: pos };
 					}
 				} else if (firstCode === 110) {
 					// 'n'
-					if ((input.charCodeAt(start + 1) | 0x20) === 111 && (input.charCodeAt(start + 2) | 0x20) === 116) {
+					if (
+						(input.charCodeAt(start + 1) | 0x20) === 111 &&
+						(input.charCodeAt(start + 2) | 0x20) === 116
+					) {
 						return { type: "NOT", value: "not", start, end: pos };
 					}
 				}

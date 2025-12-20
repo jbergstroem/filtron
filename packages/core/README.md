@@ -1,6 +1,6 @@
 # @filtron/core
 
-A fast, type-safe query language suitable for filter-like patterns in real-time APIs.
+A fast, human-friendly filter language designed for real-time APIs. Parses expressions like `age > 18 AND verified` into a type-safe AST.
 
 ![npm version](https://img.shields.io/npm/v/@filtron/core.svg)
 ![npm bundle size](https://img.shields.io/bundlephobia/min/%40filtron%2Fcore)

@@ -1,6 +1,6 @@
 # Filtron
 
-Fast, type-safe query language parser for filtering data in real-time APIs.
+A fast, human-friendly filter language designed for real-time APIs. Parses expressions like `age > 18 AND verified` into a type-safe AST, with helpers to generate SQL WHERE clauses or JavaScript predicates.
 
 **Monorepo containing:**
 

@@ -3,7 +3,7 @@
 	"name": "filtron",
 	"version": "1.0.0",
 	"private": true,
-	"description": "Fast, type-safe query language parser for filtering data in real-time APIs",
+	"description": "The monorepo for Filtron, a fast, human-friendly filter language designed for real-time APIs.",
 	"homepage": "https://github.com/jbergstroem/filtron#readme",
 	"bugs": {
 		"url": "https://github.com/jbergstroem/filtron/issues"

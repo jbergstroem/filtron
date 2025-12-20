@@ -4,21 +4,23 @@
  * Verify script for monorepo package publishing
  *
  * This script:
- * 1. Extracts package name and version from git tags (format: package@version)
+ * 1. Extracts package name and version from git tags (format: package-version)
  * 2. Verifies each tag matches the package.json
  * 3. Outputs package directories for the workflow to use
  *
+ * Git tags use format: package-version (e.g., "core-1.0.0", "sql-2.0.0")
+ * Package.json uses scoped names (e.g., "@filtron/core", "@filtron/sql")
+ *
  * Usage:
  *   bun run scripts/verify-tag.ts <tags...>
- *   Example: bun run scripts/verify-tag.ts @filtron/core@1.1.0 @filtron/sql@2.0.0
+ *   Example: bun run scripts/verify-tag.ts core-1.1.0 sql-2.0.0
  *
  * Outputs (via GITHUB_OUTPUT):
  *   - packages: JSON array of {name, version, dir} objects
  */
 
-import { existsSync, statSync } from "fs";
-import { join } from "path";
-import { parseArgs } from "util";
+import { existsSync, statSync } from "bun:fs";
+import { join } from "bun:path";
 
 export interface PackageJson {
 	name: string;
@@ -34,34 +36,30 @@ export interface PackageInfo {
 
 /**
  * Parse a git tag into package name and version
+ * Git tags use format: package-version (e.g., "core-1.0.0", "sql-2.0.0")
+ * Only supports simple semver: X.Y.Z (no v prefix, no prerelease/build metadata)
  */
 export function parseTag(tag: string): {
-	packageName: string;
+	shortName: string;
 	version: string;
 } {
-	// common semver regex without trailer
-	const match = tag.match(/^(.+)@v?((0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-.+)?(?:\+.+)?)$/);
+	// Simple semver regex: package-X.Y.Z format
+	const match = tag.match(/^(.+)-((0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*))$/);
 
 	if (!match) {
-		throw new Error(`Tag '${tag}' does not match pattern '{package}@{version}'`);
+		throw new Error(`Tag '${tag}' does not match pattern '{package}-{version}'`);
 	}
 
-	const [, packageName, version] = match;
-	return { packageName, version };
+	const [, shortName, version] = match;
+	return { shortName, version };
 }
 
 /**
- * Map package name to directory path
+ * Map short package name to directory path
+ * Short name like "core" or "sql" maps to "packages/core" or "packages/sql"
  */
-export function getPackageDirectory(packageName: string): string {
-	// Handle scoped packages like @filtron/core -> packages/core
-	const scopedMatch = packageName.match(/^@filtron\/(.+)$/);
-
-	if (!scopedMatch) {
-		throw new Error(`Unknown package name pattern: ${packageName}`);
-	}
-
-	const packageDir = join("packages", scopedMatch[1]);
+export function getPackageDirectory(shortName: string): string {
+	const packageDir = join("packages", shortName);
 
 	// Verify directory exists
 	if (!existsSync(packageDir)) {
@@ -79,7 +77,7 @@ export function getPackageDirectory(packageName: string): string {
  * Read and parse package.json using dynamic import
  */
 export async function readPackageJson(packageDir: string): Promise<PackageJson> {
-	const packageJsonPath = join(process.cwd(), packageDir, "package.json");
+	const packageJsonPath = join(Bun.cwd(), packageDir, "package.json");
 
 	try {
 		const packageJson = await import(packageJsonPath, {
@@ -100,23 +98,33 @@ export async function isPublished(packageName: string, version: string): Promise
 		stderr: "pipe",
 	});
 
-	const exitCode = await proc.exited;
+	const timeout = new Promise<number>((resolve) =>
+		setTimeout(() => {
+			proc.kill();
+			resolve(1);
+		}, 5000),
+	);
+
+	const exitCode = await Promise.race([proc.exited, timeout]);
 	return exitCode === 0;
 }
 
 /**
  * Verify tag matches package.json
+ * Note: packageJson.name is scoped (e.g., "@filtron/core") for npm publishing
  */
 export async function verifyTag(
-	packageName: string,
+	shortName: string,
 	version: string,
 	packageDir: string,
-): Promise<void> {
+): Promise<string> {
 	const packageJson = await readPackageJson(packageDir);
 
-	if (packageJson.name !== packageName) {
+	// Validate that the package.json name matches expected scoped format
+	const expectedScopedName = `@filtron/${shortName}`;
+	if (packageJson.name !== expectedScopedName) {
 		throw new Error(
-			`Package name mismatch! Tag specifies: ${packageName}, package.json has: ${packageJson.name}`,
+			`Package name mismatch! Expected: ${expectedScopedName}, package.json has: ${packageJson.name}`,
 		);
 	}
 
@@ -126,22 +134,27 @@ export async function verifyTag(
 		);
 	}
 
-	const published = await isPublished(packageName, version);
+	// Check npm using the scoped package name
+	const published = await isPublished(packageJson.name, version);
 	if (published) {
-		throw new Error(`Version ${packageName}@${version} is already published on npm`);
+		throw new Error(`Version ${packageJson.name}@${version} is already published on npm`);
 	}
+
+	return packageJson.name;
 }
 
 /**
  * Process a single tag and return package info
+ * Git tag uses short name (e.g., "core@1.0.0")
+ * Returns scoped npm package name (e.g., "@filtron/core")
  */
 async function processTag(tag: string): Promise<PackageInfo> {
-	const { packageName, version } = parseTag(tag);
-	const packageDir = getPackageDirectory(packageName);
-	await verifyTag(packageName, version, packageDir);
+	const { shortName, version } = parseTag(tag);
+	const packageDir = getPackageDirectory(shortName);
+	const scopedPackageName = await verifyTag(shortName, version, packageDir);
 
 	return {
-		name: packageName,
+		name: scopedPackageName,
 		version,
 		dir: packageDir,
 	};
@@ -152,19 +165,15 @@ async function processTag(tag: string): Promise<PackageInfo> {
  */
 async function main() {
 	try {
-		const { positionals } = parseArgs({
-			args: Bun.argv.slice(2),
-			allowPositionals: true,
-			strict: true,
-		});
+		const args = Bun.argv.slice(2);
 
-		if (positionals.length === 0) {
+		if (args.length === 0) {
 			console.error(`Usage: bun run scripts/verify-tag.ts <tag> [<tag>...]`);
-			console.error(`Example: bun run scripts/verify-tag.ts @filtron/core@1.1.0`);
+			console.error(`Example: bun run scripts/verify-tag.ts core-1.1.0 sql-2.0.0`);
 			process.exit(1);
 		}
 
-		const tags = positionals[0].split("\n").filter((tag) => tag.trim().length > 0);
+		const tags = args[0].split("\n").filter((tag) => tag.trim().length > 0);
 
 		if (tags.length === 0) {
 			console.error(`No valid tags provided`);

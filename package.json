@@ -39,6 +39,14 @@
 		"oxlint": "1.34.0",
 		"oxlint-tsgolint": "0.10.0"
 	},
+	"peerDependencies": {
+		"typescript": "catalog:"
+	},
+	"peerDependenciesMeta": {
+		"typescript": {
+			"optional": true
+		}
+	},
 	"engines": {
 		"bun": ">=1.1.0",
 		"node": ">=20.0.0"

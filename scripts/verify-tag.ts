@@ -35,11 +35,15 @@ export interface PackageInfo {
 /**
  * Parse a git tag into package name and version
  */
-export function parseTag(tag: string): { packageName: string; version: string } {
+export function parseTag(tag: string): {
+	packageName: string;
+	version: string;
+} {
+	// common semver regex without trailer
 	const match = tag.match(/^(.+)@v?((0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-.+)?(?:\+.+)?)$/);
 
 	if (!match) {
-		throw new Error(`Tag '${tag}' does not match pattern '@filtron/{package}@{version}'`);
+		throw new Error(`Tag '${tag}' does not match pattern '{package}@{version}'`);
 	}
 
 	const [, packageName, version] = match;
@@ -78,7 +82,9 @@ export async function readPackageJson(packageDir: string): Promise<PackageJson> 
 	const packageJsonPath = join(process.cwd(), packageDir, "package.json");
 
 	try {
-		const packageJson = await import(packageJsonPath, { with: { type: "json" } });
+		const packageJson = await import(packageJsonPath, {
+			with: { type: "json" },
+		});
 		return packageJson.default as PackageJson;
 	} catch (error) {
 		throw new Error(`Could not read package.json in ${packageDir}: ${error}`);

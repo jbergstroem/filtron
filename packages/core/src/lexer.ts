@@ -1,69 +1,44 @@
 /**
- * Lexer for Filtron query language
+ * Optimized Lexer for Filtron query language
  *
- * Tokenizes input strings into a stream of tokens for the parser.
+ * Optimizations:
+ * - Works with char codes directly (avoids string creation)
+ * - Lookup table for character classification
+ * - Inlined hot paths
+ * - Fast keyword detection
+ * - Fast path for strings without escapes
  */
-
-const isDigit = (char: string): boolean => {
-	const code = char.charCodeAt(0);
-	return code >= 48 && code <= 57; // 0-9
-};
-
-const isAlpha = (char: string): boolean => {
-	const code = char.charCodeAt(0);
-	return (
-		(code >= 65 && code <= 90) || // A-Z
-		(code >= 97 && code <= 122) || // a-z
-		code === 95
-	);
-};
-
-const isAlphaNum = (char: string): boolean => {
-	const code = char.charCodeAt(0);
-	return (
-		(code >= 48 && code <= 57) || // 0-9
-		(code >= 65 && code <= 90) || // A-Z
-		(code >= 97 && code <= 122) || // a-z
-		code === 95
-	);
-};
 
 /**
  * Token types produced by the lexer
  */
 export type TokenType =
-	// Grouping
 	| "LPAREN"
 	| "RPAREN"
 	| "LBRACKET"
 	| "RBRACKET"
-	// Punctuation
 	| "COMMA"
 	| "QUESTION"
 	| "DOT"
 	| "DOTDOT"
-	// Keywords (case-insensitive)
 	| "AND"
 	| "OR"
 	| "NOT"
 	| "EXISTS"
 	| "TRUE"
 	| "FALSE"
-	// Operators
-	| "EQ" // =
-	| "NEQ" // !=
-	| "GT" // >
-	| "GTE" // >=
-	| "LT" // <
-	| "LTE" // <=
-	| "LIKE" // ~
-	| "COLON" // :
-	| "NOT_COLON" // !:
-	// Literals
+	| "EQ"
+	| "NEQ"
+	| "GT"
+	| "GTE"
+	| "LT"
+	| "LTE"
+	| "LIKE"
+	| "COLON"
+	| "NOT_COLON"
 	| "STRING"
 	| "NUMBER"
 	| "IDENT"
-	// End of input
 	| "EOF";
 
 /**
@@ -76,17 +51,70 @@ export interface Token {
 	end: number;
 }
 
-/**
- * Keywords mapped to their token types
- */
-const KEYWORDS: Record<string, TokenType> = {
-	and: "AND",
-	or: "OR",
-	not: "NOT",
-	exists: "EXISTS",
-	true: "TRUE",
-	false: "FALSE",
-};
+// Character codes
+const enum CharCode {
+	Tab = 9,
+	Newline = 10,
+	CarriageReturn = 13,
+	Space = 32,
+	Bang = 33, // !
+	Quote = 34, // "
+	Dot = 46, // .
+	Slash = 47, // /
+	Zero = 48,
+	Nine = 57,
+	Colon = 58, // :
+	LessThan = 60, // <
+	Equals = 61, // =
+	GreaterThan = 62, // >
+	Question = 63, // ?
+	UpperA = 65,
+	UpperZ = 90,
+	LBracket = 91, // [
+	Backslash = 92, // \
+	RBracket = 93, // ]
+	Underscore = 95, // _
+	LowerA = 97,
+	LowerZ = 122,
+	Tilde = 126, // ~
+	LParen = 40, // (
+	RParen = 41, // )
+	Comma = 44, // ,
+	Minus = 45, // -
+	LowerN = 110,
+	LowerR = 114,
+	LowerT = 116,
+}
+
+// Character classification lookup table (0-127)
+const enum CharClass {
+	Other = 0,
+	Whitespace = 1,
+	Digit = 2,
+	Alpha = 4,
+	AlphaNum = 6, // Alpha | Digit
+}
+
+// Build lookup table at module load
+const charClass = new Uint8Array(128);
+for (let i = 0; i < 128; i++) {
+	if (
+		i === CharCode.Space ||
+		i === CharCode.Tab ||
+		i === CharCode.Newline ||
+		i === CharCode.CarriageReturn
+	) {
+		charClass[i] = CharClass.Whitespace;
+	} else if (i >= CharCode.Zero && i <= CharCode.Nine) {
+		charClass[i] = CharClass.Digit;
+	} else if (
+		(i >= CharCode.UpperA && i <= CharCode.UpperZ) ||
+		(i >= CharCode.LowerA && i <= CharCode.LowerZ) ||
+		i === CharCode.Underscore
+	) {
+		charClass[i] = CharClass.Alpha;
+	}
+}
 
 /**
  * Lexer error with position information
@@ -102,7 +130,7 @@ export class LexerError extends Error {
 }
 
 /**
- * Lexer for tokenizing Filtron query strings
+ * Optimized Lexer for tokenizing Filtron query strings
  */
 export class Lexer {
 	private pos = 0;
@@ -115,291 +143,386 @@ export class Lexer {
 	}
 
 	/**
-	 * Get the current character without advancing
+	 * Skip whitespace and comments (inlined for performance)
 	 */
-	private peek(): string {
-		return this.pos < this.length ? this.input[this.pos] : "";
-	}
+	private skipWhitespace(): void {
+		const input = this.input;
+		const length = this.length;
+		let pos = this.pos;
 
-	/**
-	 * Get the next character without advancing
-	 */
-	private peekNext(): string {
-		return this.pos + 1 < this.length ? this.input[this.pos + 1] : "";
-	}
+		while (pos < length) {
+			const code = input.charCodeAt(pos);
 
-	/**
-	 * Advance and return the current character
-	 */
-	private advance(): string {
-		return this.pos < this.length ? this.input[this.pos++] : "";
-	}
-
-	/**
-	 * Skip whitespace and comments
-	 */
-	private skipWhitespaceAndComments(): void {
-		while (this.pos < this.length) {
-			const code = this.input.charCodeAt(this.pos);
-
-			// Skip whitespace (space=32, tab=9, newline=10, carriage=13)
-			if (code === 32 || code === 9 || code === 10 || code === 13) {
-				this.pos++;
+			// Fast whitespace check
+			if (
+				code === CharCode.Space ||
+				code === CharCode.Tab ||
+				code === CharCode.Newline ||
+				code === CharCode.CarriageReturn
+			) {
+				pos++;
 				continue;
 			}
 
-			// Skip single-line comments: // ...
-			if (code === 47 && this.pos + 1 < this.length && this.input.charCodeAt(this.pos + 1) === 47) {
-				this.pos += 2; // skip //
-				while (this.pos < this.length && this.input.charCodeAt(this.pos) !== 10) {
-					this.pos++;
+			// Comment check
+			if (
+				code === CharCode.Slash &&
+				pos + 1 < length &&
+				input.charCodeAt(pos + 1) === CharCode.Slash
+			) {
+				pos += 2;
+				while (pos < length && input.charCodeAt(pos) !== CharCode.Newline) {
+					pos++;
 				}
 				continue;
 			}
 
 			break;
 		}
+
+		this.pos = pos;
 	}
 
 	/**
-	 * Read a string literal (double-quoted)
+	 * Read a string literal - fast path for no escapes
 	 */
 	private readString(): Token {
+		const input = this.input;
+		const length = this.length;
 		const start = this.pos;
-		this.pos++; // skip opening quote
+		let pos = this.pos + 1; // skip opening quote
 
-		const chars: string[] = [];
-		let lastPos = this.pos;
-
-		while (this.pos < this.length) {
-			const char = this.input[this.pos];
-
-			if (char === '"') {
-				// Flush remaining characters
-				if (lastPos < this.pos) {
-					chars.push(this.input.slice(lastPos, this.pos));
-				}
-				this.pos++; // skip closing quote
+		// Fast path: scan for closing quote or backslash
+		let hasEscape = false;
+		const scanStart = pos;
+		while (pos < length) {
+			const code = input.charCodeAt(pos);
+			if (code === CharCode.Quote) {
+				// No escapes - just slice
+				this.pos = pos + 1;
 				return {
 					type: "STRING",
-					value: chars.join(""),
+					value: input.slice(scanStart, pos),
 					start,
 					end: this.pos,
 				};
 			}
-
-			if (char === "\\") {
-				// Flush accumulated characters before escape
-				if (lastPos < this.pos) {
-					chars.push(this.input.slice(lastPos, this.pos));
-				}
-				this.pos++; // skip backslash
-
-				const escaped = this.input[this.pos++];
-				switch (escaped) {
-					case "n":
-						chars.push("\n");
-						break;
-					case "t":
-						chars.push("\t");
-						break;
-					case "r":
-						chars.push("\r");
-						break;
-					case "\\":
-						chars.push("\\");
-						break;
-					case '"':
-						chars.push('"');
-						break;
-					default:
-						// Keep unknown escapes as-is
-						chars.push(escaped);
-				}
-				lastPos = this.pos;
-				continue;
+			if (code === CharCode.Backslash) {
+				hasEscape = true;
+				break;
 			}
+			pos++;
+		}
 
-			this.pos++;
+		// Slow path: handle escapes
+		if (hasEscape) {
+			pos = scanStart;
+			let result = "";
+			let chunkStart = pos;
+
+			while (pos < length) {
+				const code = input.charCodeAt(pos);
+
+				if (code === CharCode.Quote) {
+					result += input.slice(chunkStart, pos);
+					this.pos = pos + 1;
+					return { type: "STRING", value: result, start, end: this.pos };
+				}
+
+				if (code === CharCode.Backslash) {
+					result += input.slice(chunkStart, pos);
+					pos++;
+					const escaped = input.charCodeAt(pos);
+					pos++;
+					switch (escaped) {
+						case CharCode.LowerN:
+							result += "\n";
+							break;
+						case CharCode.LowerT:
+							result += "\t";
+							break;
+						case CharCode.LowerR:
+							result += "\r";
+							break;
+						case CharCode.Backslash:
+							result += "\\";
+							break;
+						case CharCode.Quote:
+							result += '"';
+							break;
+						default:
+							result += String.fromCharCode(escaped);
+					}
+					chunkStart = pos;
+					continue;
+				}
+
+				pos++;
+			}
 		}
 
 		throw new LexerError("Unterminated string literal", start);
 	}
 
 	/**
-	 * Read a number literal (unsigned integer or float)
+	 * Read a number literal
 	 */
 	private readNumber(): Token {
+		const input = this.input;
+		const length = this.length;
 		const start = this.pos;
+		let pos = this.pos;
 
 		// Handle negative sign
-		if (this.peek() === "-") {
-			this.pos++;
+		if (input.charCodeAt(pos) === CharCode.Minus) {
+			pos++;
 		}
 
 		// Read integer part
-		while (this.pos < this.length && isDigit(this.input[this.pos])) {
-			this.pos++;
+		while (pos < length) {
+			const code = input.charCodeAt(pos);
+			if (code < CharCode.Zero || code > CharCode.Nine) break;
+			pos++;
 		}
 
-		// Check for decimal part
-		if (
-			this.pos < this.length &&
-			this.input[this.pos] === "." &&
-			this.pos + 1 < this.length &&
-			isDigit(this.input[this.pos + 1])
-		) {
-			this.pos++; // skip dot
-			while (this.pos < this.length && isDigit(this.input[this.pos])) {
-				this.pos++;
+		// Check for decimal
+		if (pos < length && input.charCodeAt(pos) === CharCode.Dot && pos + 1 < length) {
+			const nextCode = input.charCodeAt(pos + 1);
+			if (nextCode >= CharCode.Zero && nextCode <= CharCode.Nine) {
+				pos++; // skip dot
+				while (pos < length) {
+					const code = input.charCodeAt(pos);
+					if (code < CharCode.Zero || code > CharCode.Nine) break;
+					pos++;
+				}
+				this.pos = pos;
+				return {
+					type: "NUMBER",
+					value: parseFloat(input.slice(start, pos)),
+					start,
+					end: pos,
+				};
 			}
-			return {
-				type: "NUMBER",
-				value: parseFloat(this.input.slice(start, this.pos)),
-				start,
-				end: this.pos,
-			};
 		}
 
+		this.pos = pos;
 		return {
 			type: "NUMBER",
-			value: parseInt(this.input.slice(start, this.pos), 10),
+			value: parseInt(input.slice(start, pos), 10),
 			start,
-			end: this.pos,
+			end: pos,
 		};
 	}
 
 	/**
-	 * Read an identifier or keyword
+	 * Read identifier with fast keyword detection
 	 */
 	private readIdentifier(): Token {
+		const input = this.input;
+		const length = this.length;
 		const start = this.pos;
+		let pos = this.pos;
 
 		// Read all alphanumeric characters
-		while (this.pos < this.length && isAlphaNum(this.input[this.pos])) {
-			this.pos++;
+		while (pos < length) {
+			const code = input.charCodeAt(pos);
+			if (
+				(code >= CharCode.LowerA && code <= CharCode.LowerZ) ||
+				(code >= CharCode.UpperA && code <= CharCode.UpperZ) ||
+				(code >= CharCode.Zero && code <= CharCode.Nine) ||
+				code === CharCode.Underscore
+			) {
+				pos++;
+			} else {
+				break;
+			}
 		}
 
-		const ident = this.input.slice(start, this.pos);
+		this.pos = pos;
+		const len = pos - start;
 
-		// Check if it's a keyword
-		const lower = ident.toLowerCase();
-		const keywordType = KEYWORDS[lower];
-		if (keywordType) {
-			if (keywordType === "TRUE") {
-				return { type: "TRUE", value: true, start, end: this.pos };
+		// Fast keyword detection based on length and first char
+		if (len >= 2 && len <= 6) {
+			const firstCode = input.charCodeAt(start) | 0x20; // lowercase
+
+			if (len === 2) {
+				// "or"
+				if (firstCode === 111 && (input.charCodeAt(start + 1) | 0x20) === 114) {
+					return { type: "OR", value: "or", start, end: pos };
+				}
+			} else if (len === 3) {
+				// "and", "not"
+				if (firstCode === 97) {
+					// 'a'
+					if (
+						(input.charCodeAt(start + 1) | 0x20) === 110 &&
+						(input.charCodeAt(start + 2) | 0x20) === 100
+					) {
+						return { type: "AND", value: "and", start, end: pos };
+					}
+				} else if (firstCode === 110) {
+					// 'n'
+					if (
+						(input.charCodeAt(start + 1) | 0x20) === 111 &&
+						(input.charCodeAt(start + 2) | 0x20) === 116
+					) {
+						return { type: "NOT", value: "not", start, end: pos };
+					}
+				}
+			} else if (len === 4) {
+				// "true"
+				if (firstCode === 116) {
+					// 't'
+					if (
+						(input.charCodeAt(start + 1) | 0x20) === 114 &&
+						(input.charCodeAt(start + 2) | 0x20) === 117 &&
+						(input.charCodeAt(start + 3) | 0x20) === 101
+					) {
+						return { type: "TRUE", value: true, start, end: pos };
+					}
+				}
+			} else if (len === 5) {
+				// "false"
+				if (firstCode === 102) {
+					// 'f'
+					if (
+						(input.charCodeAt(start + 1) | 0x20) === 97 &&
+						(input.charCodeAt(start + 2) | 0x20) === 108 &&
+						(input.charCodeAt(start + 3) | 0x20) === 115 &&
+						(input.charCodeAt(start + 4) | 0x20) === 101
+					) {
+						return { type: "FALSE", value: false, start, end: pos };
+					}
+				}
+			} else if (len === 6) {
+				// "exists"
+				if (firstCode === 101) {
+					// 'e'
+					if (
+						(input.charCodeAt(start + 1) | 0x20) === 120 &&
+						(input.charCodeAt(start + 2) | 0x20) === 105 &&
+						(input.charCodeAt(start + 3) | 0x20) === 115 &&
+						(input.charCodeAt(start + 4) | 0x20) === 116 &&
+						(input.charCodeAt(start + 5) | 0x20) === 115
+					) {
+						return { type: "EXISTS", value: "exists", start, end: pos };
+					}
+				}
 			}
-			if (keywordType === "FALSE") {
-				return { type: "FALSE", value: false, start, end: this.pos };
-			}
-			return { type: keywordType, value: lower, start, end: this.pos };
 		}
 
-		return { type: "IDENT", value: ident, start, end: this.pos };
+		return { type: "IDENT", value: input.slice(start, pos), start, end: pos };
 	}
 
 	/**
 	 * Get the next token
 	 */
 	next(): Token {
-		this.skipWhitespaceAndComments();
+		this.skipWhitespace();
 
-		if (this.pos >= this.length) {
-			return { type: "EOF", value: "", start: this.pos, end: this.pos };
-		}
+		const input = this.input;
+		const pos = this.pos;
 
-		const start = this.pos;
-		const char = this.peek();
-
-		// Single character tokens
-		switch (char) {
-			case "(":
-				this.advance();
-				return { type: "LPAREN", value: "(", start, end: this.pos };
-			case ")":
-				this.advance();
-				return { type: "RPAREN", value: ")", start, end: this.pos };
-			case "[":
-				this.advance();
-				return { type: "LBRACKET", value: "[", start, end: this.pos };
-			case "]":
-				this.advance();
-				return { type: "RBRACKET", value: "]", start, end: this.pos };
-			case ",":
-				this.advance();
-				return { type: "COMMA", value: ",", start, end: this.pos };
-			case "?":
-				this.advance();
-				return { type: "QUESTION", value: "?", start, end: this.pos };
+		if (pos >= this.length) {
+			return { type: "EOF", value: "", start: pos, end: pos };
 		}
 
-		// Two-character operators (check these before single-char versions)
-		if (char === "!" && this.peekNext() === "=") {
-			this.advance();
-			this.advance();
-			return { type: "NEQ", value: "!=", start, end: this.pos };
-		}
-		if (char === "!" && this.peekNext() === ":") {
-			this.advance();
-			this.advance();
-			return { type: "NOT_COLON", value: "!:", start, end: this.pos };
-		}
-		if (char === ">" && this.peekNext() === "=") {
-			this.advance();
-			this.advance();
-			return { type: "GTE", value: ">=", start, end: this.pos };
-		}
-		if (char === "<" && this.peekNext() === "=") {
-			this.advance();
-			this.advance();
-			return { type: "LTE", value: "<=", start, end: this.pos };
-		}
-		if (char === "." && this.peekNext() === ".") {
-			this.advance();
-			this.advance();
-			return { type: "DOTDOT", value: "..", start, end: this.pos };
+		const code = input.charCodeAt(pos);
+
+		// Single character tokens (most common first)
+		switch (code) {
+			case CharCode.LParen:
+				this.pos = pos + 1;
+				return { type: "LPAREN", value: "(", start: pos, end: pos + 1 };
+			case CharCode.RParen:
+				this.pos = pos + 1;
+				return { type: "RPAREN", value: ")", start: pos, end: pos + 1 };
+			case CharCode.LBracket:
+				this.pos = pos + 1;
+				return { type: "LBRACKET", value: "[", start: pos, end: pos + 1 };
+			case CharCode.RBracket:
+				this.pos = pos + 1;
+				return { type: "RBRACKET", value: "]", start: pos, end: pos + 1 };
+			case CharCode.Comma:
+				this.pos = pos + 1;
+				return { type: "COMMA", value: ",", start: pos, end: pos + 1 };
+			case CharCode.Question:
+				this.pos = pos + 1;
+				return { type: "QUESTION", value: "?", start: pos, end: pos + 1 };
+			case CharCode.Equals:
+				this.pos = pos + 1;
+				return { type: "EQ", value: "=", start: pos, end: pos + 1 };
+			case CharCode.Tilde:
+				this.pos = pos + 1;
+				return { type: "LIKE", value: "~", start: pos, end: pos + 1 };
+			case CharCode.Colon:
+				this.pos = pos + 1;
+				return { type: "COLON", value: ":", start: pos, end: pos + 1 };
 		}
 
-		// Single character operators
-		switch (char) {
-			case ".":
-				this.advance();
-				return { type: "DOT", value: ".", start, end: this.pos };
-			case "=":
-				this.advance();
-				return { type: "EQ", value: "=", start, end: this.pos };
-			case ">":
-				this.advance();
-				return { type: "GT", value: ">", start, end: this.pos };
-			case "<":
-				this.advance();
-				return { type: "LT", value: "<", start, end: this.pos };
-			case "~":
-				this.advance();
-				return { type: "LIKE", value: "~", start, end: this.pos };
-			case ":":
-				this.advance();
-				return { type: "COLON", value: ":", start, end: this.pos };
+		// Two-character operators
+		const nextCode = pos + 1 < this.length ? input.charCodeAt(pos + 1) : 0;
+
+		if (code === CharCode.Bang) {
+			if (nextCode === CharCode.Equals) {
+				this.pos = pos + 2;
+				return { type: "NEQ", value: "!=", start: pos, end: pos + 2 };
+			}
+			if (nextCode === CharCode.Colon) {
+				this.pos = pos + 2;
+				return { type: "NOT_COLON", value: "!:", start: pos, end: pos + 2 };
+			}
+		}
+
+		if (code === CharCode.GreaterThan) {
+			if (nextCode === CharCode.Equals) {
+				this.pos = pos + 2;
+				return { type: "GTE", value: ">=", start: pos, end: pos + 2 };
+			}
+			this.pos = pos + 1;
+			return { type: "GT", value: ">", start: pos, end: pos + 1 };
+		}
+
+		if (code === CharCode.LessThan) {
+			if (nextCode === CharCode.Equals) {
+				this.pos = pos + 2;
+				return { type: "LTE", value: "<=", start: pos, end: pos + 2 };
+			}
+			this.pos = pos + 1;
+			return { type: "LT", value: "<", start: pos, end: pos + 1 };
+		}
+
+		if (code === CharCode.Dot) {
+			if (nextCode === CharCode.Dot) {
+				this.pos = pos + 2;
+				return { type: "DOTDOT", value: "..", start: pos, end: pos + 2 };
+			}
+			this.pos = pos + 1;
+			return { type: "DOT", value: ".", start: pos, end: pos + 1 };
 		}
 
 		// String literal
-		if (char === '"') {
+		if (code === CharCode.Quote) {
 			return this.readString();
 		}
 
-		// Number (including negative numbers)
-		if (
-			isDigit(char) ||
-			(char === "-" && this.pos + 1 < this.length && isDigit(this.input[this.pos + 1]))
-		) {
+		// Number
+		if (code >= CharCode.Zero && code <= CharCode.Nine) {
+			return this.readNumber();
+		}
+		if (code === CharCode.Minus && nextCode >= CharCode.Zero && nextCode <= CharCode.Nine) {
 			return this.readNumber();
 		}
 
 		// Identifier or keyword
-		if (isAlpha(char)) {
+		if (
+			(code >= CharCode.LowerA && code <= CharCode.LowerZ) ||
+			(code >= CharCode.UpperA && code <= CharCode.UpperZ) ||
+			code === CharCode.Underscore
+		) {
 			return this.readIdentifier();
 		}
 
-		throw new LexerError(`Unexpected character: '${char}'`, this.pos);
+		throw new LexerError(`Unexpected character: '${input[pos]}'`, pos);
 	}
 }

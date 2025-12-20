@@ -177,18 +177,18 @@ parse('age > 18 AND status = "active"')
 
 Filtron uses a hand-written recursive descent parser optimized for speed:
 
-| Query Type | Parse Time   | Throughput       |
-| ---------- | ------------ | ---------------- |
-| Simple     | ~90-250ns    | 4-11M ops/sec    |
-| Medium     | ~360-870ns   | 1.1-2.8M ops/sec |
-| Complex    | ~0.9-1.5μs   | 650K-1.1M ops/sec |
+| Query Type | Parse Time | Throughput        |
+| ---------- | ---------- | ----------------- |
+| Simple     | ~90-250ns  | 4-11M ops/sec     |
+| Medium     | ~360-870ns | 1.1-2.8M ops/sec  |
+| Complex    | ~0.9-1.5μs | 650K-1.1M ops/sec |
 
 **Additional package overhead:**
 
-| Package       | Overhead  | Total Throughput |
-| ------------- | --------- | ---------------- |
-| @filtron/js   | ~0.2μs    | ~750K ops/sec    |
-| @filtron/sql  | ~0.3μs    | ~740K ops/sec    |
+| Package      | Overhead | Total Throughput |
+| ------------ | -------- | ---------------- |
+| @filtron/js  | ~0.2μs   | ~750K ops/sec    |
+| @filtron/sql | ~0.3μs   | ~740K ops/sec    |
 
 Run benchmarks: `bun run bench` in each package
 

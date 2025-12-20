@@ -4,9 +4,6 @@
  * Tokenizes input strings into a stream of tokens for the parser.
  */
 
-/**
- * Fast character type checking using char codes
- */
 const isDigit = (char: string): boolean => {
 	const code = char.charCodeAt(0);
 	return code >= 48 && code <= 57; // 0-9
@@ -18,7 +15,7 @@ const isAlpha = (char: string): boolean => {
 		(code >= 65 && code <= 90) || // A-Z
 		(code >= 97 && code <= 122) || // a-z
 		code === 95
-	); // _
+	);
 };
 
 const isAlphaNum = (char: string): boolean => {
@@ -28,7 +25,7 @@ const isAlphaNum = (char: string): boolean => {
 		(code >= 65 && code <= 90) || // A-Z
 		(code >= 97 && code <= 122) || // a-z
 		code === 95
-	); // _
+	);
 };
 
 /**
@@ -70,7 +67,7 @@ export type TokenType =
 	| "EOF";
 
 /**
- * A token produced by the lexer
+ * The generic token produced by the lexer
  */
 export interface Token {
 	type: TokenType;
@@ -230,7 +227,7 @@ export class Lexer {
 	}
 
 	/**
-	 * Read a number literal (integer or float, possibly negative)
+	 * Read a number literal (unsigned integer or float)
 	 */
 	private readNumber(): Token {
 		const start = this.pos;

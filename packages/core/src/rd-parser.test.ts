@@ -12,7 +12,7 @@ import type {
 } from "./types";
 import { parseQuery, ParseError } from "./rd-parser";
 
-describe("Recursive Descent Parser", () => {
+describe("RD Parser", () => {
 	describe("Field Expressions", () => {
 		test("simple field name", () => {
 			const ast = parseQuery("user_name") as BooleanFieldExpression;

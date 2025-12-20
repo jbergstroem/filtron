@@ -10,8 +10,8 @@
 		"emitDeclarationOnly": true,
 		"outDir": "./dist",
 		"rootDir": ".",
-		"isolatedModules": true,
+		"isolatedModules": true
 	},
 	"include": ["index.ts", "src/**/*.ts"],
-	"exclude": ["node_modules", "dist", "**/*.test.ts"],
+	"exclude": ["node_modules", "dist", "**/*.test.ts"]
 }

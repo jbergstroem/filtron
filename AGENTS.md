@@ -10,7 +10,7 @@
 - Do NOT add dependencies without explicit approval
 - Do NOT expose internal functions in public API
 - Do NOT write tests beyond what's needed for coverage
-- Keep README updates factual; no marketing language
+- Keep README updates factual - no marketing language
 
 ## Key Files
 

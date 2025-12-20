@@ -26,7 +26,7 @@ export interface ParseError {
 }
 
 /**
- * Result of a parse operation - either success or error
+ * The generic parse result
  */
 export type ParseResult = ParseSuccess | ParseError;
 

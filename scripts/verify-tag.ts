@@ -94,8 +94,8 @@ export async function readPackageJson(packageDir: string): Promise<PackageJson> 
  */
 export async function isPublished(packageName: string, version: string): Promise<boolean> {
 	const proc = Bun.spawn(["bun", "info", `${packageName}@${version}`], {
-		stdout: "pipe",
-		stderr: "pipe",
+		stdout: "ignore",
+		stderr: "ignore",
 	});
 
 	const timeout = new Promise<number>((resolve) =>
@@ -173,18 +173,16 @@ async function main() {
 			process.exit(1);
 		}
 
-		console.log(`\nVerifying ${tags.length} tag(s)...`);
+		console.log(`\nVerifying ${tags.length} tag(s)...\n`);
 
 		const packages: PackageInfo[] = [];
 
 		for (const tag of tags) {
-			console.log(`\n  Tag: ${tag}`);
 			const pkg = await processTag(tag);
-			console.log(`    Package: ${pkg.name}`);
-			console.log(`    Version: ${pkg.version}`);
-			console.log(`    Directory: ${pkg.dir}`);
 			packages.push(pkg);
 		}
+
+		console.table(packages);
 
 		// Output for GitHub Actions
 		const githubOutput = Bun.env.GITHUB_OUTPUT;
@@ -202,6 +200,8 @@ async function main() {
 		}
 		process.exit(1);
 	}
+
+	console.log("All tags verified successfully!");
 }
 
 // Only run main if this is the main module

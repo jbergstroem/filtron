@@ -117,8 +117,8 @@ describe("Verify tag", () => {
 			const result = await isPublished("@filtron/core", "1.1.0");
 			expect(result).toBe(true);
 			expect(mockSpawn).toHaveBeenCalledWith(["bun", "info", "@filtron/core@1.1.0"], {
-				stdout: "pipe",
-				stderr: "pipe",
+				stdout: "ignore",
+				stderr: "ignore",
 			});
 		});
 
@@ -133,8 +133,8 @@ describe("Verify tag", () => {
 			expect(mockSpawn).toHaveBeenCalledWith(
 				["bun", "info", "@filtron/core@1.0.0-nonexistent-test-version"],
 				{
-					stdout: "pipe",
-					stderr: "pipe",
+					stdout: "ignore",
+					stderr: "ignore",
 				},
 			);
 		});
@@ -150,8 +150,8 @@ describe("Verify tag", () => {
 			expect(mockSpawn).toHaveBeenCalledWith(
 				["bun", "info", "@filtron/core@999.999.999-alpha.nonexistent"],
 				{
-					stdout: "pipe",
-					stderr: "pipe",
+					stdout: "ignore",
+					stderr: "ignore",
 				},
 			);
 		});

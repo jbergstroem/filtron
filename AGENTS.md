@@ -107,12 +107,14 @@ Value           = STRING | NUMBER | BOOLEAN | DottedIdent
 
 - No emojis in code, comments, documentation, or commit messages
 - Keep updates factual; no marketing language or hyperbole
+- Write concisely - remove verbose explanations and redundant sections
+- Avoid bold text for emphasis; let the content speak for itself
 - Use sentence case for headings (not Title Case)
 - Code examples should be minimal and runnable
-- Link to other docs using relative paths: `[Guide](./CONTRIBUTING.md)`
+- Show both safe and unsafe patterns in security-related examples
 - Tables for structured information (operators, commands, etc.)
 - Use TypeScript for all code examples
-- Show both success and error cases in examples where relevant
+- Link to other docs using relative paths: `[Guide](./CONTRIBUTING.md)`
 
 ## GitHub Actions Workflow Style
 

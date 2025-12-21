@@ -11,10 +11,6 @@ import {
 	type PackageInfo,
 } from "./verify-tag";
 
-afterEach(() => {
-	// clean up spies
-});
-
 describe("Verify tag", () => {
 	describe("parseTag", () => {
 		test("parses valid package-version tag", () => {

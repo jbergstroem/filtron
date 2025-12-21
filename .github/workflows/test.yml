@@ -26,11 +26,12 @@ jobs:
           use_oidc: true
           files: ./coverage/lcov.info
           disable_search: true
-      - uses: codecov/test-results-action@47f89e9acb64b76debcd5ea40642d25a4adced9f # v1
+      - uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5
         if: ${{ !cancelled() }}
         with:
           use_oidc: true
-          file: ./junit.xml
+          report_type: test_results
+          files: ./junit.xml
           disable_search: true
 
   e2e:
@@ -82,7 +83,7 @@ jobs:
           bun-version: ${{ matrix.version }}
 
       - if: matrix.setup == 'deno'
-        uses: denoland/setup-deno@v2
+        uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2
         with:
           deno-version: ${{ matrix.version }}
 

@@ -1,0 +1,11 @@
+{
+	"compilerOptions": {
+		"target": "ES2021",
+		"module": "ESNext",
+		"lib": ["ES2021"],
+		"moduleResolution": "bundler",
+		"strict": true,
+		"skipLibCheck": true
+	},
+	"include": ["scripts/*.ts"]
+}

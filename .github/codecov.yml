@@ -5,6 +5,13 @@ coverage:
     project:
       default:
         target: 90%
+        paths:
+          - "!scripts/verify-tag.ts"
+      # No plan on end to end testing this
+      scripts:
+        target: 50%
+        paths:
+          - scripts/
     patch: off
 
 component_management:

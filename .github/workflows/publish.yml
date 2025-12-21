@@ -1,0 +1,47 @@
+name: Publish Package
+
+on:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    outputs:
+      packages: ${{ steps.verify.outputs.packages }}
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+      - uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2
+        with:
+          bun-version-file: package.json
+      - run: |
+          tags=$(git tag --points-at HEAD)
+          if [ -z "$tags" ]; then
+            echo "Error: No tags found pointing at HEAD"
+            exit 1
+          fi
+          echo "$tags" | xargs bun run scripts/verify-tag.ts
+        id: verify
+
+  publish:
+    needs: verify
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      matrix:
+        package: ${{ fromJson(needs.verify.outputs.packages) }}
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+      - uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2
+        with:
+          bun-version-file: package.json
+      - run: bun ci
+      - run: |
+          cd "${{ matrix.package.dir }}"
+          bun run build
+      - run: |
+          cd "${{ matrix.package.dir }}"
+          bun publish --access public

@@ -83,7 +83,7 @@ jobs:
           bun-version: ${{ matrix.version }}
 
       - if: matrix.setup == 'deno'
-        uses: denoland/setup-deno@v2
+        uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2
         with:
           deno-version: ${{ matrix.version }}
 

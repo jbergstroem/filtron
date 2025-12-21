@@ -19,8 +19,8 @@
  *   - packages: JSON array of {name, version, dir} objects
  */
 
-import { existsSync, statSync } from "bun:fs";
-import { join } from "bun:path";
+import { existsSync, statSync } from "node:fs";
+import { join } from "node:path";
 
 export interface PackageJson {
 	name: string;
@@ -190,7 +190,9 @@ async function main() {
 		const githubOutput = Bun.env.GITHUB_OUTPUT;
 		if (githubOutput) {
 			const output = `packages=${JSON.stringify(packages)}\n`;
-			await Bun.write(githubOutput, output, { append: true });
+			const file = Bun.file(githubOutput);
+			const existingContent = (await file.exists()) ? await file.text() : "";
+			await Bun.write(githubOutput, existingContent + output);
 		}
 	} catch (error) {
 		if (error instanceof Error) {

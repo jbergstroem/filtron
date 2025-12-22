@@ -52,48 +52,48 @@ export interface Token {
 }
 
 // Character codes
-const enum CharCode {
-	Tab = 9,
-	Newline = 10,
-	CarriageReturn = 13,
-	Space = 32,
-	Bang = 33, // !
-	Quote = 34, // "
-	Dot = 46, // .
-	Slash = 47, // /
-	Zero = 48,
-	Nine = 57,
-	Colon = 58, // :
-	LessThan = 60, // <
-	Equals = 61, // =
-	GreaterThan = 62, // >
-	Question = 63, // ?
-	UpperA = 65,
-	UpperZ = 90,
-	LBracket = 91, // [
-	Backslash = 92, // \
-	RBracket = 93, // ]
-	Underscore = 95, // _
-	LowerA = 97,
-	LowerZ = 122,
-	Tilde = 126, // ~
-	LParen = 40, // (
-	RParen = 41, // )
-	Comma = 44, // ,
-	Minus = 45, // -
-	LowerN = 110,
-	LowerR = 114,
-	LowerT = 116,
-}
+const CharCode = {
+	Tab: 9,
+	Newline: 10,
+	CarriageReturn: 13,
+	Space: 32,
+	Bang: 33, // !
+	Quote: 34, // "
+	Dot: 46, // .
+	Slash: 47, // /
+	Zero: 48,
+	Nine: 57,
+	Colon: 58, // :
+	LessThan: 60, // <
+	Equals: 61, // =
+	GreaterThan: 62, // >
+	Question: 63, // ?
+	UpperA: 65,
+	UpperZ: 90,
+	LBracket: 91, // [
+	Backslash: 92, // \
+	RBracket: 93, // ]
+	Underscore: 95, // _
+	LowerA: 97,
+	LowerZ: 122,
+	Tilde: 126, // ~
+	LParen: 40, // (
+	RParen: 41, // )
+	Comma: 44, // ,
+	Minus: 45, // -
+	LowerN: 110,
+	LowerR: 114,
+	LowerT: 116,
+} as const;
 
 // Character classification lookup table (0-127)
-const enum CharClass {
-	Other = 0,
-	Whitespace = 1,
-	Digit = 2,
-	Alpha = 4,
-	AlphaNum = 6, // Alpha | Digit
-}
+const CharClass = {
+	Other: 0,
+	Whitespace: 1,
+	Digit: 2,
+	Alpha: 4,
+	AlphaNum: 6, // Alpha | Digit
+} as const;
 
 // Build lookup table at module load
 const charClass = new Uint8Array(128);

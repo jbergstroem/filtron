@@ -6,7 +6,6 @@
 import type {
 	ASTNode,
 	Value,
-	ComparisonOperator,
 	OrExpression,
 	AndExpression,
 	NotExpression,
@@ -224,13 +223,84 @@ function generateComparison(
 ): FilterPredicate<Record<string, unknown>> {
 	validateField(node.field, state);
 	const mappedField = resolveFieldName(node.field, state);
-	const value = extractValue(node.value);
-	const compareFn = getComparisonFunction(node.operator, value, state);
+	const targetValue = extractValue(node.value);
+	const accessor = state.fieldAccessor;
 
-	return (item) => {
-		const fieldValue = state.fieldAccessor(item, mappedField);
-		return compareFn(fieldValue, value);
-	};
+	// Inline simple comparisons to avoid function call overhead
+	switch (node.operator) {
+		case "=":
+		case ":":
+			if (state.caseInsensitive && typeof targetValue === "string") {
+				const lowerTarget = targetValue.toLowerCase();
+				return (item) => {
+					const fieldValue = accessor(item, mappedField);
+					return typeof fieldValue === "string"
+						? fieldValue.toLowerCase() === lowerTarget
+						: fieldValue === targetValue;
+				};
+			}
+			return (item) => accessor(item, mappedField) === targetValue;
+
+		case "!=":
+			if (state.caseInsensitive && typeof targetValue === "string") {
+				const lowerTarget = targetValue.toLowerCase();
+				return (item) => {
+					const fieldValue = accessor(item, mappedField);
+					return typeof fieldValue === "string"
+						? fieldValue.toLowerCase() !== lowerTarget
+						: fieldValue !== targetValue;
+				};
+			}
+			return (item) => accessor(item, mappedField) !== targetValue;
+
+		case "~":
+			if (typeof targetValue !== "string") {
+				return () => false;
+			}
+			if (state.caseInsensitive) {
+				const lowerTarget = targetValue.toLowerCase();
+				return (item) => {
+					const fieldValue = accessor(item, mappedField);
+					return typeof fieldValue === "string" && fieldValue.toLowerCase().includes(lowerTarget);
+				};
+			}
+			return (item) => {
+				const fieldValue = accessor(item, mappedField);
+				return typeof fieldValue === "string" && fieldValue.includes(targetValue);
+			};
+
+		case ">":
+			if (typeof targetValue !== "number") return () => false;
+			return (item) => {
+				const fieldValue = accessor(item, mappedField);
+				return typeof fieldValue === "number" && fieldValue > targetValue;
+			};
+
+		case ">=":
+			if (typeof targetValue !== "number") return () => false;
+			return (item) => {
+				const fieldValue = accessor(item, mappedField);
+				return typeof fieldValue === "number" && fieldValue >= targetValue;
+			};
+
+		case "<":
+			if (typeof targetValue !== "number") return () => false;
+			return (item) => {
+				const fieldValue = accessor(item, mappedField);
+				return typeof fieldValue === "number" && fieldValue < targetValue;
+			};
+
+		case "<=":
+			if (typeof targetValue !== "number") return () => false;
+			return (item) => {
+				const fieldValue = accessor(item, mappedField);
+				return typeof fieldValue === "number" && fieldValue <= targetValue;
+			};
+
+		default:
+			const _exhaustive: never = node.operator;
+			throw new Error(`Unknown operator: ${node.operator}`);
+	}
 }
 
 /**
@@ -243,9 +313,9 @@ function generateOneOf(
 	validateField(node.field, state);
 	const mappedField = resolveFieldName(node.field, state);
 	const values = node.values.map((v: Value) => extractValue(v));
+	const accessor = state.fieldAccessor;
 
 	if (values.length === 0) {
-		// Empty IN clause - always false
 		return () => false;
 	}
 
@@ -253,27 +323,30 @@ function generateOneOf(
 		const lowerValues = values.map((v: string | number | boolean) =>
 			typeof v === "string" ? v.toLowerCase() : v,
 		);
+		// Use Set for O(1) lookup on larger lists (threshold ~12 based on typical benchmarks)
+		if (lowerValues.length > 12) {
+			const valueSet = new Set(lowerValues);
+			return (item) => {
+				const fieldValue = accessor(item, mappedField);
+				const compareValue = typeof fieldValue === "string" ? fieldValue.toLowerCase() : fieldValue;
+				return valueSet.has(compareValue as string | number | boolean);
+			};
+		}
 		return (item) => {
-			const fieldValue = state.fieldAccessor(item, mappedField);
+			const fieldValue = accessor(item, mappedField);
 			const compareValue = typeof fieldValue === "string" ? fieldValue.toLowerCase() : fieldValue;
-			return lowerValues.some((v: string | number | boolean) => v === compareValue);
+			return lowerValues.includes(compareValue as string | number | boolean);
 		};
 	}
 
-	// For small arrays (<=4 items), Array.includes is faster than Set lookup
-	if (values.length <= 4) {
-		return (item) => {
-			const fieldValue = state.fieldAccessor(item, mappedField);
-			return values.includes(fieldValue as string | number | boolean);
-		};
+	// For small arrays (<=12 items), Array.includes is faster than Set lookup
+	if (values.length <= 12) {
+		return (item) => values.includes(accessor(item, mappedField) as string | number | boolean);
 	}
 
 	// Use Set for O(1) lookup on larger lists
 	const valueSet = new Set(values);
-	return (item) => {
-		const fieldValue = state.fieldAccessor(item, mappedField);
-		return valueSet.has(fieldValue as string | number | boolean);
-	};
+	return (item) => valueSet.has(accessor(item, mappedField) as string | number | boolean);
 }
 
 /**
@@ -286,9 +359,9 @@ function generateNotOneOf(
 	validateField(node.field, state);
 	const mappedField = resolveFieldName(node.field, state);
 	const values = node.values.map((v: Value) => extractValue(v));
+	const accessor = state.fieldAccessor;
 
 	if (values.length === 0) {
-		// Empty NOT IN clause - always true
 		return () => true;
 	}
 
@@ -296,27 +369,30 @@ function generateNotOneOf(
 		const lowerValues = values.map((v: string | number | boolean) =>
 			typeof v === "string" ? v.toLowerCase() : v,
 		);
+		// Use Set for O(1) lookup on larger lists (threshold ~12 based on typical benchmarks)
+		if (lowerValues.length > 12) {
+			const valueSet = new Set(lowerValues);
+			return (item) => {
+				const fieldValue = accessor(item, mappedField);
+				const compareValue = typeof fieldValue === "string" ? fieldValue.toLowerCase() : fieldValue;
+				return !valueSet.has(compareValue as string | number | boolean);
+			};
+		}
 		return (item) => {
-			const fieldValue = state.fieldAccessor(item, mappedField);
+			const fieldValue = accessor(item, mappedField);
 			const compareValue = typeof fieldValue === "string" ? fieldValue.toLowerCase() : fieldValue;
-			return !lowerValues.some((v: string | number | boolean) => v === compareValue);
+			return !lowerValues.includes(compareValue as string | number | boolean);
 		};
 	}
 
-	// For small arrays (<=4 items), Array.includes is faster than Set lookup
-	if (values.length <= 4) {
-		return (item) => {
-			const fieldValue = state.fieldAccessor(item, mappedField);
-			return !values.includes(fieldValue as string | number | boolean);
-		};
+	// For small arrays (<=12 items), Array.includes is faster than Set lookup
+	if (values.length <= 12) {
+		return (item) => !values.includes(accessor(item, mappedField) as string | number | boolean);
 	}
 
 	// Use Set for O(1) lookup on larger lists
 	const valueSet = new Set(values);
-	return (item) => {
-		const fieldValue = state.fieldAccessor(item, mappedField);
-		return !valueSet.has(fieldValue as string | number | boolean);
-	};
+	return (item) => !valueSet.has(accessor(item, mappedField) as string | number | boolean);
 }
 
 /**
@@ -328,8 +404,9 @@ function generateExists(
 ): FilterPredicate<Record<string, unknown>> {
 	validateField(node.field, state);
 	const mappedField = resolveFieldName(node.field, state);
+	const accessor = state.fieldAccessor;
 	return (item) => {
-		const fieldValue = state.fieldAccessor(item, mappedField);
+		const fieldValue = accessor(item, mappedField);
 		return fieldValue !== null && fieldValue !== undefined;
 	};
 }
@@ -343,10 +420,8 @@ function generateBooleanField(
 ): FilterPredicate<Record<string, unknown>> {
 	validateField(node.field, state);
 	const mappedField = resolveFieldName(node.field, state);
-	return (item) => {
-		const fieldValue = state.fieldAccessor(item, mappedField);
-		return fieldValue === true;
-	};
+	const accessor = state.fieldAccessor;
+	return (item) => accessor(item, mappedField) === true;
 }
 
 /**
@@ -358,100 +433,12 @@ function generateRange(
 ): FilterPredicate<Record<string, unknown>> {
 	validateField(node.field, state);
 	const mappedField = resolveFieldName(node.field, state);
+	const accessor = state.fieldAccessor;
+	const { min, max } = node;
 	return (item) => {
-		const fieldValue = state.fieldAccessor(item, mappedField);
-		if (typeof fieldValue !== "number") {
-			return false;
-		}
-		return fieldValue >= node.min && fieldValue <= node.max;
+		const fieldValue = accessor(item, mappedField);
+		return typeof fieldValue === "number" && fieldValue >= min && fieldValue <= max;
 	};
-}
-
-/**
- * Returns a comparison function for the given operator
- */
-function getComparisonFunction(
-	operator: ComparisonOperator,
-	_targetValue: string | number | boolean,
-	state: GeneratorState,
-): (fieldValue: unknown, targetValue: string | number | boolean) => boolean {
-	switch (operator) {
-		case "=":
-		case ":":
-			if (state.caseInsensitive) {
-				return (fieldValue, targetValue) => {
-					if (typeof fieldValue === "string" && typeof targetValue === "string") {
-						return fieldValue.toLowerCase() === targetValue.toLowerCase();
-					}
-					return fieldValue === targetValue;
-				};
-			}
-			return (fieldValue, targetValue) => fieldValue === targetValue;
-
-		case "!=":
-			if (state.caseInsensitive) {
-				return (fieldValue, targetValue) => {
-					if (typeof fieldValue === "string" && typeof targetValue === "string") {
-						return fieldValue.toLowerCase() !== targetValue.toLowerCase();
-					}
-					return fieldValue !== targetValue;
-				};
-			}
-			return (fieldValue, targetValue) => fieldValue !== targetValue;
-
-		case "~":
-			// Contains/LIKE - uses substring matching
-			if (state.caseInsensitive) {
-				return (fieldValue, targetValue) => {
-					if (typeof fieldValue !== "string" || typeof targetValue !== "string") {
-						return false;
-					}
-					return fieldValue.toLowerCase().includes(targetValue.toLowerCase());
-				};
-			}
-			return (fieldValue, targetValue) => {
-				if (typeof fieldValue !== "string" || typeof targetValue !== "string") {
-					return false;
-				}
-				return fieldValue.includes(targetValue);
-			};
-
-		case ">":
-			return (fieldValue, targetValue) => {
-				if (typeof fieldValue !== "number" || typeof targetValue !== "number") {
-					return false;
-				}
-				return fieldValue > targetValue;
-			};
-
-		case ">=":
-			return (fieldValue, targetValue) => {
-				if (typeof fieldValue !== "number" || typeof targetValue !== "number") {
-					return false;
-				}
-				return fieldValue >= targetValue;
-			};
-
-		case "<":
-			return (fieldValue, targetValue) => {
-				if (typeof fieldValue !== "number" || typeof targetValue !== "number") {
-					return false;
-				}
-				return fieldValue < targetValue;
-			};
-
-		case "<=":
-			return (fieldValue, targetValue) => {
-				if (typeof fieldValue !== "number" || typeof targetValue !== "number") {
-					return false;
-				}
-				return fieldValue <= targetValue;
-			};
-
-		default:
-			const _exhaustive: never = operator;
-			throw new Error(`Unknown operator: ${operator as string}`);
-	}
 }
 
 /**

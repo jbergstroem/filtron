@@ -21,9 +21,13 @@ const bench = withCodSpeed(
 const simpleAST = parse("age > 18");
 const mediumAST = parse('status = "active" AND age >= 18');
 const complexAST = parse('(role = "admin" OR role = "moderator") AND status = "active"');
+// Large oneOf (>12 items) to test Set-based lookup optimization
+const largeOneOfAST = parse(
+	'status : ["s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11", "s12", "s13", "s14"] AND age > 18',
+);
 
 // Validate ASTs
-if (!simpleAST.success || !mediumAST.success || !complexAST.success) {
+if (!simpleAST.success || !mediumAST.success || !complexAST.success || !largeOneOfAST.success) {
 	throw new Error("Failed to parse test queries");
 }
 
@@ -42,6 +46,7 @@ const users = Array.from({ length: 1000 }, (_, i) => ({
 const simpleFilter = toFilter(simpleAST.ast);
 const mediumFilter = toFilter(mediumAST.ast);
 const complexFilter = toFilter(complexAST.ast);
+const largeOneOfFilter = toFilter(largeOneOfAST.ast);
 
 // Filter creation benchmarks (isolated overhead)
 bench
@@ -65,6 +70,9 @@ bench
 	})
 	.add("filter array: complex", () => {
 		users.filter(complexFilter);
+	})
+	.add("filter array: large oneOf", () => {
+		users.filter(largeOneOfFilter);
 	});
 
 // End-to-end pipeline benchmarks

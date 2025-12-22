@@ -43,6 +43,7 @@ jobs:
           disable_search: true
 
   e2e:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-24.04
     strategy:
       matrix:

@@ -45,7 +45,7 @@ jobs:
       - uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2
         with:
           bun-version-file: package.json
-      - run: bun install
+      - run: bun ci
       - run: bun oxlint --type-aware
 
   format:
@@ -57,5 +57,5 @@ jobs:
       - uses: oven-sh/setup-bun@735343b667d3e6f658f44d0eca948eb6282f2b76 # v2
         with:
           bun-version-file: package.json
-      - run: bun install
+      - run: bun ci
       - run: bun oxfmt --check

@@ -296,6 +296,10 @@ function generateComparison(
 				const fieldValue = accessor(item, mappedField);
 				return typeof fieldValue === "number" && fieldValue <= targetValue;
 			};
+
+		default:
+			const _exhaustive: never = node.operator;
+			throw new Error(`Unknown operator: ${node.operator}`);
 	}
 }
 
@@ -319,8 +323,8 @@ function generateOneOf(
 		const lowerValues = values.map((v: string | number | boolean) =>
 			typeof v === "string" ? v.toLowerCase() : v,
 		);
-		// Use Set for O(1) lookup on larger lists
-		if (lowerValues.length > 4) {
+		// Use Set for O(1) lookup on larger lists (threshold ~12 based on typical benchmarks)
+		if (lowerValues.length > 12) {
 			const valueSet = new Set(lowerValues);
 			return (item) => {
 				const fieldValue = accessor(item, mappedField);
@@ -335,8 +339,8 @@ function generateOneOf(
 		};
 	}
 
-	// For small arrays (<=4 items), Array.includes is faster than Set lookup
-	if (values.length <= 4) {
+	// For small arrays (<=12 items), Array.includes is faster than Set lookup
+	if (values.length <= 12) {
 		return (item) => values.includes(accessor(item, mappedField) as string | number | boolean);
 	}
 
@@ -365,8 +369,8 @@ function generateNotOneOf(
 		const lowerValues = values.map((v: string | number | boolean) =>
 			typeof v === "string" ? v.toLowerCase() : v,
 		);
-		// Use Set for O(1) lookup on larger lists
-		if (lowerValues.length > 4) {
+		// Use Set for O(1) lookup on larger lists (threshold ~12 based on typical benchmarks)
+		if (lowerValues.length > 12) {
 			const valueSet = new Set(lowerValues);
 			return (item) => {
 				const fieldValue = accessor(item, mappedField);
@@ -381,8 +385,8 @@ function generateNotOneOf(
 		};
 	}
 
-	// For small arrays (<=4 items), Array.includes is faster than Set lookup
-	if (values.length <= 4) {
+	// For small arrays (<=12 items), Array.includes is faster than Set lookup
+	if (values.length <= 12) {
 		return (item) => !values.includes(accessor(item, mappedField) as string | number | boolean);
 	}
 

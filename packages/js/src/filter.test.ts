@@ -614,4 +614,53 @@ describe("toFilter", () => {
 			expect(filter({ user: { profile: { name: "Bob" } } })).toBe(false);
 		});
 	});
+
+	describe("Optimization Behaviors", () => {
+		test("oneOf with >12 items uses Set path", () => {
+			const values = Array.from({ length: 15 }, (_, i) => ({
+				type: "string" as const,
+				value: `item${i}`,
+			}));
+			const ast: OneOfExpression = { type: "oneOf", field: "status", values };
+			const filter = toFilter(ast);
+			expect(filter({ status: "item0" })).toBe(true);
+			expect(filter({ status: "item14" })).toBe(true);
+			expect(filter({ status: "notfound" })).toBe(false);
+		});
+
+		test("case-insensitive oneOf with >12 items uses Set path", () => {
+			const values = Array.from({ length: 15 }, (_, i) => ({
+				type: "string" as const,
+				value: `Item${i}`,
+			}));
+			const ast: OneOfExpression = { type: "oneOf", field: "status", values };
+			const filter = toFilter(ast, { caseInsensitive: true });
+			expect(filter({ status: "item0" })).toBe(true);
+			expect(filter({ status: "ITEM0" })).toBe(true);
+			expect(filter({ status: "item15" })).toBe(false);
+		});
+
+		test("numeric operators return false for non-numeric values", () => {
+			const ast: ComparisonExpression = {
+				type: "comparison",
+				field: "age",
+				operator: ">",
+				value: { type: "number", value: 18 },
+			};
+			const filter = toFilter(ast);
+			expect(filter({ age: "25" })).toBe(false);
+			expect(filter({ age: 25 })).toBe(true);
+		});
+
+		test("contains (~) returns false for non-string target", () => {
+			const ast: ComparisonExpression = {
+				type: "comparison",
+				field: "name",
+				operator: "~",
+				value: { type: "number", value: 123 },
+			};
+			const filter = toFilter(ast);
+			expect(filter({ name: "test123" })).toBe(false);
+		});
+	});
 });

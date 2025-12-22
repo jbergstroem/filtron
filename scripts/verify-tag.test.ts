@@ -1,7 +1,7 @@
 import { describe, expect, test, spyOn } from "bun:test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import * as path from "node:path";
 import {
 	parseTag,
 	getPackageDirectory,
@@ -67,8 +67,8 @@ describe("Verify tag", () => {
 		});
 
 		test("throws error when path exists but is not a directory", async () => {
-			const tmpDir = mkdtempSync(join(tmpdir(), "filtron-test-"));
-			const testFile = join(tmpDir, "test-file");
+			const tmpDir = mkdtempSync(path.join(tmpdir(), "filtron-test-"));
+			const testFile = path.join(tmpDir, "test-file");
 			await Bun.write(testFile, "test");
 
 			// Mock join to return our test file path

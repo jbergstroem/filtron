@@ -175,9 +175,7 @@ async function main() {
 
 		console.log(`\nVerifying ${tags.length} tag(s)...\n`);
 
-		const packages: PackageInfo[] = [];
-
-		await Promise.all(tags.map((tag) => processTag(tag)));
+		const packages: PackageInfo[] = await Promise.all(tags.map((tag) => processTag(tag)));
 
 		console.table(packages);
 

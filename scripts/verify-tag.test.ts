@@ -1,7 +1,7 @@
-import { describe, expect, test, spyOn, afterEach } from "bun:test";
-import { mkdtempSync } from "node:fs";
+import { describe, expect, test, spyOn } from "bun:test";
+import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import * as path from "node:path";
 import {
 	parseTag,
 	getPackageDirectory,
@@ -67,12 +67,7 @@ describe("Verify tag", () => {
 		});
 
 		test("throws error when path exists but is not a directory", async () => {
-			const fs = await import("node:fs");
-			const path = await import("path");
-			const os = await import("node:os");
-
-			// Create a temporary directory and file
-			const tmpDir = mkdtempSync(join(tmpdir(), "filtron-test-"));
+			const tmpDir = mkdtempSync(path.join(tmpdir(), "filtron-test-"));
 			const testFile = path.join(tmpDir, "test-file");
 			await Bun.write(testFile, "test");
 
@@ -83,7 +78,7 @@ describe("Verify tag", () => {
 				expect(() => getPackageDirectory("core")).toThrow(`'${testFile}' is not a directory`);
 			} finally {
 				joinSpy.mockRestore();
-				fs.rmSync(tmpDir, { recursive: true, force: true });
+				rmSync(tmpDir, { recursive: true, force: true });
 			}
 		});
 	});

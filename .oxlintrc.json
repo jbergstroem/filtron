@@ -4,9 +4,19 @@
 	"env": {
 		"builtin": true
 	},
-	"ignorePatterns": ["src/grammar.ohm-bundle.*"],
 	"rules": {
 		"typescript/no-floating-promises": "error",
-		"typescript/no-misused-promises": "error"
+		"typescript/no-misused-promises": "error",
+		"no-await-in-loop": "error",
+		"no-useless-call": "error",
+		"no-accumulating-spread": "error",
+		"no-map-spread": "error",
+		"prefer-array-find": "error",
+		"prefer-array-flat-map": "error",
+		"prefer-set-has": "error",
+		"bad-bitwise-operator": "error",
+		"no-barrel-file": "error",
+		"no-const-enum": "error",
+		"no-rest-spread-properties": "error"
 	}
 }

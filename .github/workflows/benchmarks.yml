@@ -30,7 +30,7 @@ jobs:
       - uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6
         with:
           node-version: 24
-      - uses: CodSpeedHQ/action@346a2d8a8d9d38909abd0bc3d23f773110f076ad # v4
+      - uses: CodSpeedHQ/action@972e3437949c89e1357ebd1a2dbc852fcbc57245 # v4.5.1
         with:
           mode: simulation
           run: cd packages/benchmark && bun run bench

@@ -229,7 +229,7 @@ function generateComparison(
 
 	return (item) => {
 		const fieldValue = state.fieldAccessor(item, mappedField);
-		return compareFn(fieldValue, value);
+		return compareFn(fieldValue);
 	};
 }
 
@@ -372,52 +372,61 @@ function generateRange(
  */
 function getComparisonFunction(
 	operator: ComparisonOperator,
-	_targetValue: string | number | boolean,
+	targetValue: string | number | boolean,
 	state: GeneratorState,
-): (fieldValue: unknown, targetValue: string | number | boolean) => boolean {
+): (fieldValue: unknown) => boolean {
 	switch (operator) {
 		case "=":
 		case ":":
-			if (state.caseInsensitive) {
-				return (fieldValue, targetValue) => {
-					if (typeof fieldValue === "string" && typeof targetValue === "string") {
-						return fieldValue.toLowerCase() === targetValue.toLowerCase();
+			if (state.caseInsensitive && typeof targetValue === "string") {
+				// Pre-lowercase the target value once during filter creation
+				const lowerTarget = targetValue.toLowerCase();
+				return (fieldValue) => {
+					if (typeof fieldValue === "string") {
+						return fieldValue.toLowerCase() === lowerTarget;
 					}
 					return fieldValue === targetValue;
 				};
 			}
-			return (fieldValue, targetValue) => fieldValue === targetValue;
+			return (fieldValue) => fieldValue === targetValue;
 
 		case "!=":
-			if (state.caseInsensitive) {
-				return (fieldValue, targetValue) => {
-					if (typeof fieldValue === "string" && typeof targetValue === "string") {
-						return fieldValue.toLowerCase() !== targetValue.toLowerCase();
+			if (state.caseInsensitive && typeof targetValue === "string") {
+				// Pre-lowercase the target value once during filter creation
+				const lowerTarget = targetValue.toLowerCase();
+				return (fieldValue) => {
+					if (typeof fieldValue === "string") {
+						return fieldValue.toLowerCase() !== lowerTarget;
 					}
 					return fieldValue !== targetValue;
 				};
 			}
-			return (fieldValue, targetValue) => fieldValue !== targetValue;
+			return (fieldValue) => fieldValue !== targetValue;
 
 		case "~":
 			// Contains/LIKE - uses substring matching
-			if (state.caseInsensitive) {
-				return (fieldValue, targetValue) => {
-					if (typeof fieldValue !== "string" || typeof targetValue !== "string") {
+			if (state.caseInsensitive && typeof targetValue === "string") {
+				// Pre-lowercase the target value once during filter creation
+				const lowerTarget = targetValue.toLowerCase();
+				return (fieldValue) => {
+					if (typeof fieldValue !== "string") {
 						return false;
 					}
-					return fieldValue.toLowerCase().includes(targetValue.toLowerCase());
+					return fieldValue.toLowerCase().includes(lowerTarget);
 				};
 			}
-			return (fieldValue, targetValue) => {
-				if (typeof fieldValue !== "string" || typeof targetValue !== "string") {
-					return false;
-				}
-				return fieldValue.includes(targetValue);
-			};
+			if (typeof targetValue === "string") {
+				return (fieldValue) => {
+					if (typeof fieldValue !== "string") {
+						return false;
+					}
+					return fieldValue.includes(targetValue);
+				};
+			}
+			return () => false;
 
 		case ">":
-			return (fieldValue, targetValue) => {
+			return (fieldValue) => {
 				if (typeof fieldValue !== "number" || typeof targetValue !== "number") {
 					return false;
 				}
@@ -425,7 +434,7 @@ function getComparisonFunction(
 			};
 
 		case ">=":
-			return (fieldValue, targetValue) => {
+			return (fieldValue) => {
 				if (typeof fieldValue !== "number" || typeof targetValue !== "number") {
 					return false;
 				}
@@ -433,7 +442,7 @@ function getComparisonFunction(
 			};
 
 		case "<":
-			return (fieldValue, targetValue) => {
+			return (fieldValue) => {
 				if (typeof fieldValue !== "number" || typeof targetValue !== "number") {
 					return false;
 				}
@@ -441,7 +450,7 @@ function getComparisonFunction(
 			};
 
 		case "<=":
-			return (fieldValue, targetValue) => {
+			return (fieldValue) => {
 				if (typeof fieldValue !== "number" || typeof targetValue !== "number") {
 					return false;
 				}

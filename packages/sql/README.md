@@ -159,7 +159,7 @@ Caching is effective when:
 
 For simple queries or unique filters, caching overhead is not worthwhile.
 
-In practice, caching the database query results at http level is often more effective than caching parsed SQL alone — the database query is typically orders of magnitude slower than processing the Filtron query.
+Caching at the HTTP level (database query results) is often more effective than caching a parsed Filtron SQLResult. Database queries are typically orders of magnitude slower than processing the Filtron query.
 
 ## Security
 

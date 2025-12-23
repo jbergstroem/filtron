@@ -1,18 +1,18 @@
 # @filtron/sql
 
-Filtron helper: generate safe, parameterized SQL WHERE clauses from filter expressions.
+Convert Filtron AST to parameterized SQL WHERE clauses.
 
-![npm version](https://img.shields.io/npm/v/@filtron/sql.svg)
-![npm bundle size](https://img.shields.io/bundlephobia/min/%40filtron%2Fsql)
-![codecov](https://codecov.io/gh/jbergstroem/filtron/graph/badge.svg?token=FXIWJKJ9RI&component=sql)
+[![npm version](https://img.shields.io/npm/v/@filtron/sql.svg)](https://www.npmjs.com/package/@filtron/sql)
+[![npm bundle size](https://img.shields.io/bundlephobia/min/%40filtron%2Fsql)](https://bundlephobia.com/package/@filtron/sql)
+[![codecov](https://codecov.io/gh/jbergstroem/filtron/graph/badge.svg?token=FXIWJKJ9RI&component=sql)](https://codecov.io/gh/jbergstroem/filtron)
 
 ## Installation
 
 ```bash
-bun add @filtron/sql
+npm install @filtron/core @filtron/sql
 ```
 
-## Quick Start
+## Usage
 
 ```typescript
 import { parse } from "@filtron/core";
@@ -25,53 +25,119 @@ if (result.success) {
   // sql: "(age > $1 AND status = $2)"
   // params: [18, "active"]
 
-  const users = await db.query(`SELECT * FROM users WHERE ${sql}`, params);
+  await db.query(`SELECT * FROM users WHERE ${sql}`, params);
 }
 ```
 
 ## API
 
-### `toSQL(ast, options?)`
+### `toSQL(ast, options?): SQLResult`
 
 Converts a Filtron AST to a parameterized SQL WHERE clause.
 
-**Options:**
+**Returns:**
 
-| Option           | Type                         | Description                                  |
-| ---------------- | ---------------------------- | -------------------------------------------- |
-| `parameterStyle` | `'numbered'` \| `'question'` | Placeholder style: `$1` (default) or `?`     |
-| `fieldMapper`    | `(field) => string`          | Transform field names to column names        |
-| `valueMapper`    | `(value) => value`           | Transform values (useful for LIKE wildcards) |
-| `startIndex`     | `number`                     | Starting parameter index (default: `1`)      |
+```typescript
+interface SQLResult {
+  sql: string;      // The WHERE clause (without "WHERE" keyword)
+  params: unknown[]; // Parameter values in order
+}
+```
+
+#### Options
+
+| Option           | Type                          | Default      | Description                              |
+| ---------------- | ----------------------------- | ------------ | ---------------------------------------- |
+| `parameterStyle` | `"numbered"` \| `"question"`  | `"numbered"` | Placeholder format                       |
+| `fieldMapper`    | `(field: string) => string`   | `undefined`  | Transform field names to column names    |
+| `valueMapper`    | `(value: unknown) => unknown` | `undefined`  | Transform values before parameterization |
+| `startIndex`     | `number`                      | `1`          | Starting index for numbered placeholders |
+
+#### Parameter Styles
+
+**Numbered (`$1`, `$2`, ...)** — PostgreSQL, CockroachDB:
+
+```typescript
+const { sql, params } = toSQL(ast);
+// sql: "(age > $1 AND status = $2)"
+```
+
+**Question marks (`?`, `?`, ...)** — MySQL, SQLite, MariaDB:
 
 ```typescript
 const { sql, params } = toSQL(ast, {
-  parameterStyle: "question", // for MySQL/SQLite
+  parameterStyle: "question",
+});
+// sql: "(age > ? AND status = ?)"
+```
+
+#### Examples
+
+**Custom field mapping:**
+
+```typescript
+const { sql, params } = toSQL(ast, {
   fieldMapper: (field) => `users.${field}`,
+});
+// "age > 18" becomes "users.age > $1"
+```
+
+**Table-qualified columns:**
+
+```typescript
+const { sql, params } = toSQL(ast, {
+  fieldMapper: (field) => `"${field}"`,  // Quote column names
 });
 ```
 
-### Helper Functions
+**Start index (for combining queries):**
 
-Helpers for use with `valueMapper` when using the LIKE operator (`~`):
+```typescript
+const { sql, params } = toSQL(ast, {
+  startIndex: 3,
+});
+// Placeholders start at $3
+```
+
+### LIKE Helpers
+
+Helper functions for the contains operator (`~`):
 
 ```typescript
 import { toSQL, contains, prefix, suffix, escapeLike } from "@filtron/sql";
+```
 
-// contains("foo") → "%foo%"
-// prefix("foo")   → "foo%"
-// suffix("foo")   → "%foo"
-// escapeLike("foo%bar") → "foo\\%bar"
+| Function     | Input   | Output    | Use Case             |
+| ------------ | ------- | --------- | -------------------- |
+| `contains`   | `"foo"` | `"%foo%"` | Substring match      |
+| `prefix`     | `"foo"` | `"foo%"`  | Starts with          |
+| `suffix`     | `"foo"` | `"%foo"`  | Ends with            |
+| `escapeLike` | `"a%b"` | `"a\\%b"` | Escape special chars |
 
-const { sql, params } = toSQL(ast, { valueMapper: contains });
+**Usage with valueMapper:**
+
+```typescript
+const { sql, params } = toSQL(ast, {
+  valueMapper: contains,
+});
+// Query "name ~ 'john'" produces params: ["%john%"]
 ```
 
 ## Security
 
-This library generates parameterized queries to prevent SQL injection:
+All queries are parameterized to prevent SQL injection:
 
 ```typescript
-const { sql, params } = toSQL(ast);
-db.query(`SELECT * FROM users WHERE ${sql}`, params);
-// Params: ["admin' OR '1'='1"] - safely escaped
+// User input with SQL injection attempt
+const result = parse('name = "admin\' OR \'1\'=\'1"');
+const { sql, params } = toSQL(result.ast);
+
+// sql: "(name = $1)"
+// params: ["admin' OR '1'='1"]  — treated as literal string value
 ```
+
+Never interpolate user input directly into SQL. Always use the `params` array with your database driver's parameterized query support.
+
+## License
+
+MIT

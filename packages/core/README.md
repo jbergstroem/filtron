@@ -1,26 +1,35 @@
 # @filtron/core
 
-A fast, human-friendly filter language designed for real-time APIs. Parses expressions like `age > 18 AND verified` into a type-safe AST.
+A fast, human-friendly filter language for JavaScript and TypeScript. Parse expressions like `age > 18 AND verified` into a type-safe AST.
 
-![npm version](https://img.shields.io/npm/v/@filtron/core.svg)
-![npm bundle size](https://img.shields.io/bundlephobia/min/%40filtron%2Fcore)
-![codecov](https://codecov.io/gh/jbergstroem/filtron/graph/badge.svg?token=FXIWJKJ9RI&component=core)
+[![npm version](https://img.shields.io/npm/v/@filtron/core.svg)](https://www.npmjs.com/package/@filtron/core)
+[![npm bundle size](https://img.shields.io/bundlephobia/min/%40filtron%2Fcore)](https://bundlephobia.com/package/@filtron/core)
+[![codecov](https://codecov.io/gh/jbergstroem/filtron/graph/badge.svg?token=FXIWJKJ9RI&component=core)](https://codecov.io/gh/jbergstroem/filtron)
 
-## Features
+## Why Filtron?
 
-- **Fast**: High-performance recursive descent parser — 90ns-1.5μs per query
-- **Small**: ~8 KB minified, zero runtime dependencies
-- **Type-safe**: Full TypeScript support with discriminated union AST
+Let users filter data with readable expressions instead of building complex query UIs:
+
+```
+price < 100 AND category : ["electronics", "books"] AND inStock
+```
+
+Filtron parses these expressions into a structured AST you can use to generate SQL, filter arrays, or build custom query backends — safely, with no risk of injection attacks.
+
+**Use cases:** Search UIs, API query parameters, admin dashboards, real-time data filtering.
 
 ## Installation
 
 ```bash
-bun add @filtron/core
-# or
 npm install @filtron/core
 ```
 
-## Quick Start
+**Optional helpers:**
+
+- `@filtron/sql` — Generate parameterized SQL WHERE clauses
+- `@filtron/js` — Filter JavaScript arrays in-memory
+
+## Usage
 
 ```typescript
 import { parse } from "@filtron/core";
@@ -29,140 +38,167 @@ const result = parse('age > 18 AND status = "active"');
 
 if (result.success) {
   console.log(result.ast);
-  // Use AST to build SQL, filter data, etc.
 } else {
   console.error(result.error);
-}
-```
-
-..or use `parseOrThrow` for try/catch style error handling:
-
-```typescript
-import { parseOrThrow } from "@filtron/core";
-
-try {
-  const ast = parseOrThrow('age > 18 AND status = "active"');
-  console.log(ast);
-  // Use AST to build SQL, filter data, etc.
-} catch (error) {
-  console.error(error.message);
 }
 ```
 
 ## Syntax
 
 ```typescript
-// Comparison operators
-parse("age > 18");
+// Comparisons
+parse('age > 18');
 parse('status = "active"');
-parse("score >= 4.5");
+parse('role != "guest"');
 
-// Boolean operators
-parse("age > 18 AND verified");
-parse('role = "admin" OR role = "moderator"');
-parse("NOT suspended");
+// Boolean logic
+parse('age > 18 AND verified');
+parse('admin OR moderator');
+parse('NOT suspended');
+parse('(admin OR mod) AND active');
 
 // Field existence
-parse("email?");
-parse("name EXISTS");
+parse('email?');
+parse('profile EXISTS');
 
-// One-of expressions
-parse('status : ["pending", "approved", "active"]');
+// Contains (substring)
+parse('name ~ "john"');
 
-// Range expressions
-parse("age = 18..65");
-parse("price = 9.99..99.99");
+// One-of (IN)
+parse('status : ["pending", "approved"]');
 
-// Complex queries
-parse('(role = "admin" OR role = "mod") AND status = "active"');
+// Ranges
+parse('age = 18..65');
+parse('price = 9.99..99.99');
 
 // Nested fields
-parse("user.profile.age >= 18");
+parse('user.profile.age >= 18');
 ```
 
 ## Operators
 
-| Operator             | Meaning       | Example             |
-| -------------------- | ------------- | ------------------- |
-| `=`, `:`             | Equal         | `status = "active"` |
-| `!=`, `!:`           | Not equal     | `role != "guest"`   |
-| `>`, `>=`, `<`, `<=` | Comparison    | `age >= 18`         |
-| `~`                  | Contains      | `name ~ "john"`     |
-| `?`, `EXISTS`        | Field exists  | `email?`            |
-| `..`                 | Range         | `age = 18..65`      |
-| `AND`, `OR`, `NOT`   | Boolean logic | `a AND b OR c`      |
+| Operator             | Meaning       | Example               |
+| -------------------- | ------------- | --------------------- |
+| `=`, `:`             | Equal         | `status = "active"`   |
+| `!=`, `!:`           | Not equal     | `role != "guest"`     |
+| `>`, `>=`, `<`, `<=` | Comparison    | `age >= 18`           |
+| `~`                  | Contains      | `name ~ "john"`       |
+| `?`, `EXISTS`        | Field exists  | `email?`              |
+| `..`                 | Range         | `age = 18..65`        |
+| `: [...]`            | One of        | `status : ["a", "b"]` |
+| `AND`, `OR`, `NOT`   | Boolean logic | `a AND (b OR c)`      |
 
-## AST Structure
+## API
+
+### `parse(input: string): ParseResult`
+
+Parses a filter expression and returns a result object.
+
+```typescript
+const result = parse('age > 18');
+
+if (result.success) {
+  result.ast;   // ASTNode
+} else {
+  result.error; // string
+}
+```
+
+### `parseOrThrow(input: string): ASTNode`
+
+Parses a filter expression, throwing on invalid input.
+
+```typescript
+try {
+  const ast = parseOrThrow('age > 18');
+} catch (error) {
+  console.error(error.message);
+}
+```
+
+## Types
+
+All AST types are exported for building custom consumers:
+
+```typescript
+import type {
+  ParseResult,
+  ASTNode,
+  AndExpression,
+  OrExpression,
+  NotExpression,
+  ComparisonExpression,
+  ExistsExpression,
+  BooleanFieldExpression,
+  OneOfExpression,
+  NotOneOfExpression,
+  RangeExpression,
+  Value,
+  ComparisonOperator,
+  StringValue,
+  NumberValue,
+  BooleanValue,
+  IdentifierValue,
+} from "@filtron/core";
+```
+
+### AST structure
+
+| Node Type      | Fields                       | Example Input          |
+| -------------- | ---------------------------- | ---------------------- |
+| `and`          | `left`, `right`              | `a AND b`              |
+| `or`           | `left`, `right`              | `a OR b`               |
+| `not`          | `expression`                 | `NOT a`                |
+| `comparison`   | `field`, `operator`, `value` | `age > 18`             |
+| `exists`       | `field`                      | `email?`               |
+| `booleanField` | `field`                      | `verified`             |
+| `oneOf`        | `field`, `values`            | `status : ["a", "b"]`  |
+| `notOneOf`     | `field`, `values`            | `status !: ["a", "b"]` |
+| `range`        | `field`, `min`, `max`        | `age = 18..65`         |
+
+**Example output:**
 
 ```typescript
 parse('age > 18 AND status = "active"')
 
 // Returns:
 {
-  type: "and",
-  left: {
-    type: "comparison",
-    field: "age",
-    operator: ">",
-    value: { type: "number", value: 18 }
-  },
-  right: {
-    type: "comparison",
-    field: "status",
-    operator: "=",
-    value: { type: "string", value: "active" }
+  success: true,
+  ast: {
+    type: "and",
+    left: {
+      type: "comparison",
+      field: "age",
+      operator: ">",
+      value: { type: "number", value: 18 }
+    },
+    right: {
+      type: "comparison",
+      field: "status",
+      operator: "=",
+      value: { type: "string", value: "active" }
+    }
   }
 }
 ```
-
-## TypeScript
-
-Full type definitions included:
-
-```typescript
-import type {
-  ParseResult,
-  ASTNode,
-  ComparisonExpression,
-  // ... all types exported
-} from "@filtron/core";
-
-function handleAST(node: ASTNode) {
-  switch (node.type) {
-    case "comparison":
-      // TypeScript knows node.field, node.operator, node.value exist
-      break;
-    case "and":
-      // TypeScript knows node.left, node.right exist
-      break;
-    // ... fully typed
-  }
-}
-```
-
-## Use Cases
-
-- **SQL Generation**: Build WHERE clauses from user queries
-- **In-Memory Filtering**: Filter arrays/collections with complex logic
-- **Search APIs**: Parse user search filters safely
-- **Access Control**: Define permission rules with queries
 
 ## Performance
 
-Filtron uses a hand-written recursive descent parser optimized for speed:
+Hand-written recursive descent parser. ~8 KB minified, zero dependencies.
 
-| Query Type | Parse Time | Throughput        |
-| ---------- | ---------- | ----------------- |
-| Simple     | ~90-250ns  | 4-11M ops/sec     |
-| Medium     | ~360-870ns | 1.1-2.8M ops/sec  |
-| Complex    | ~0.9-1.5μs | 650K-1.1M ops/sec |
+| Query Complexity | Parse Time | Throughput        |
+| ---------------- | ---------- | ----------------- |
+| Simple           | ~90-250ns  | 4-11M ops/sec     |
+| Medium           | ~360-870ns | 1.1-2.8M ops/sec  |
+| Complex          | ~0.9-1.5μs | 650K-1.1M ops/sec |
 
-Run benchmarks: `bun run bench`
+## Related packages
 
-## Documentation
+| Package                                                    | Description                              |
+| ---------------------------------------------------------- | ---------------------------------------- |
+| [@filtron/sql](https://www.npmjs.com/package/@filtron/sql) | Generate parameterized SQL WHERE clauses |
+| [@filtron/js](https://www.npmjs.com/package/@filtron/js)   | Filter JavaScript arrays in-memory       |
 
-- **[Contributing Guide](../../CONTRIBUTING.md)** - Development setup and workflow
+## License
 
-## Inspiration
-
-The Filtron query language syntax was strongly inspired by [dumbql](https://github.com/tomakado/dumbql).
+MIT

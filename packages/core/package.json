@@ -2,7 +2,7 @@
 	"$schema": "https://json.schemastore.org/package.json",
 	"name": "@filtron/core",
 	"version": "1.2.0",
-	"description": "A fast, human-friendly filter language designed for real-time APIs. Parses expressions into a type-safe AST, with helpers to generate SQL WHERE clauses or JavaScript predicates.",
+	"description": "Filtron parses human-friendly filter strings into structured queries you can use anywhere — SQL databases, in-memory arrays, or your own custom backend.",
 	"keywords": [
 		"filter",
 		"filtering",

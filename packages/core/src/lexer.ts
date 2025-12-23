@@ -1,12 +1,5 @@
 /**
- * Optimized Lexer for Filtron query language
- *
- * Optimizations:
- * - Works with char codes directly (avoids string creation)
- * - Lookup table for character classification
- * - Inlined hot paths
- * - Fast keyword detection
- * - Fast path for strings without escapes
+ * A Lexer for the Filtron query language
  */
 
 /**
@@ -130,7 +123,7 @@ export class LexerError extends Error {
 }
 
 /**
- * Optimized Lexer for tokenizing Filtron query strings
+ * Lexer for tokenizing Filtron query strings
  */
 export class Lexer {
 	private pos = 0;
@@ -341,7 +334,7 @@ export class Lexer {
 		this.pos = pos;
 		const len = pos - start;
 
-		// Fast keyword detection based on length and first char
+		// Keyword detection based on length and first char
 		if (len >= 2 && len <= 6) {
 			const firstCode = input.charCodeAt(start) | 0x20; // lowercase
 

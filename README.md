@@ -1,156 +1,227 @@
 # Filtron
 
-A fast, human-friendly filter language designed for real-time APIs. Parses expressions like `age > 18 AND verified` into a type-safe AST, with helpers to generate SQL WHERE clauses or JavaScript predicates.
+Let users filter your data with simple, readable expressions.
 
-**Monorepo containing:**
+```
+age > 18 AND status = "active"
+```
 
-- **[@filtron/core](./packages/core)** - Core query language parser
-- **[@filtron/sql](./packages/sql)** - SQL WHERE clause generator
-- **[@filtron/js](./packages/js)** - In-memory JavaScript array filtering
-- **[@filtron/benchmark](./packages/benchmark)** - Benchmarks for CI (private package)
+Filtron parses human-friendly filter strings into structured queries you can use anywhere — SQL databases, in-memory arrays, or your own custom backend.
 
-[![CodSpeed](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://codspeed.io/jbergstroem/filtron?utm_source=badge)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+[![CodSpeed](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://codspeed.io/jbergstroem/filtron)
 
-## Features
+## Why Filtron?
 
-- **Fast**: High-performance recursive descent parser — 90ns-1.5μs per query
-- **Small**: ~8 KB minified, zero runtime dependencies
-- **Type-safe**: Full TypeScript support with discriminated union AST
+Building filter functionality is tedious. You need to:
+
+- Parse user input safely (no "SQL injection")
+- Handle different operators, boolean logic, nested conditions
+- Generate the right output for your data layer
+
+Filtron handles the hard parts. You get a well-tested parser that turns readable expressions into type-safe, structured queries.
+
+Since filtering usually is a synchronous operation in real-time APIs, performance is one of its main priorities. We benchmark every change and continuously look for ways to improve it.
+
+**Input:**
+
+```
+price < 100 AND category : ["electronics", "books"] AND inStock
+```
+
+**Output (SQL):**
+
+```sql
+WHERE (price < $1 AND category IN ($2, $3) AND inStock = $4)
+-- params: [100, "electronics", "books", true]
+```
+
+**Output (JavaScript):**
+
+```javascript
+items.filter(item =>
+  item.price < 100 &&
+  ["electronics", "books"].includes(item.category) &&
+  item.inStock
+)
+```
+
+## Use Cases
+
+- **Search UIs** — Let users type natural filter expressions instead of building complex form interfaces
+- **API query parameters** — Accept `?filter=price < 50 AND rating >= 4` in your REST endpoints
+- **Admin dashboards** — Give power users flexible filtering without writing raw SQL
+- **Real-time streams** — Filter WebSocket or event data on the fly
 
 ## Installation
 
 ```bash
-bun add @filtron/core
-# or
 npm install @filtron/core
+
+# Or directly add SQL or JavaScript helpers
+npm install @filtron/sql   # For SQL WHERE clauses
+npm install @filtron/js    # For in-memory array filtering
 ```
 
 ## Quick Start
 
-```typescript
-import { parse, type ParseResult } from "@filtron/core";
+### Parse a filter expression
 
-const result: ParseResult = parse('age > 18 AND status = "active"');
+```typescript
+import { parse } from "@filtron/core";
+
+const result = parse('age > 18 AND status = "active"');
 
 if (result.success) {
-  console.log(result.ast);
-  // Use AST to build SQL, filter data, etc.
+  // result.ast contains the parsed query
 } else {
-  console.error(result.error);
+  // result.error contains what went wrong
 }
 ```
 
-..or use `parseOrThrow` for try/catch style error handling:
+### Generate SQL
 
 ```typescript
-import { parseOrThrow, type ASTNode } from "@filtron/core";
+import { parse } from "@filtron/core";
+import { toSQL } from "@filtron/sql";
+
+const result = parse('age > 18 AND status = "active"');
+
+if (result.success) {
+  const { sql, params } = toSQL(result.ast);
+  // sql: "(age > $1 AND status = $2)"
+  // params: [18, "active"]
+
+  await db.query(`SELECT * FROM users WHERE ${sql}`, params);
+}
+```
+
+### Filter JavaScript arrays
+
+```typescript
+import { parse } from "@filtron/core";
+import { toFilter } from "@filtron/js";
+
+const result = parse('age > 18 AND status = "active"');
+
+if (result.success) {
+  const filter = toFilter(result.ast);
+
+  const users = [
+    { name: "Alice", age: 25, status: "active" },
+    { name: "Bob", age: 16, status: "active" },
+  ];
+
+  users.filter(filter);
+  // => [{ name: "Alice", age: 25, status: "active" }]
+}
+```
+
+## Syntax Reference
+
+Filtron supports a rich set of operators for building expressive queries:
+
+### Comparisons
+
+```
+age > 18
+age >= 21
+price < 100
+score <= 4.5
+status = "active"
+role != "guest"
+```
+
+### Boolean Logic
+
+```
+age > 18 AND verified
+role = "admin" OR role = "moderator"
+NOT suspended
+(role = "admin" OR role = "mod") AND active
+```
+
+### Field Existence
+
+Check if a field is present:
+
+```
+email?
+profile EXISTS
+```
+
+### Contains (substring matching)
+
+```
+name ~ "john"
+description ~ "sale"
+```
+
+### One-of (IN)
+
+Match against a list of values:
+
+```
+status : ["pending", "approved", "rejected"]
+category : ["books", "electronics"]
+```
+
+### Ranges
+
+```
+age = 18..65
+temperature = -10..20
+```
+
+### Nested Fields
+
+```
+user.profile.age >= 18
+order.shipping.address.country = "PT"
+```
+
+### Operators Summary
+
+| Operator             | Meaning       | Example                             |
+| -------------------- | ------------- | ----------------------------------- |
+| `=`, `:`             | Equal         | `status = "active"`                 |
+| `!=`, `!:`           | Not equal     | `role != "guest"`                   |
+| `>`, `>=`, `<`, `<=` | Comparison    | `age >= 18`                         |
+| `~`                  | Contains      | `name ~ "john"`                     |
+| `?`, `EXISTS`        | Field exists  | `email?`                            |
+| `..`                 | Range         | `age = 18..65`                      |
+| `: [...]`            | One of        | `status : ["pending", "active"]`    |
+| `AND`, `OR`, `NOT`   | Boolean logic | `verified AND (admin OR moderator)` |
+
+## Error Handling
+
+Use `parseOrThrow` if you prefer exceptions over result objects:
+
+```typescript
+import { parseOrThrow } from "@filtron/core";
 
 try {
-  const ast: ASTNode = parseOrThrow('age > 18 AND status = "active"');
-  console.log(ast);
-  // Use AST to build SQL, filter data, etc.
+  const ast = parseOrThrow('age > 18 AND status = "active"');
 } catch (error) {
   console.error(error.message);
 }
 ```
 
-..or use the `@filtron/sql` package to create a WHERE query:
+## Packages
 
-```bash
-bun add @filtron/sql
-```
+Filtron is a monorepo with focused packages:
 
-```typescript
-import { parse, type ParseResult } from "@filtron/core";
-import { toSQL, type SQLResult } from "@filtron/sql";
+| Package                          | Description                                    |
+| -------------------------------- | ---------------------------------------------- |
+| [@filtron/core](./packages/core) | Core parser — parses expressions into an AST   |
+| [@filtron/sql](./packages/sql)   | Generates parameterized SQL WHERE clauses      |
+| [@filtron/js](./packages/js)     | Creates filter functions for JavaScript arrays |
 
-const result: ParseResult = parse('age > 18 AND status = "active"');
+## Advanced
 
-if (result.success) {
-  const { sql, params }: SQLResult = toSQL(result.ast);
-  // sql: "(age > $1 AND status = $2)"
-  // params: [18, "active"]
+### AST Structure
 
-  const users = await db.query(`SELECT * FROM users WHERE ${sql}`, params);
-}
-```
-
-..or use the @filtron/js package to filter JavaScript arrays in-memory:
-
-```bash
-bun add @filtron/js
-```
-
-```typescript
-import { parse, type ParseResult } from "@filtron/core";
-import { toFilter } from "@filtron/js";
-
-interface User {
-  name: string;
-  age: number;
-  status: string;
-}
-
-const result: ParseResult = parse('age > 18 AND status = "active"');
-
-if (result.success) {
-  const filter = toFilter<User>(result.ast);
-
-  const users: User[] = [
-    { name: "Alice", age: 25, status: "active" },
-    { name: "Bob", age: 16, status: "active" },
-  ];
-
-  const filtered = users.filter(filter);
-  // [{ name: "Alice", age: 25, status: "active" }]
-}
-```
-
-## Syntax
-
-```typescript
-// Comparison operators
-parse("age > 18");
-parse('status = "active"');
-parse("score >= 4.5");
-
-// Boolean operators
-parse("age > 18 AND verified");
-parse('role = "admin" OR role = "moderator"');
-parse("NOT suspended");
-
-// Field existence
-parse("email?");
-parse("name EXISTS");
-
-// One-of expressions
-parse('status : ["pending", "approved", "active"]');
-
-// Range expressions
-parse("age = 18..65");
-parse("price = 9.99..99.99");
-
-// Complex queries
-parse('(role = "admin" OR role = "mod") AND status = "active"');
-
-// Nested fields
-parse("user.profile.age >= 18");
-```
-
-## Operators
-
-| Operator             | Meaning       | Example             |
-| -------------------- | ------------- | ------------------- |
-| `=`, `:`             | Equal         | `status = "active"` |
-| `!=`, `!:`           | Not equal     | `role != "guest"`   |
-| `>`, `>=`, `<`, `<=` | Comparison    | `age >= 18`         |
-| `~`                  | Contains      | `name ~ "john"`     |
-| `?`, `EXISTS`        | Field exists  | `email?`            |
-| `..`                 | Range         | `age = 18..65`      |
-| `AND`, `OR`, `NOT`   | Boolean logic | `a AND b OR c`      |
-
-## AST Structure
+The parser produces a typed AST you can traverse for custom use cases:
 
 ```typescript
 parse('age > 18 AND status = "active"')
@@ -173,33 +244,37 @@ parse('age > 18 AND status = "active"')
 }
 ```
 
-## Performance
+Full TypeScript types are exported for building custom AST consumers.
 
-Filtron uses a hand-written recursive descent parser optimized for speed:
+### Performance
 
-| Query Type | Parse Time | Throughput        |
-| ---------- | ---------- | ----------------- |
-| Simple     | ~90-250ns  | 4-11M ops/sec     |
-| Medium     | ~360-870ns | 1.1-2.8M ops/sec  |
-| Complex    | ~0.9-1.5μs | 650K-1.1M ops/sec |
+Filtron currently uses a hand-written lexer and recursive descent parser and has no runtime dependencies (~8 KB minified). We continuously monitor performance with [CodSpeed](https://codspeed.io/) to test out new optimizations.
 
-**Additional package overhead:**
+The AST syntax is seen as stable and any changes follows strict semantic versioning (we for instance switched from a PEG parser to a hand-written recursive descent parser after the initial release).
 
-| Package      | Overhead | Total Throughput |
-| ------------ | -------- | ---------------- |
-| @filtron/js  | ~0.2μs   | ~750K ops/sec    |
-| @filtron/sql | ~0.3μs   | ~740K ops/sec    |
+| Query Complexity | Parse Time | Throughput        |
+| ---------------- | ---------- | ----------------- |
+| Simple           | ~90-250ns  | 4-11M ops/sec     |
+| Medium           | ~360-870ns | 1.1-2.8M ops/sec  |
+| Complex          | ~0.9-1.5μs | 650K-1.1M ops/sec |
 
-Run benchmarks: `bun run bench` in each package
+The helper packages add minimal overhead:
+
+| Package      | Additional Overhead |
+| ------------ | ------------------- |
+| @filtron/js  | ~0.2μs              |
+| @filtron/sql | ~0.3μs              |
+
+Run benchmarks locally: `bun run bench` in each package directory.
 
 ## Contributing
 
-See the [Contributing Guide](./CONTRIBUTING.md) for development setup and workflow guidelines.
+See the [Contributing Guide](./CONTRIBUTING.md) for development setup and guidelines.
 
-## Inspiration
+## Acknowledgments
 
-The Filtron query language syntax was strongly inspired by [dumbql](https://github.com/tomakado/dumbql).
+The query syntax was strongly inspired by [dumbql](https://github.com/tomakado/dumbql).
 
 ## License
 
-MIT - See [LICENSE](./LICENSE)
+MIT — See [LICENSE](./LICENSE)

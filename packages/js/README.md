@@ -1,20 +1,18 @@
 # @filtron/js
 
-Filtron helper: transform filter expressions into JavaScript predicates for `Array.filter()`.
+Convert Filtron AST to JavaScript filter predicates for use with `Array.filter()`.
 
-![npm version](https://img.shields.io/npm/v/@filtron/js.svg)
-![npm bundle size](https://img.shields.io/bundlephobia/min/%40filtron%2Fjs)
-![codecov](https://codecov.io/gh/jbergstroem/filtron/graph/badge.svg?token=FXIWJKJ9RI&component=js)
+[![npm version](https://img.shields.io/npm/v/@filtron/js.svg)](https://www.npmjs.com/package/@filtron/js)
+[![npm bundle size](https://img.shields.io/bundlephobia/min/%40filtron%2Fjs)](https://bundlephobia.com/package/@filtron/js)
+[![codecov](https://codecov.io/gh/jbergstroem/filtron/graph/badge.svg?token=FXIWJKJ9RI&component=js)](https://codecov.io/gh/jbergstroem/filtron)
 
 ## Installation
 
 ```bash
-bun add @filtron/js
-# or
 npm install @filtron/js
 ```
 
-## Quick Start
+## Usage
 
 ```typescript
 import { parse } from "@filtron/core";
@@ -30,34 +28,69 @@ if (result.success) {
     { name: "Bob", age: 16, status: "active" },
   ];
 
-  const filtered = users.filter(filter);
-  // [{ name: "Alice", age: 25, status: "active" }]
+  users.filter(filter);
+  // => [{ name: "Alice", age: 25, status: "active" }]
 }
 ```
 
 ## API
 
-### `toFilter(ast, options?)`
+### `toFilter<T>(ast, options?): (item: T) => boolean`
 
-Converts a Filtron AST to a predicate function for use with `Array.filter()`.
+Converts a Filtron AST to a predicate function.
 
-**Options:**
+#### Options
 
-| Option            | Type                      | Description                                             |
-| ----------------- | ------------------------- | ------------------------------------------------------- |
-| `allowedFields`   | `string[]`                | Restrict queryable fields (throws if field not in list) |
-| `fieldAccessor`   | `(obj, field) => unknown` | Custom field value accessor                             |
-| `caseInsensitive` | `boolean`                 | Case-insensitive string comparisons (default: `false`)  |
-| `fieldMapping`    | `Record<string, string>`  | Map query field names to object property names          |
+| Option            | Type                                 | Default     | Description                                                 |
+| ----------------- | ------------------------------------ | ----------- | ----------------------------------------------------------- |
+| `allowedFields`   | `string[]`                           | `undefined` | Whitelist of queryable fields (throws if field not in list) |
+| `fieldAccessor`   | `(obj: T, field: string) => unknown` | `undefined` | Custom function to retrieve field values                    |
+| `caseInsensitive` | `boolean`                            | `false`     | Case-insensitive string comparisons                         |
+| `fieldMapping`    | `Record<string, string>`             | `undefined` | Map query field names to object property names              |
+
+#### Examples
+
+**Restrict allowed fields:**
 
 ```typescript
 const filter = toFilter(ast, {
   allowedFields: ["name", "email", "age"],
+});
+// Querying "password" will throw an error
+```
+
+**Case-insensitive matching:**
+
+```typescript
+const filter = toFilter(ast, {
+  caseInsensitive: true,
+});
+// "status = 'ACTIVE'" matches { status: "active" }
+```
+
+**Field mapping:**
+
+```typescript
+const filter = toFilter(ast, {
+  fieldMapping: {
+    email: "emailAddress",
+    age: "userAge",
+  },
+});
+// Query "email" maps to object property "emailAddress"
+```
+
+**Combined options:**
+
+```typescript
+const filter = toFilter(ast, {
+  fieldMapping: { user_email: "email" },
+  allowedFields: ["user_email"],  // Validates against query field names
   caseInsensitive: true,
 });
 ```
 
-### `nestedAccessor(separator?)`
+### `nestedAccessor(separator?): FieldAccessor`
 
 Creates a field accessor for dot-notation nested properties.
 
@@ -72,55 +105,26 @@ const filter = toFilter(ast, {
 // Matches: { user: { profile: { age: 25 } } }
 ```
 
-## Advanced Usage
-
-### Field Mapping
-
-Map query field names to different object property names. This is useful when you want to expose a different API in your queries than your internal data structure:
-
-```typescript
-import { parse } from "@filtron/core";
-import { toFilter } from "@filtron/js";
-
-const result = parse('email = "user@example.com" AND age > 18');
-
-if (result.success) {
-  const filter = toFilter(result.ast, {
-    fieldMapping: {
-      email: "emailAddress",
-      age: "userAge",
-    },
-  });
-
-  const users = [
-    { emailAddress: "user@example.com", userAge: 25 },
-    { emailAddress: "other@example.com", userAge: 16 },
-  ];
-
-  const filtered = users.filter(filter);
-  // [{ emailAddress: "user@example.com", userAge: 25 }]
-}
-```
-
-Field mapping works with all expression types and can be combined with other options:
+Custom separator:
 
 ```typescript
 const filter = toFilter(ast, {
-  fieldMapping: {
-    user_id: "id",
-    user_email: "email",
-  },
-  allowedFields: ["user_id", "user_email"], // Validation uses query field names (before mapping)
-  caseInsensitive: true,
+  fieldAccessor: nestedAccessor("/"),
 });
+// Query: "user/profile/age > 18"
 ```
 
 ## Security
 
-When accepting user input, use `allowedFields` to prevent access to sensitive fields:
+When accepting user input, use `allowedFields` to prevent access to sensitive properties:
 
 ```typescript
 const filter = toFilter(ast, {
-  allowedFields: ["name", "email", "status"], // "password" queries will throw
+  allowedFields: ["name", "email", "status"],
 });
+// Queries against "password", "token", etc. will throw
 ```
+
+## License
+
+MIT

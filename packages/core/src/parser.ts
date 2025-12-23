@@ -1,7 +1,5 @@
 /**
- * Filtron Parser
- *
- * High-performance recursive descent parser for Filtron query language.
+ * The Filtron parser
  */
 
 import type { ASTNode } from "./types";

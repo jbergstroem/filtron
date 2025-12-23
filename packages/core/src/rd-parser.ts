@@ -1,5 +1,6 @@
 /**
  * Recursive Descent Parser for Filtron
+ * https://en.wikipedia.org/wiki/Recursive_descent_parser
  *
  * Grammar (in order of precedence, lowest to highest):
  *

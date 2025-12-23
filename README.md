@@ -141,6 +141,15 @@ NOT suspended
 (role = "admin" OR role = "mod") AND active
 ```
 
+### Grouping with Parentheses
+
+Use parentheses to control precedence and group conditions:
+
+```
+(role = "admin" OR role = "moderator") AND active
+((a AND b) OR (c AND d)) AND verified
+```
+
 ### Field Existence
 
 Check if a field is present:

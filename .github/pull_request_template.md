@@ -1,14 +1,17 @@
-## Why
+### Why
 
 <!-- Why is it needed? -->
 
-## What
+### What
 
 <!-- What changed? -->
 
-## Notes
+### Notes
 
-<!-- Anything reviewers should know?
+<!--
+Anything reviewers should know?
  - Did you use Agentic software? If so, to what extent?
  - Is there specific reasoning to your implementation that is not obvious while reading the code?
+
+If not, remove this section.
 -->

@@ -3,10 +3,10 @@ name: Feature
 about: Something new
 ---
 
-## Why
+### Why
 
 <!-- Why do you need it? -->
 
-## What
+### What
 
 <!-- What do you want? -->

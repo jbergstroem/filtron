@@ -107,7 +107,7 @@ Helper functions for the contains operator (`~`):
 import { toSQL, contains, prefix, suffix, escapeLike } from "@filtron/sql";
 ```
 
-| Function     | Input   | Output    | Use Case             |
+| Function     | Input   | Output    | Use case             |
 | ------------ | ------- | --------- | -------------------- |
 | `contains`   | `"foo"` | `"%foo%"` | Substring match      |
 | `prefix`     | `"foo"` | `"foo%"`  | Starts with          |
@@ -122,6 +122,44 @@ const { sql, params } = toSQL(ast, {
 });
 // Query "name ~ 'john'" produces params: ["%john%"]
 ```
+
+## Performance
+
+For APIs with repeated filter queries, cache parsed results to avoid redundant parsing:
+
+```typescript
+const cache = new Map<string, SQLResult>();
+
+function getFilterSQL(filter: string): SQLResult | null {
+  const cached = cache.get(filter);
+  if (cached) return cached;
+
+  const result = parse(filter);
+  if (!result.success) return null;
+
+  const sql = toSQL(result.ast, { parameterStyle: "question" });
+  cache.set(filter, sql);
+  return sql;
+}
+```
+
+Consider using an LRU cache with a size limit for production:
+
+```typescript
+// https://github.com/isaacs/node-lru-cache
+import { LRUCache } from "lru-cache";
+
+const cache = new LRUCache<string, SQLResult>({ max: 1000 });
+```
+
+Caching is effective when:
+
+- Users frequently repeat the same filter queries
+- Filter expressions are complex (nested `AND`/`OR` conditions)
+
+For simple queries or unique filters, caching overhead is not worthwhile.
+
+In practice, caching the database query results at http level is often more effective than caching parsed SQL alone — the database query is typically orders of magnitude slower than processing the Filtron query.
 
 ## Security
 

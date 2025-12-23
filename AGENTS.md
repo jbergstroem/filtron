@@ -1,4 +1,4 @@
-# Filtron - Agent Guidelines
+# Filtron - agent guidelines
 
 ## Goals
 
@@ -12,7 +12,7 @@
 - Do NOT write tests beyond what's needed for coverage
 - Keep README updates factual; no marketing language
 
-## Key Files
+## Key files
 
 | Purpose                  | Path                             |
 | ------------------------ | -------------------------------- |
@@ -22,7 +22,8 @@
 | AST types                | `packages/core/src/types.ts`     |
 | JS filter                | `packages/js/src/filter.ts`      |
 | SQL generator            | `packages/sql/src/converter.ts`  |
-| Benchmarks               | `packages/benchmark/*.bench.ts`  |
+| CI benchmarks            | `packages/benchmark/*.bench.ts`  |
+| Local benchmarks         | `packages/*/bench.ts`            |
 
 ## Commands
 
@@ -33,7 +34,7 @@
 | Lint/format    | `bun run lint`      |
 | Type check     | `bun run typecheck` |
 
-## Performance Requirements
+## Performance requirements
 
 - Parser changes must not regress simple query parsing beyond 5%
 - Run `bun run bench` before and after changes for the package that is modified
@@ -46,14 +47,14 @@
 - No mocking unless absolutely required
 - Run `bun run lint` after writing code to catch issues early
 
-## Code Style
+## Code style
 
 - No default exports
 - No `any` types
 - No classes—use functions (except Lexer/Parser which use classes for state)
 - Prefer `switch` with exhaustiveness checks over `if/else` chains
 
-## Parser Architecture
+## Parser architecture
 
 Filtron uses a hand-written recursive descent parser for performance:
 
@@ -79,7 +80,7 @@ FieldName       = IDENT ('.' IDENT)*
 Value           = STRING | NUMBER | BOOLEAN | DottedIdent
 ```
 
-## Checklist: Modifying Parser
+## Checklist: modifying parser
 
 1. Edit `packages/core/src/lexer.ts` if new tokens needed
 2. Edit `packages/core/src/rd-parser.ts` for grammar changes
@@ -88,14 +89,14 @@ Value           = STRING | NUMBER | BOOLEAN | DottedIdent
 5. Add tests in `packages/core/src/*.test.ts`
 6. Update README.md in affected packages
 
-## Checklist: Modifying SQL Generator
+## Checklist: modifying SQL generator
 
 1. Ensure syntax follows standard SQL; use options for database-specific syntax
 2. All values must be parameterized—never concatenate
 3. Run `bun run bench` in `packages/benchmark`
 4. Add tests in `packages/sql/src/*.test.ts`
 
-## Checklist: Modifying JS Filter
+## Checklist: modifying JS filter
 
 1. Performance is critical—measure filter creation and execution overhead
 2. All field access must respect `fieldMapping` option if provided
@@ -103,7 +104,7 @@ Value           = STRING | NUMBER | BOOLEAN | DottedIdent
 4. Run `bun run bench` in `packages/js`
 5. Add tests in `packages/js/src/*.test.ts`
 
-## Documentation Guidelines
+## Documentation guidelines
 
 - No emojis in code, comments, documentation, or commit messages
 - Keep updates factual; no marketing language or hyperbole
@@ -116,7 +117,7 @@ Value           = STRING | NUMBER | BOOLEAN | DottedIdent
 - Use TypeScript for all code examples
 - Link to other docs using relative paths: `[Guide](./CONTRIBUTING.md)`
 
-## GitHub Actions Workflow Style
+## GitHub Actions workflow style
 
 - Use concise style: `uses:` and `run:` without `name:` unless clarity requires it
 - Pin action versions to full SHA with version comment: `actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6`

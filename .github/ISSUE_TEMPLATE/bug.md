@@ -3,14 +3,14 @@ name: Bug
 about: Something's broken
 ---
 
-## Problem
+### Problem
 
 <!-- What's broken? -->
 
-## Expected
+### Expected
 
 <!-- What should happen? -->
 
-## Steps
+### Steps to reproduce
 
 <!-- How to reproduce? -->

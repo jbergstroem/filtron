@@ -144,7 +144,7 @@ import type {
 
 ### AST structure
 
-| Node Type      | Fields                       | Example Input          |
+| Node Type      | Fields                       | Example input          |
 | -------------- | ---------------------------- | ---------------------- |
 | `and`          | `left`, `right`              | `a AND b`              |
 | `or`           | `left`, `right`              | `a OR b`               |
@@ -186,18 +186,11 @@ parse('age > 18 AND status = "active"')
 
 Hand-written recursive descent parser. ~8 KB minified, zero dependencies.
 
-| Query Complexity | Parse Time | Throughput        |
+| Query complexity | Parse time | Throughput        |
 | ---------------- | ---------- | ----------------- |
 | Simple           | ~90-250ns  | 4-11M ops/sec     |
 | Medium           | ~360-870ns | 1.1-2.8M ops/sec  |
 | Complex          | ~0.9-1.5μs | 650K-1.1M ops/sec |
-
-## Related packages
-
-| Package                                                    | Description                              |
-| ---------------------------------------------------------- | ---------------------------------------- |
-| [@filtron/sql](https://www.npmjs.com/package/@filtron/sql) | Generate parameterized SQL WHERE clauses |
-| [@filtron/js](https://www.npmjs.com/package/@filtron/js)   | Filter JavaScript arrays in-memory       |
 
 ## License
 

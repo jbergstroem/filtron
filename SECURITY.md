@@ -1,6 +1,6 @@
-# Security Policy
+# Security policy
 
-## Supported Versions
+## Supported versions
 
 We support the current major version of each package:
 
@@ -10,7 +10,7 @@ We support the current major version of each package:
 | @filtron/sql  | 1.x                |
 | @filtron/js   | 1.x                |
 
-## Reporting a Vulnerability
+## Reporting a vulnerability
 
 Please do not report security vulnerabilities through public GitHub issues. Instead, create a [private security advisory](https://github.com/jbergstroem/filtron/security/advisories/new) on GitHub.
 
@@ -23,9 +23,9 @@ Include in your report:
 
 We'll acknowledge your report within 72 hours and keep you informed of progress.
 
-## Security Considerations
+## Security considerations
 
-### SQL Injection Prevention
+### SQL injection prevention
 
 The `@filtron/sql` package generates parameterized SQL queries, therefore avoiding SQL-related vulnerabilities:
 
@@ -38,7 +38,7 @@ db.query(sql, params);
 const unsafeSql = `SELECT * FROM ${userInput} WHERE ${filterString}`;
 ```
 
-### Input Validation
+### Input validation
 
 Ultimately, it is up to the user to ensure that input is validated and sanitized before passing it on to the actual dataset. Both the `js` package and the `sql` package provide utilities for this purpose.
 
@@ -48,7 +48,7 @@ In general:
 - Set reasonable limits on expression complexity
 - Consider rate limiting for public APIs
 
-### Denial of Service
+### Denial of service
 
 - Deeply nested expressions can cause performance issues
 - Consider setting a maximum depth or complexity limit

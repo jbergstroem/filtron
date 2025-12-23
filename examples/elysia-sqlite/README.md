@@ -1,4 +1,4 @@
-# Elysia + SQLite + Filtron Example
+# Elysia + SQLite + Filtron example
 
 An example repository showcasing how filtering could work in an API.
 

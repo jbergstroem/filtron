@@ -26,14 +26,14 @@ Filtron uses oxlint (including the experimental tsgolint) and oxfmt. Run it all 
 bun run lint
 ```
 
-## Getting Help
+## Getting help
 
 - **Issues**: [GitHub Issues](https://github.com/jbergstroem/filtron/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/jbergstroem/filtron/discussions)
 
-## Development Workflow
+## Development workflow
 
-### Making Changes
+### Making changes
 
 1. **Create a branch**
 
@@ -73,7 +73,7 @@ bun run lint
    git commit -m "feat: add new feature"
    ```
 
-### Commit Message Guidelines
+### Commit message guidelines
 
 Follow these conventions for all commits:
 
@@ -97,7 +97,7 @@ Closes: https://github.com/jbergstroem/filtron/issues/122
 
 ## Performance
 
-### Running Benchmarks
+### Running benchmarks
 
 As you make changes, compare the before/after. We also keep tabs on this in CI when you open a PR.
 If you are creating a new package, also add a benchmark in `packages/benchmark`, similar to how
@@ -113,7 +113,7 @@ cd packages/sql && bun run bench
 
 ## Building
 
-### Development Build
+### Development build
 
 ```bash
 # Full build (all packages)
@@ -122,7 +122,7 @@ bun run build
 bun run build --filter='@filtron/core'
 ```
 
-## Submitting Changes
+## Submitting changes
 
 ### Before Submitting
 
@@ -163,7 +163,7 @@ Releases are automated via GitHub Actions when you push a tag matching the `pack
 
    Also, mention all package changes in the release notes.
 
-## Code of Conduct
+## Code of conduct
 
 Be respectful and constructive in all interactions. We're all here to build great software together.
 

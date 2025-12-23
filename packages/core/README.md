@@ -129,27 +129,32 @@ import type {
   NotExpression,
   ComparisonExpression,
   ExistsExpression,
+  BooleanFieldExpression,
   OneOfExpression,
+  NotOneOfExpression,
   RangeExpression,
-  ValueNode,
+  Value,
+  ComparisonOperator,
   StringValue,
   NumberValue,
   BooleanValue,
-  NullValue,
+  IdentifierValue,
 } from "@filtron/core";
 ```
 
-### AST Structure
+### AST structure
 
-| Node Type    | Fields                           | Example Input         |
-| ------------ | -------------------------------- | --------------------- |
-| `and`        | `left`, `right`                  | `a AND b`             |
-| `or`         | `left`, `right`                  | `a OR b`              |
-| `not`        | `expression`                     | `NOT a`               |
-| `comparison` | `field`, `operator`, `value`     | `age > 18`            |
-| `exists`     | `field`                          | `email?`              |
-| `oneOf`      | `field`, `values`, `negated`     | `status : ["a", "b"]` |
-| `range`      | `field`, `min`, `max`, `negated` | `age = 18..65`        |
+| Node Type      | Fields                       | Example Input          |
+| -------------- | ---------------------------- | ---------------------- |
+| `and`          | `left`, `right`              | `a AND b`              |
+| `or`           | `left`, `right`              | `a OR b`               |
+| `not`          | `expression`                 | `NOT a`                |
+| `comparison`   | `field`, `operator`, `value` | `age > 18`             |
+| `exists`       | `field`                      | `email?`               |
+| `booleanField` | `field`                      | `verified`             |
+| `oneOf`        | `field`, `values`            | `status : ["a", "b"]`  |
+| `notOneOf`     | `field`, `values`            | `status !: ["a", "b"]` |
+| `range`        | `field`, `min`, `max`        | `age = 18..65`         |
 
 **Example output:**
 
@@ -187,7 +192,7 @@ Hand-written recursive descent parser. ~8 KB minified, zero dependencies.
 | Medium           | ~360-870ns | 1.1-2.8M ops/sec  |
 | Complex          | ~0.9-1.5μs | 650K-1.1M ops/sec |
 
-## Related Packages
+## Related packages
 
 | Package                                                    | Description                              |
 | ---------------------------------------------------------- | ---------------------------------------- |

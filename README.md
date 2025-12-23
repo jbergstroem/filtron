@@ -117,7 +117,7 @@ if (result.success) {
 }
 ```
 
-## Syntax Reference
+## Syntax reference
 
 Filtron supports a rich set of operators for building expressive queries:
 
@@ -141,7 +141,7 @@ NOT suspended
 (role = "admin" OR role = "mod") AND active
 ```
 
-### Grouping with Parentheses
+### Grouping with parentheses
 
 Use parentheses to control precedence and group conditions:
 
@@ -150,7 +150,7 @@ Use parentheses to control precedence and group conditions:
 ((a AND b) OR (c AND d)) AND verified
 ```
 
-### Field Existence
+### Field existence
 
 Check if a field is present:
 
@@ -182,14 +182,14 @@ age = 18..65
 temperature = -10..20
 ```
 
-### Nested Fields
+### Nested fields
 
 ```
 user.profile.age >= 18
 order.shipping.address.country = "PT"
 ```
 
-### Operators Summary
+### Operators
 
 | Operator             | Meaning       | Example                             |
 | -------------------- | ------------- | ----------------------------------- |
@@ -202,7 +202,7 @@ order.shipping.address.country = "PT"
 | `: [...]`            | One of        | `status : ["pending", "active"]`    |
 | `AND`, `OR`, `NOT`   | Boolean logic | `verified AND (admin OR moderator)` |
 
-## Error Handling
+## Error eandling
 
 Use `parseOrThrow` if you prefer exceptions over result objects:
 
@@ -228,7 +228,7 @@ Filtron is a monorepo with focused packages:
 
 ## Advanced
 
-### AST Structure
+### AST structure
 
 The parser produces a typed AST you can traverse for custom use cases:
 

@@ -92,7 +92,7 @@ const filter = toFilter(ast, {
 
 ### `nestedAccessor(separator?): FieldAccessor`
 
-Creates a field accessor for dot-notation nested properties.
+Creates a field accessor for dot-notation nested properties:
 
 ```typescript
 import { toFilter, nestedAccessor } from "@filtron/js";

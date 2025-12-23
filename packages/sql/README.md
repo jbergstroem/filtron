@@ -9,7 +9,7 @@ Convert Filtron AST to parameterized SQL WHERE clauses.
 ## Installation
 
 ```bash
-npm install @filtron/core @filtron/sql
+npm install @filtron/sql
 ```
 
 ## Usage
@@ -53,7 +53,7 @@ interface SQLResult {
 | `valueMapper`    | `(value: unknown) => unknown` | `undefined`  | Transform values before parameterization |
 | `startIndex`     | `number`                      | `1`          | Starting index for numbered placeholders |
 
-#### Parameter Styles
+#### Parameter styles
 
 **Numbered (`$1`, `$2`, ...)** — PostgreSQL, CockroachDB:
 
@@ -62,7 +62,7 @@ const { sql, params } = toSQL(ast);
 // sql: "(age > $1 AND status = $2)"
 ```
 
-**Question marks (`?`, `?`, ...)** — MySQL, SQLite, MariaDB:
+**Question marks (`?`, `?`, ...)** — MariaDB, SQLite, DuckDB:
 
 ```typescript
 const { sql, params } = toSQL(ast, {
@@ -99,7 +99,7 @@ const { sql, params } = toSQL(ast, {
 // Placeholders start at $3
 ```
 
-### LIKE Helpers
+### LIKE helpers
 
 Helper functions for the contains operator (`~`):
 

@@ -34,15 +34,58 @@ export type TokenType =
 	| "IDENT"
 	| "EOF";
 
-/**
- * The generic token produced by the lexer
- */
-export interface Token {
-	type: TokenType;
-	value: string | number | boolean;
+/** Base token properties */
+interface TokenBase {
 	start: number;
 	end: number;
 }
+
+/** Tokens with string values (punctuation, operators, keywords, identifiers) */
+export interface StringToken extends TokenBase {
+	type:
+		| "LPAREN"
+		| "RPAREN"
+		| "LBRACKET"
+		| "RBRACKET"
+		| "COMMA"
+		| "QUESTION"
+		| "DOT"
+		| "DOTDOT"
+		| "AND"
+		| "OR"
+		| "NOT"
+		| "EXISTS"
+		| "EQ"
+		| "NEQ"
+		| "GT"
+		| "GTE"
+		| "LT"
+		| "LTE"
+		| "LIKE"
+		| "COLON"
+		| "NOT_COLON"
+		| "STRING"
+		| "IDENT"
+		| "EOF";
+	value: string;
+}
+
+/** Tokens with number values */
+export interface NumberToken extends TokenBase {
+	type: "NUMBER";
+	value: number;
+}
+
+/** Tokens with boolean values */
+export interface BooleanToken extends TokenBase {
+	type: "TRUE" | "FALSE";
+	value: boolean;
+}
+
+/**
+ * Discriminated union of all token types for proper type narrowing
+ */
+export type Token = StringToken | NumberToken | BooleanToken;
 
 // Character codes
 const CharCode = {

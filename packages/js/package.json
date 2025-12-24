@@ -50,8 +50,8 @@
 		"@filtron/core": "workspace:*"
 	},
 	"devDependencies": {
-		"@types/bun": "catalog:",
-		"mitata": "catalog:"
+		"@filtron/benchmark": "workspace:*",
+		"@types/bun": "catalog:"
 	},
 	"peerDependencies": {
 		"typescript": "catalog:"

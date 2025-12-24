@@ -21,8 +21,8 @@ const colors = {
 };
 
 // Helper to print section headers
-function section(num: number, title: string) {
-	console.log(`${colors.bright}${colors.cyan}${num}. ${title}${colors.reset}`);
+function section(section: number | string, title: string) {
+	console.log(`${colors.bright}${colors.cyan}${section}. ${title}${colors.reset}`);
 }
 
 // Helper to print error messages

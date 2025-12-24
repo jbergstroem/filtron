@@ -49,8 +49,8 @@
 		"typecheck": "tsc --noemit"
 	},
 	"devDependencies": {
+		"@filtron/benchmark": "workspace:*",
 		"@types/bun": "catalog:",
-		"mitata": "catalog:",
 		"typescript": "catalog:"
 	},
 	"peerDependencies": {

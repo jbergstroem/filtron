@@ -12,6 +12,7 @@ import {
 	measureMemory,
 	measureTime,
 	printMemory,
+	printOverhead,
 	type BenchState,
 } from "@filtron/benchmark";
 import { parse } from "./dist/index.js";
@@ -37,12 +38,11 @@ group("Complex", () => {
 	}).args("query", queries.complex);
 });
 
-// Memory analysis
+// Memory & overhead analysis
 const testQuery = 'age > 18 AND status = "active" AND verified';
 printMemory([measureMemory("parse", 1000, () => parse(testQuery))]);
 
-// Throughput
 const parseTime = measureTime(() => parse(testQuery));
-console.log(`\nThroughput: ${Math.round(1000 / parseTime).toLocaleString()} ops/sec`);
+printOverhead("parse", parseTime);
 
 await run();

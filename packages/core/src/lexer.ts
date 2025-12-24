@@ -79,36 +79,6 @@ const CharCode = {
 	LowerT: 116,
 } as const;
 
-// Character classification lookup table (0-127)
-const CharClass = {
-	Other: 0,
-	Whitespace: 1,
-	Digit: 2,
-	Alpha: 4,
-	AlphaNum: 6, // Alpha | Digit
-} as const;
-
-// Build lookup table at module load
-const charClass = new Uint8Array(128);
-for (let i = 0; i < 128; i++) {
-	if (
-		i === CharCode.Space ||
-		i === CharCode.Tab ||
-		i === CharCode.Newline ||
-		i === CharCode.CarriageReturn
-	) {
-		charClass[i] = CharClass.Whitespace;
-	} else if (i >= CharCode.Zero && i <= CharCode.Nine) {
-		charClass[i] = CharClass.Digit;
-	} else if (
-		(i >= CharCode.UpperA && i <= CharCode.UpperZ) ||
-		(i >= CharCode.LowerA && i <= CharCode.LowerZ) ||
-		i === CharCode.Underscore
-	) {
-		charClass[i] = CharClass.Alpha;
-	}
-}
-
 /**
  * Lexer error with position information
  */

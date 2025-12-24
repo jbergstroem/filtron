@@ -1,6 +1,6 @@
 /**
  * Performance benchmark for @filtron/js
- * Run with: bun run benchmark.ts
+ * Run with: bun run bench
  */
 
 import {

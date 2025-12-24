@@ -32,7 +32,7 @@ export interface SQLResult {
 export interface SQLOptions {
 	/**
 	 * Parameter placeholder style
-	 * - 'numbered': PostgreSQL/DuckDB style ($1, $2, $3)
+	 * - 'numbered': PostgreSQL/CockroachDB style ($1, $2, $3)
 	 * - 'question': MySQL/SQLite/DuckDB style (?, ?, ?)
 	 * @default 'numbered'
 	 */

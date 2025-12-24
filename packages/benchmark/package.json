@@ -5,6 +5,9 @@
 	"private": true,
 	"description": "Continuous performance benchmarks for Filtron using tinybench + CodSpeed",
 	"type": "module",
+	"exports": {
+		".": "./src/index.ts"
+	},
 	"scripts": {
 		"bench": "bun run bench:core && bun run bench:sql && bun run bench:js",
 		"bench:core": "node core.bench.ts",
@@ -16,6 +19,7 @@
 		"@filtron/core": "workspace:*",
 		"@filtron/js": "workspace:*",
 		"@filtron/sql": "workspace:*",
+		"mitata": "1.0.34",
 		"tinybench": "5.1.0"
 	},
 	"devDependencies": {

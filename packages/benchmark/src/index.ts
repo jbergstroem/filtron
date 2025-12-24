@@ -45,7 +45,7 @@ export function measureMemory(
 
 	if (global.gc) global.gc();
 	const after = heapStats();
-	const kbPerOp = (after.heapSize - before.heapSize) / iterations / 1024;
+	const kbPerOp = Math.max(0, (after.heapSize - before.heapSize) / iterations / 1024);
 
 	return { label, kbPerOp };
 }
@@ -74,7 +74,7 @@ export function printOverhead(
 	convertTime: number,
 	totalTime: number,
 ): void {
-	const overheadPct = ((convertTime / parseTime) * 100).toFixed(0);
+	const overheadPct = parseTime > 0 ? ((convertTime / parseTime) * 100).toFixed(0) : "N/A";
 	const throughput = Math.round(1000 / totalTime).toLocaleString();
 
 	console.log(`\n${name}:`);

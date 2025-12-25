@@ -43,7 +43,7 @@
 	},
 	"scripts": {
 		"bench": "bun run build && bun --expose-gc run benchmark.ts",
-		"build": "bun build --minify --splitting --sourcemap=linked --outdir=dist index.ts && tsc --emitDeclarationOnly --declaration --declarationMap --outDir dist --skipLibCheck",
+		"build": "bun build --production --splitting --sourcemap=linked --outdir=dist index.ts && tsc --emitDeclarationOnly --declaration --declarationMap --outDir dist --skipLibCheck",
 		"prepublishOnly": "bun run build && bun test",
 		"test": "bun test",
 		"typecheck": "tsc --noemit"

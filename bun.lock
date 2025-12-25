@@ -40,7 +40,6 @@
         "@filtron/js": "workspace:*",
         "@filtron/sql": "workspace:*",
         "mitata": "1.0.34",
-        "tinybench": "5.1.0",
       },
       "devDependencies": {
         "@types/bun": "catalog:",

@@ -4,16 +4,16 @@
  *
  * Grammar (in order of precedence, lowest to highest):
  *
- *   Query         = OrExpression
- *   OrExpression  = AndExpression (OR AndExpression)*
- *   AndExpression = NotExpression (AND NotExpression)*
- *   NotExpression = NOT NotExpression | PrimaryExpression
+ *   Query             = OrExpression
+ *   OrExpression      = AndExpression (OR AndExpression)*
+ *   AndExpression     = NotExpression (AND NotExpression)*
+ *   NotExpression     = NOT NotExpression | PrimaryExpression
  *   PrimaryExpression = '(' OrExpression ')' | FieldExpression
- *   FieldExpression = FieldName ('?' | EXISTS | ComparisonOp Value RangeSuffix? | OneOfOp '[' Values ']')?
- *   FieldName     = IDENT ('.' IDENT)*
- *   Value         = STRING | NUMBER | BOOLEAN | DottedIdent
- *   Values        = Value (',' Value)*
- *   RangeSuffix   = '..' NUMBER
+ *   FieldExpression   = FieldName ('?' | EXISTS | ComparisonOp Value RangeSuffix? | OneOfOp '[' Values ']')?
+ *   FieldName         = IDENT ('.' IDENT)*
+ *   Value             = STRING | NUMBER | BOOLEAN | DottedIdent
+ *   Values            = Value (',' Value)*
+ *   RangeSuffix       = '..' NUMBER
  */
 
 import type {

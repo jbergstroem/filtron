@@ -1,5 +1,5 @@
 /**
- * The Filtron parser
+ * The Filtron parser public API
  */
 
 import type { ASTNode } from "./types";

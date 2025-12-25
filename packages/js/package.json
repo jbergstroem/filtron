@@ -41,7 +41,7 @@
 	},
 	"scripts": {
 		"bench": "bun --expose-gc run benchmark.ts",
-		"build": "bun build --minify --splitting --sourcemap=linked --outdir=dist --external @filtron/core index.ts && tsc",
+		"build": "bun build --production --splitting --sourcemap=linked --outdir=dist --external @filtron/core index.ts && tsc",
 		"prepublishOnly": "bun run build && bun test",
 		"test": "bun test",
 		"typecheck": "tsc --noemit"

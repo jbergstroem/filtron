@@ -87,8 +87,6 @@ function generateUsers(count: number) {
  * Initialize database and seed with data
  */
 export function seedDatabase(db: Database, count: number = 500): void {
-	db.exec("PRAGMA foreign_keys = ON");
-
 	db.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

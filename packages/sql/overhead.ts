@@ -28,7 +28,21 @@ console.log(`Testing ${iterations.toLocaleString()} iterations per query\n`);
 let totalOverhead = 0;
 let totalCount = 0;
 
-const overheadResults = [];
+interface OverheadResult {
+	"Query Complexity": string;
+	"Parse Only": string;
+	"Parse+SQL": string;
+	Overhead: string;
+	Impact: string;
+}
+
+interface ConversionResult {
+	"Conversion Type": string;
+	"Time per op": string;
+	Throughput: string;
+}
+
+const overheadResults: OverheadResult[] = [];
 
 for (const testCase of testCases) {
 	// Measure parse only
@@ -89,7 +103,7 @@ const sqlTestCases = [
 	},
 ];
 
-const conversionResults = [];
+const conversionResults: ConversionResult[] = [];
 
 for (const testCase of sqlTestCases) {
 	const start = performance.now();

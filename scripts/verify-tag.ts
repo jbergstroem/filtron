@@ -85,7 +85,9 @@ export async function readPackageJson(packageDir: string): Promise<PackageJson> 
 		});
 		return packageJson.default as PackageJson;
 	} catch (error) {
-		throw new Error(`Could not read package.json in ${packageDir}: ${error}`);
+		throw new Error(
+			`Could not read package.json in ${packageDir}: ${error instanceof Error ? error.message : String(error)}`,
+		);
 	}
 }
 

@@ -299,7 +299,7 @@ function generateComparison(
 
 		default:
 			const _exhaustive: never = node.operator;
-			throw new Error(`Unknown operator: ${node.operator}`);
+			throw new Error(`Unknown operator: ${_exhaustive as string}`);
 	}
 }
 

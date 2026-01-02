@@ -30,6 +30,7 @@ export interface PackageJson {
 
 export interface PackageInfo {
 	name: string;
+	tag: string;
 	version: string;
 	dir: string;
 }
@@ -147,7 +148,7 @@ export async function verifyTag(
 
 /**
  * Process a single tag and return package info
- * Git tag uses short name (e.g., "core@1.0.0")
+ * Git tag uses short name (e.g., "core-1.0.0")
  * Returns scoped npm package name (e.g., "@filtron/core")
  */
 async function processTag(tag: string): Promise<PackageInfo> {
@@ -157,6 +158,7 @@ async function processTag(tag: string): Promise<PackageInfo> {
 
 	return {
 		name: scopedPackageName,
+		tag: tag,
 		version,
 		dir: packageDir,
 	};

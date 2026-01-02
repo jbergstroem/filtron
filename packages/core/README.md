@@ -184,7 +184,7 @@ parse('age > 18 AND status = "active"')
 
 ## Performance
 
-Hand-written recursive descent parser. ~8 KB minified, zero dependencies.
+Hand-written recursive descent parser. ~9 KB minified, zero dependencies.
 
 | Query complexity | Parse time | Throughput        |
 | ---------------- | ---------- | ----------------- |

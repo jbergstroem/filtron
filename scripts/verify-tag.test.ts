@@ -8,6 +8,7 @@ import {
 	readPackageJson,
 	isPublished,
 	processTag,
+	main,
 	type PackageInfo,
 	type VerifyResult,
 } from "./verify-tag";
@@ -133,6 +134,160 @@ describe("Verify tag", () => {
 					stderr: "ignore",
 				},
 			);
+		});
+
+		test("returns false and kills process on timeout", async () => {
+			let killCalled = false;
+			const mockSpawn = spyOn(Bun, "spawn").mockReturnValue({
+				exited: new Promise(() => {}), // Never resolves
+				kill: () => {
+					killCalled = true;
+				},
+			} as ReturnType<typeof Bun.spawn>);
+
+			// Use a short timeout by mocking setTimeout
+			const originalSetTimeout = globalThis.setTimeout;
+			globalThis.setTimeout = ((fn: () => void, _ms: number) => {
+				fn(); // Execute immediately
+				return 0 as unknown as ReturnType<typeof setTimeout>;
+			}) as typeof setTimeout;
+
+			try {
+				const result = await isPublished("@filtron/core", "1.0.0");
+				expect(result).toBe(false);
+				expect(killCalled).toBe(true);
+			} finally {
+				globalThis.setTimeout = originalSetTimeout;
+				mockSpawn.mockRestore();
+			}
+		});
+	});
+
+	describe("processTag", () => {
+		test("returns error for invalid tag format", async () => {
+			const result = await processTag("invalid");
+			expect(result).toEqual({
+				status: "error",
+				tag: "invalid",
+				reason: "invalid tag format",
+			});
+		});
+
+		test("returns error when package directory not found", async () => {
+			const result = await processTag("nonexistent-1.0.0");
+			expect(result).toEqual({
+				status: "error",
+				tag: "nonexistent-1.0.0",
+				reason: "package directory not found",
+			});
+		});
+
+		test("returns error when package.json cannot be read", async () => {
+			// Mock getPackageDirectory to return a valid-looking path
+			const pathJoin = path.join.bind(path);
+
+			// Return a temp directory that exists but has no package.json
+			const tmpDir = mkdtempSync(pathJoin(tmpdir(), "filtron-test-"));
+			const joinSpy = spyOn(path, "join");
+
+			joinSpy.mockImplementation((...args: string[]) => {
+				if (args[0] === "packages" && args[1] === "testpkg") {
+					return tmpDir;
+				}
+				return pathJoin(...args);
+			});
+
+			try {
+				const result = await processTag("testpkg-1.0.0");
+				expect(result.status).toBe("error");
+				if (result.status === "error") {
+					expect(result.reason).toBe("could not read package.json");
+				}
+			} finally {
+				joinSpy.mockRestore();
+				rmSync(tmpDir, { recursive: true, force: true });
+			}
+		});
+
+		test("returns error for package name mismatch", async () => {
+			const pathJoin = path.join.bind(path);
+			const tmpDir = mkdtempSync(pathJoin(tmpdir(), "filtron-test-"));
+
+			// Create a package.json with wrong name
+			await Bun.write(
+				pathJoin(tmpDir, "package.json"),
+				JSON.stringify({ name: "@other/wrongpkg", version: "1.0.0" }),
+			);
+
+			const joinSpy = spyOn(path, "join").mockImplementation((...args: string[]) => {
+				// For getPackageDirectory: join("packages", "wrongpkg")
+				if (args[0] === "packages" && args[1] === "wrongpkg") {
+					return tmpDir;
+				}
+				// For readPackageJson: join(process.cwd(), packageDir, "package.json")
+				if (args[1] === tmpDir && args[2] === "package.json") {
+					return pathJoin(tmpDir, "package.json");
+				}
+				return pathJoin(...args);
+			});
+
+			try {
+				const result = await processTag("wrongpkg-1.0.0");
+				expect(result.status).toBe("error");
+				if (result.status === "error") {
+					expect(result.reason).toBe("name mismatch: @other/wrongpkg");
+				}
+			} finally {
+				joinSpy.mockRestore();
+				rmSync(tmpDir, { recursive: true, force: true });
+			}
+		});
+
+		test("returns error for version mismatch", async () => {
+			const result = await processTag("core-99.99.99");
+			expect(result.status).toBe("error");
+			if (result.status === "error") {
+				expect(result.reason).toContain("version mismatch");
+			}
+		});
+
+		test("returns skip when package is already published", async () => {
+			const packageJson = await readPackageJson("packages/core");
+
+			const mockSpawn = spyOn(Bun, "spawn").mockReturnValue({
+				exited: Promise.resolve(0),
+				kill: () => {},
+			} as ReturnType<typeof Bun.spawn>);
+
+			const result = await processTag(`core-${packageJson.version}`);
+			expect(result).toEqual({
+				status: "skip",
+				tag: `core-${packageJson.version}`,
+				reason: "already published",
+			});
+
+			mockSpawn.mockRestore();
+		});
+
+		test("returns ok when package is not published", async () => {
+			const packageJson = await readPackageJson("packages/core");
+
+			const mockSpawn = spyOn(Bun, "spawn").mockReturnValue({
+				exited: Promise.resolve(1),
+				kill: () => {},
+			} as ReturnType<typeof Bun.spawn>);
+
+			const result = await processTag(`core-${packageJson.version}`);
+			expect(result).toEqual({
+				status: "ok",
+				info: {
+					name: "core",
+					version: packageJson.version,
+					dir: "packages/core",
+				},
+			});
+
+			mockSpawn.mockRestore();
 		});
 	});
 
@@ -299,6 +454,158 @@ describe("Verify tag", () => {
 			]);
 
 			mockSpawn.mockRestore();
+		});
+	});
+
+	describe("main", () => {
+		test("exits with error when no tags provided", async () => {
+			const originalArgv = Bun.argv;
+			const exitSpy = spyOn(process, "exit").mockImplementation(() => {
+				throw new Error("process.exit called");
+			});
+			const errorSpy = spyOn(console, "error").mockImplementation(() => {});
+
+			// @ts-expect-error - Bun.argv is readonly but we need to mock it
+			Bun.argv = ["bun", "verify-tag.ts"];
+
+			try {
+				let error: Error | undefined;
+				try {
+					await main();
+				} catch (e) {
+					error = e as Error;
+				}
+				expect(error?.message).toBe("process.exit called");
+				expect(errorSpy).toHaveBeenCalledWith(
+					"Usage: bun run scripts/verify-tag.ts <tag> [<tag>...]",
+				);
+			} finally {
+				// @ts-expect-error - restoring argv
+				Bun.argv = originalArgv;
+				exitSpy.mockRestore();
+				errorSpy.mockRestore();
+			}
+		});
+
+		test("processes valid tags and outputs results", async () => {
+			const packageJson = await readPackageJson("packages/core");
+			const originalArgv = Bun.argv;
+			const logSpy = spyOn(console, "log").mockImplementation(() => {});
+			const tableSpy = spyOn(console, "table").mockImplementation(() => {});
+
+			const mockSpawn = spyOn(Bun, "spawn").mockReturnValue({
+				exited: Promise.resolve(1), // Not published
+				kill: () => {},
+			} as ReturnType<typeof Bun.spawn>);
+
+			// @ts-expect-error - Bun.argv is readonly
+			Bun.argv = ["bun", "verify-tag.ts", `core-${packageJson.version}`];
+
+			try {
+				await main();
+				expect(logSpy).toHaveBeenCalledWith("Verifying 1 tag(s)...\n");
+				expect(logSpy).toHaveBeenCalledWith("To publish:");
+				expect(logSpy).toHaveBeenCalledWith("\n1 package(s) ready to publish.");
+			} finally {
+				// @ts-expect-error - restoring argv
+				Bun.argv = originalArgv;
+				logSpy.mockRestore();
+				tableSpy.mockRestore();
+				mockSpawn.mockRestore();
+			}
+		});
+
+		test("exits with error when tags have errors", async () => {
+			const originalArgv = Bun.argv;
+			const exitSpy = spyOn(process, "exit").mockImplementation(() => {
+				throw new Error("process.exit called");
+			});
+			const logSpy = spyOn(console, "log").mockImplementation(() => {});
+			const tableSpy = spyOn(console, "table").mockImplementation(() => {});
+
+			// @ts-expect-error - Bun.argv is readonly
+			Bun.argv = ["bun", "verify-tag.ts", "invalid-tag"];
+
+			try {
+				let error: Error | undefined;
+				try {
+					await main();
+				} catch (e) {
+					error = e as Error;
+				}
+				expect(error?.message).toBe("process.exit called");
+				expect(logSpy).toHaveBeenCalledWith("\nErrors:");
+			} finally {
+				// @ts-expect-error - restoring argv
+				Bun.argv = originalArgv;
+				exitSpy.mockRestore();
+				logSpy.mockRestore();
+				tableSpy.mockRestore();
+			}
+		});
+
+		test("handles skipped packages", async () => {
+			const packageJson = await readPackageJson("packages/core");
+			const originalArgv = Bun.argv;
+			const logSpy = spyOn(console, "log").mockImplementation(() => {});
+			const tableSpy = spyOn(console, "table").mockImplementation(() => {});
+
+			const mockSpawn = spyOn(Bun, "spawn").mockReturnValue({
+				exited: Promise.resolve(0), // Already published
+				kill: () => {},
+			} as ReturnType<typeof Bun.spawn>);
+
+			// @ts-expect-error - Bun.argv is readonly
+			Bun.argv = ["bun", "verify-tag.ts", `core-${packageJson.version}`];
+
+			try {
+				await main();
+				expect(logSpy).toHaveBeenCalledWith("\nSkipped:");
+				expect(logSpy).toHaveBeenCalledWith("\nNo packages to publish.");
+			} finally {
+				// @ts-expect-error - restoring argv
+				Bun.argv = originalArgv;
+				logSpy.mockRestore();
+				tableSpy.mockRestore();
+				mockSpawn.mockRestore();
+			}
+		});
+
+		test("writes to GITHUB_OUTPUT when available", async () => {
+			const packageJson = await readPackageJson("packages/core");
+			const originalArgv = Bun.argv;
+			const originalEnv = Bun.env.GITHUB_OUTPUT;
+			const pathJoin = path.join.bind(path);
+			const tmpDir = mkdtempSync(pathJoin(tmpdir(), "filtron-test-"));
+			const outputFile = pathJoin(tmpDir, "github-output");
+
+			const logSpy = spyOn(console, "log").mockImplementation(() => {});
+			const tableSpy = spyOn(console, "table").mockImplementation(() => {});
+
+			const mockSpawn = spyOn(Bun, "spawn").mockReturnValue({
+				exited: Promise.resolve(1), // Not published
+				kill: () => {},
+			} as ReturnType<typeof Bun.spawn>);
+
+			// @ts-expect-error - Bun.argv is readonly
+			Bun.argv = ["bun", "verify-tag.ts", `core-${packageJson.version}`];
+			Bun.env.GITHUB_OUTPUT = outputFile;
+
+			try {
+				await main();
+				const content = await Bun.file(outputFile).text();
+				expect(content).toContain("packages=");
+				expect(content).toContain(`"name":"core"`);
+				expect(content).toContain(`"version":"${packageJson.version}"`);
+			} finally {
+				// @ts-expect-error - restoring argv
+				Bun.argv = originalArgv;
+				Bun.env.GITHUB_OUTPUT = originalEnv;
+				logSpy.mockRestore();
+				tableSpy.mockRestore();
+				mockSpawn.mockRestore();
+				rmSync(tmpDir, { recursive: true, force: true });
+			}
 		});
 	});
 

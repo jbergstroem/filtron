@@ -135,7 +135,7 @@ export async function processTag(tag: string): Promise<VerifyResult> {
 /**
  * Main execution
  */
-async function main() {
+export async function main() {
 	const tags = Bun.argv.slice(2);
 
 	if (tags.length === 0) {

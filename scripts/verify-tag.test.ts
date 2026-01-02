@@ -6,9 +6,10 @@ import {
 	parseTag,
 	getPackageDirectory,
 	readPackageJson,
-	verifyTag,
 	isPublished,
+	processTag,
 	type PackageInfo,
+	type VerifyResult,
 } from "./verify-tag";
 
 describe("Verify tag", () => {
@@ -29,28 +30,20 @@ describe("Verify tag", () => {
 			});
 		});
 
-		test("rejects tag with prerelease version", () => {
-			expect(() => parseTag("sql-2.0.0-beta.1")).toThrow(
-				"Tag 'sql-2.0.0-beta.1' does not match pattern '{package}-{version}'",
-			);
+		test("returns null for tag with prerelease version", () => {
+			expect(parseTag("sql-2.0.0-beta.1")).toBeNull();
 		});
 
-		test("rejects tag with build metadata", () => {
-			expect(() => parseTag("js-1.0.0+build.123")).toThrow(
-				"Tag 'js-1.0.0+build.123' does not match pattern '{package}-{version}'",
-			);
+		test("returns null for tag with build metadata", () => {
+			expect(parseTag("js-1.0.0+build.123")).toBeNull();
 		});
 
-		test("throws error for invalid tag format", () => {
-			expect(() => parseTag("invalidtag")).toThrow(
-				"Tag 'invalidtag' does not match pattern '{package}-{version}'",
-			);
+		test("returns null for invalid tag format", () => {
+			expect(parseTag("invalidtag")).toBeNull();
 		});
 
-		test("throws error for tag with invalid version", () => {
-			expect(() => parseTag("core-invalid")).toThrow(
-				"Tag 'core-invalid' does not match pattern '{package}-{version}'",
-			);
+		test("returns null for tag with invalid version", () => {
+			expect(parseTag("core-invalid")).toBeNull();
 		});
 	});
 
@@ -60,22 +53,19 @@ describe("Verify tag", () => {
 			expect(result).toBe("packages/core");
 		});
 
-		test("throws error for non-existent package directory", () => {
-			expect(() => getPackageDirectory("nonexistent")).toThrow(
-				"Package directory 'packages/nonexistent' does not exist",
-			);
+		test("returns null for non-existent package directory", () => {
+			expect(getPackageDirectory("nonexistent")).toBeNull();
 		});
 
-		test("throws error when path exists but is not a directory", async () => {
+		test("returns null when path exists but is not a directory", async () => {
 			const tmpDir = mkdtempSync(path.join(tmpdir(), "filtron-test-"));
 			const testFile = path.join(tmpDir, "test-file");
 			await Bun.write(testFile, "test");
 
-			// Mock join to return our test file path
 			const joinSpy = spyOn(path, "join").mockReturnValue(testFile);
 
 			try {
-				expect(() => getPackageDirectory("core")).toThrow(`'${testFile}' is not a directory`);
+				expect(getPackageDirectory("core")).toBeNull();
 			} finally {
 				joinSpy.mockRestore();
 				rmSync(tmpDir, { recursive: true, force: true });
@@ -92,9 +82,7 @@ describe("Verify tag", () => {
 		});
 
 		test("throws error for non-existent directory", async () => {
-			await expect(readPackageJson("packages/nonexistent")).rejects.toThrow(
-				"Could not read package.json",
-			);
+			expect(() => readPackageJson("packages/nonexistent")).toThrow();
 		});
 	});
 
@@ -103,7 +91,7 @@ describe("Verify tag", () => {
 			const mockSpawn = spyOn(Bun, "spawn").mockReturnValue({
 				exited: Promise.resolve(0),
 				kill: () => {},
-			} as any);
+			} as ReturnType<typeof Bun.spawn>);
 
 			const result = await isPublished("@filtron/core", "1.1.0");
 			expect(result).toBe(true);
@@ -117,7 +105,7 @@ describe("Verify tag", () => {
 			const mockSpawn = spyOn(Bun, "spawn").mockReturnValue({
 				exited: Promise.resolve(1),
 				kill: () => {},
-			} as any);
+			} as ReturnType<typeof Bun.spawn>);
 
 			const result = await isPublished("@filtron/core", "1.0.0-nonexistent-test-version");
 			expect(result).toBe(false);
@@ -134,7 +122,7 @@ describe("Verify tag", () => {
 			const mockSpawn = spyOn(Bun, "spawn").mockReturnValue({
 				exited: Promise.resolve(1),
 				kill: () => {},
-			} as any);
+			} as ReturnType<typeof Bun.spawn>);
 
 			const result = await isPublished("@filtron/core", "999.999.999-alpha.nonexistent");
 			expect(result).toBe(false);
@@ -148,110 +136,229 @@ describe("Verify tag", () => {
 		});
 	});
 
-	describe("verifyTag", () => {
-		test("throws error for package name mismatch", async () => {
-			const packageJson = await readPackageJson("packages/core");
-			await expect(verifyTag("wrongname", packageJson.version, "packages/core")).rejects.toThrow(
-				"Package name mismatch",
+	describe("CI workflow: two tags on same commit, one already published", () => {
+		// Scenario: Create two releases on the same commit (two Github releases)
+		// 1. First release: core-X.Y.Z - triggers workflow, publishes core
+		// 2. Second release: js-A.B.C - triggers workflow, should skip core, publish js
+		test("second workflow run skips already-published tag and publishes new one", async () => {
+			const corePackageJson = await readPackageJson("packages/core");
+			const jsPackageJson = await readPackageJson("packages/js");
+
+			// Simulate: core is already published, js is not
+			const coreVersion = `@filtron/core@${corePackageJson.version}`;
+			const mockSpawn = spyOn(Bun, "spawn").mockImplementation(
+				(args) =>
+					({
+						exited: Promise.resolve((args as string[])[2] === coreVersion ? 0 : 1),
+						kill: () => {},
+					}) as ReturnType<typeof Bun.spawn>,
 			);
-		});
 
-		test("throws error for version mismatch", async () => {
-			await expect(verifyTag("core", "9.9.9", "packages/core")).rejects.toThrow("Version mismatch");
-		});
+			// This is what the CI sees: both tags point to HEAD
+			const tagsAtHead = [`core-${corePackageJson.version}`, `js-${jsPackageJson.version}`];
 
-		test("throws error for already published version", async () => {
-			spyOn(Bun, "spawn").mockReturnValue({
-				exited: Promise.resolve(0),
-				kill: () => {},
-			} as any);
+			const results = await Promise.all(tagsAtHead.map(processTag));
 
-			const packageJson = await readPackageJson("packages/core");
-			await expect(verifyTag("core", packageJson.version, "packages/core")).rejects.toThrow(
-				"already published on npm",
+			const toPublish = results.filter(
+				(r): r is Extract<VerifyResult, { status: "ok" }> => r.status === "ok",
 			);
-		});
+			const skipped = results.filter(
+				(r): r is Extract<VerifyResult, { status: "skip" }> => r.status === "skip",
+			);
 
-		test("succeeds when all checks pass", async () => {
-			spyOn(Bun, "spawn").mockReturnValue({
-				exited: Promise.resolve(1),
-				kill: () => {},
-			} as any);
+			expect(skipped).toHaveLength(1);
+			expect(skipped[0].tag).toBe(`core-${corePackageJson.version}`);
+			expect(skipped[0].reason).toBe("already published");
 
-			const packageJson = await readPackageJson("packages/core");
-			const result = await verifyTag("core", packageJson.version, "packages/core");
-			expect(result).toBe("@filtron/core");
+			expect(toPublish).toHaveLength(1);
+			expect(toPublish[0].info.name).toBe("js");
+			expect(toPublish[0].info.version).toBe(jsPackageJson.version);
+
+			mockSpawn.mockRestore();
 		});
 	});
 
-	describe("end-to-end tag verification", () => {
-		test("rejects if current version is already published", async () => {
-			spyOn(Bun, "spawn").mockReturnValue({
-				exited: Promise.resolve(0),
-				kill: () => {},
-			} as any);
-
-			const packageJson = await readPackageJson("packages/core");
-			const tag = `core-${packageJson.version}`;
-
-			const { shortName, version } = parseTag(tag);
-			const packageDir = getPackageDirectory(shortName);
-
-			await expect(verifyTag(shortName, version, packageDir)).rejects.toThrow(
-				"already published on npm",
+	describe("release flow scenarios", () => {
+		test("skips already published package when processing multiple tags", async () => {
+			// Simulate: core-1.3.1 already published, js-1.1.0 not published
+			const mockSpawn = spyOn(Bun, "spawn").mockImplementation(
+				(args) =>
+					({
+						exited: Promise.resolve((args as string[])[2] === "@filtron/core@1.3.1" ? 0 : 1),
+						kill: () => {},
+					}) as ReturnType<typeof Bun.spawn>,
 			);
+
+			const corePublished = await isPublished("@filtron/core", "1.3.1");
+			const jsPublished = await isPublished("@filtron/js", "1.1.0");
+
+			expect(corePublished).toBe(true);
+			expect(jsPublished).toBe(false);
+
+			mockSpawn.mockRestore();
 		});
 
-		test("verifies unpublished version successfully", async () => {
-			spyOn(Bun, "spawn").mockReturnValue({
-				exited: Promise.resolve(1),
+		test("handles sequential release flow where earlier tags get skipped", async () => {
+			// Simulate release flow:
+			// 1. First run: core-1.3.1 tag created, nothing published yet
+			// 2. Second run: js-1.1.0 tag created, core-1.3.1 already published
+
+			const tags = ["core-1.3.1", "js-1.1.0"];
+			const alreadyPublished = new Set(["@filtron/core@1.3.1"]);
+
+			const mockSpawn = spyOn(Bun, "spawn").mockImplementation(
+				(args) =>
+					({
+						exited: Promise.resolve(alreadyPublished.has((args as string[])[2]) ? 0 : 1),
+						kill: () => {},
+					}) as ReturnType<typeof Bun.spawn>,
+			);
+
+			const results = await Promise.all(
+				tags
+					.map((tag) => {
+						const parsed = parseTag(tag);
+						if (!parsed) return null;
+						return { tag, shortName: parsed.shortName, version: parsed.version };
+					})
+					.filter((t): t is NonNullable<typeof t> => t !== null)
+					.map(async ({ tag, shortName, version }) => ({
+						tag,
+						status: (await isPublished(`@filtron/${shortName}`, version)) ? "skip" : "publish",
+					})),
+			);
+
+			expect(results).toEqual([
+				{ tag: "core-1.3.1", status: "skip" },
+				{ tag: "js-1.1.0", status: "publish" },
+			]);
+
+			mockSpawn.mockRestore();
+		});
+
+		test("all tags skipped when everything is already published", async () => {
+			const tags = ["core-1.3.1", "js-1.1.0", "sql-1.2.0"];
+
+			const mockSpawn = spyOn(Bun, "spawn").mockReturnValue({
+				exited: Promise.resolve(0), // All published
 				kill: () => {},
-			} as any);
+			} as ReturnType<typeof Bun.spawn>);
 
-			const { shortName } = parseTag("core-1.0.0");
+			const toPublish = (
+				await Promise.all(
+					tags
+						.map((tag) => {
+							const parsed = parseTag(tag);
+							if (!parsed) return null;
+							const dir = getPackageDirectory(parsed.shortName);
+							if (!dir) return null;
+							return { shortName: parsed.shortName, version: parsed.version, dir };
+						})
+						.filter((t): t is NonNullable<typeof t> => t !== null)
+						.map(async ({ shortName, version, dir }) => {
+							const published = await isPublished(`@filtron/${shortName}`, version);
+							return published ? null : { name: shortName, version, dir };
+						}),
+				)
+			).filter((p): p is PackageInfo => p !== null);
 
-			const published = await isPublished(`@filtron/${shortName}`, "1.0.0");
-			expect(published).toBe(false);
+			expect(toPublish).toEqual([]);
+
+			mockSpawn.mockRestore();
+		});
+
+		test("first release run publishes all new tags", async () => {
+			const tags = ["core-1.3.1", "js-1.1.0"];
+
+			const mockSpawn = spyOn(Bun, "spawn").mockReturnValue({
+				exited: Promise.resolve(1), // Nothing published yet
+				kill: () => {},
+			} as ReturnType<typeof Bun.spawn>);
+
+			const toPublish = (
+				await Promise.all(
+					tags
+						.map((tag) => {
+							const parsed = parseTag(tag);
+							if (!parsed) return null;
+							const dir = getPackageDirectory(parsed.shortName);
+							if (!dir) return null;
+							return { shortName: parsed.shortName, version: parsed.version, dir };
+						})
+						.filter((t): t is NonNullable<typeof t> => t !== null)
+						.map(async ({ shortName, version, dir }) => {
+							const published = await isPublished(`@filtron/${shortName}`, version);
+							return published ? null : { name: shortName, version, dir };
+						}),
+				)
+			).filter((p): p is PackageInfo => p !== null);
+
+			expect(toPublish).toEqual([
+				{ name: "core", version: "1.3.1", dir: "packages/core" },
+				{ name: "js", version: "1.1.0", dir: "packages/js" },
+			]);
+
+			mockSpawn.mockRestore();
 		});
 	});
 
 	describe("multiple tags processing", () => {
-		test("processes multiple space-separated tags", async () => {
+		test("processes multiple tags and builds package info", () => {
 			const tags = ["core-1.0.0", "sql-2.0.0"];
 
 			const packages: PackageInfo[] = [];
 
 			for (const tag of tags) {
-				const { shortName, version } = parseTag(tag);
-				const packageDir = getPackageDirectory(shortName);
-				packages.push({
-					name: `@filtron/${shortName}`,
-					version,
-					tag: tag,
-					dir: packageDir,
-				});
+				const parsed = parseTag(tag);
+				if (!parsed) continue;
+
+				const { shortName, version } = parsed;
+				const dir = getPackageDirectory(shortName);
+				if (!dir) continue;
+
+				packages.push({ name: shortName, version, dir });
 			}
 
 			expect(packages).toHaveLength(2);
 			expect(packages[0]).toEqual({
-				name: "@filtron/core",
+				name: "core",
 				version: "1.0.0",
-				tag: "core-1.0.0",
 				dir: "packages/core",
 			});
 			expect(packages[1]).toEqual({
-				name: "@filtron/sql",
+				name: "sql",
 				version: "2.0.0",
-				tag: "sql-2.0.0",
 				dir: "packages/sql",
 			});
 		});
 
 		test("handles single tag", () => {
-			const tags = ["core-1.1.0"];
+			const tag = "core-1.1.0";
+			const parsed = parseTag(tag);
 
-			expect(tags).toHaveLength(1);
-			expect(tags[0]).toBe("core-1.1.0");
+			expect(parsed).toEqual({
+				shortName: "core",
+				version: "1.1.0",
+			});
+		});
+
+		test("skips invalid tags in a list", () => {
+			const tags = ["core-1.0.0", "invalid", "sql-2.0.0"];
+
+			const packages: PackageInfo[] = [];
+
+			for (const tag of tags) {
+				const parsed = parseTag(tag);
+				if (!parsed) continue;
+
+				const { shortName, version } = parsed;
+				const dir = getPackageDirectory(shortName);
+				if (!dir) continue;
+
+				packages.push({ name: shortName, version, dir });
+			}
+
+			expect(packages).toHaveLength(2);
 		});
 	});
 });

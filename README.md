@@ -202,7 +202,7 @@ order.shipping.address.country = "PT"
 | `: [...]`            | One of        | `status : ["pending", "active"]`    |
 | `AND`, `OR`, `NOT`   | Boolean logic | `verified AND (admin OR moderator)` |
 
-## Error eandling
+## Error handling
 
 Use `parseOrThrow` if you prefer exceptions over result objects:
 
@@ -255,7 +255,7 @@ parse('age > 18 AND status = "active"')
 
 Full TypeScript types are exported for building custom AST consumers.
 
-### Performance
+## Performance
 
 Filtron currently uses a hand-written lexer and recursive descent parser and has no runtime dependencies (~9 KB minified). We continuously monitor performance with [CodSpeed](https://codspeed.io/) to test out new optimizations.
 

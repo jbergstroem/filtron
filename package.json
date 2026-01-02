@@ -30,14 +30,13 @@
 	"scripts": {
 		"bench": "cd packages/core && bun run bench",
 		"build": "bun run --filter '@filtron/core' build && bun run --filter '!@filtron/core' build",
-		"lint": "oxlint --type-aware --type-check; oxfmt --check; exit $(( $? ))",
-		"test": "bun test"
+		"lint": "oxlint --type-aware --type-check; oxfmt --check; exit $(( $? ))"
 	},
 	"devDependencies": {
 		"@types/bun": "catalog:",
-		"oxfmt": "0.20.0",
-		"oxlint": "1.35.0",
-		"oxlint-tsgolint": "0.10.0"
+		"oxfmt": "0.21.0",
+		"oxlint": "1.36.0",
+		"oxlint-tsgolint": "0.10.1"
 	},
 	"peerDependencies": {
 		"typescript": "catalog:"

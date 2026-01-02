@@ -149,47 +149,6 @@ export class Lexer {
 	}
 
 	/**
-	 * Skip whitespace and comments (inlined for performance)
-	 */
-	private skipWhitespace(): void {
-		const input = this.input;
-		const length = this.length;
-		let pos = this.pos;
-
-		while (pos < length) {
-			const code = input.charCodeAt(pos);
-
-			// Fast whitespace check
-			if (
-				code === CharCode.Space ||
-				code === CharCode.Tab ||
-				code === CharCode.Newline ||
-				code === CharCode.CarriageReturn
-			) {
-				pos++;
-				continue;
-			}
-
-			// Comment check
-			if (
-				code === CharCode.Slash &&
-				pos + 1 < length &&
-				input.charCodeAt(pos + 1) === CharCode.Slash
-			) {
-				pos += 2;
-				while (pos < length && input.charCodeAt(pos) !== CharCode.Newline) {
-					pos++;
-				}
-				continue;
-			}
-
-			break;
-		}
-
-		this.pos = pos;
-	}
-
-	/**
 	 * Read a string literal - fast path for no escapes
 	 */
 	private readString(): Token {
@@ -424,10 +383,35 @@ export class Lexer {
 	 * Get the next token
 	 */
 	next(): Token {
-		this.skipWhitespace();
-
 		const input = this.input;
-		const pos = this.pos;
+		const length = this.length;
+
+		let pos = this.pos;
+		while (pos < length) {
+			const c = input.charCodeAt(pos);
+			if (
+				c === CharCode.Space ||
+				c === CharCode.Tab ||
+				c === CharCode.Newline ||
+				c === CharCode.CarriageReturn
+			) {
+				pos++;
+				continue;
+			}
+			if (
+				c === CharCode.Slash &&
+				pos + 1 < length &&
+				input.charCodeAt(pos + 1) === CharCode.Slash
+			) {
+				pos += 2;
+				while (pos < length && input.charCodeAt(pos) !== CharCode.Newline) {
+					pos++;
+				}
+				continue;
+			}
+			break;
+		}
+		this.pos = pos;
 
 		if (pos >= this.length) {
 			return { type: "EOF", value: "", start: pos, end: pos };

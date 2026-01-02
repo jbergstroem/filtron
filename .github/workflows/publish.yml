@@ -64,4 +64,4 @@ jobs:
           registry-url: "https://registry.npmjs.org"
       - run: |
           cd "${{ matrix.package.dir }}"
-          npm publish "filtron-${{ matrix.package.tag }}.tgz" --provenance --access public
+          npm publish filtron-${{ matrix.package.name }}-${{ matrix.package.version }}.tgz --provenance --access public

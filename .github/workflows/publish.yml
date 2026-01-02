@@ -52,6 +52,7 @@ jobs:
           bun-version-file: package.json
           no-cache: true
       - run: bun ci
+      - run: bun run --filter=@filtron/core build
       - run: |
           cd "${{ matrix.package.dir }}"
           bun run build

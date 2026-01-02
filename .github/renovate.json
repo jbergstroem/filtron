@@ -28,7 +28,7 @@
 			"enabled": false
 		},
 		{
-			"matchFileNames": [".github/workflows/benchmarks.yml"],
+		  "managerFilePatterns": ["/^\\.github/workflows/[^/]+\\.yml$/"],
 			"matchDepNames": ["node"],
 			"enabled": false
 		}

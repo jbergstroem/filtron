@@ -184,33 +184,37 @@ class Parser {
 	 */
 	private parseFieldExpression(): ASTNode {
 		const field = this.parseFieldName();
+		const t = this.current.type;
 
-		// Exists check with ?
-		if (this.check("QUESTION")) {
-			this.advance();
-			return { type: "exists", field } as ExistsExpression;
-		}
-
-		// Exists check with EXISTS keyword
-		if (this.check("EXISTS")) {
+		// Exists check with ? or EXISTS
+		if (t === "QUESTION" || t === "EXISTS") {
 			this.advance();
 			return { type: "exists", field } as ExistsExpression;
 		}
 
 		// OneOf: field : [values]
-		if (this.check("COLON") && this.peekNextIsLBracket()) {
+		if (t === "COLON" && this.peekNextIsLBracket()) {
 			this.advance();
 			return this.parseOneOfArray(field, "oneOf");
 		}
 
 		// NotOneOf: field !: [values]
-		if (this.check("NOT_COLON")) {
+		if (t === "NOT_COLON") {
 			this.advance();
 			return this.parseOneOfArray(field, "notOneOf");
 		}
 
 		// Comparison with operator
-		if (this.isComparisonOperator()) {
+		if (
+			t === "EQ" ||
+			t === "NEQ" ||
+			t === "GT" ||
+			t === "GTE" ||
+			t === "LT" ||
+			t === "LTE" ||
+			t === "LIKE" ||
+			t === "COLON"
+		) {
 			const opToken = this.advance();
 			const operator = this.tokenToOperator(opToken);
 
@@ -257,23 +261,6 @@ class Parser {
 			this.nextToken = this.lexer.next();
 		}
 		return this.nextToken.type === "LBRACKET";
-	}
-
-	/**
-	 * Check if current token is a comparison operator
-	 */
-	private isComparisonOperator(): boolean {
-		const t = this.current.type;
-		return (
-			t === "EQ" ||
-			t === "NEQ" ||
-			t === "GT" ||
-			t === "GTE" ||
-			t === "LT" ||
-			t === "LTE" ||
-			t === "LIKE" ||
-			t === "COLON"
-		);
 	}
 
 	/**
@@ -355,34 +342,36 @@ class Parser {
 	 * Value = STRING | NUMBER | BOOLEAN | DottedIdent
 	 */
 	private parseValue(): Value {
+		const t = this.current.type;
+
 		// String literal
-		if (this.check("STRING")) {
+		if (t === "STRING") {
 			const token = this.advance();
 			return { type: "string", value: token.value as string };
 		}
 
 		// Number literal
-		if (this.check("NUMBER")) {
+		if (t === "NUMBER") {
 			const token = this.advance();
 			return { type: "number", value: token.value as number };
 		}
 
 		// Boolean literal
-		if (this.check("TRUE")) {
+		if (t === "TRUE") {
 			this.advance();
 			return { type: "boolean", value: true };
 		}
-		if (this.check("FALSE")) {
+		if (t === "FALSE") {
 			this.advance();
 			return { type: "boolean", value: false };
 		}
 
 		// Identifier (possibly dotted)
-		if (this.check("IDENT")) {
+		if (t === "IDENT") {
 			const first = this.advance();
 			let value = first.value as string;
 
-			while (this.check("DOT")) {
+			while (this.current.type === "DOT") {
 				this.advance(); // consume .
 				const next = this.expect("IDENT", "Expected identifier after '.'");
 				value += "." + next.value;
@@ -391,7 +380,7 @@ class Parser {
 			return { type: "identifier", value };
 		}
 
-		throw new ParseError(`Expected value, got ${this.current.type}`, this.current.start);
+		throw new ParseError(`Expected value, got ${t}`, this.current.start);
 	}
 }
 

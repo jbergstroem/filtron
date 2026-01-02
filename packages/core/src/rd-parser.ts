@@ -77,18 +77,6 @@ class Parser {
 	}
 
 	/**
-	 * Check if current token matches any of the given types
-	 * Note: Prefer explicit checks over this method for better performance
-	 */
-	private checkAny(...types: TokenType[]): boolean {
-		const currentType = this.current.type;
-		for (let i = 0; i < types.length; i++) {
-			if (currentType === types[i]) return true;
-		}
-		return false;
-	}
-
-	/**
 	 * Consume a token of the expected type, or throw an error
 	 */
 	private expect(type: TokenType, message?: string): Token {

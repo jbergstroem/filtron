@@ -88,38 +88,38 @@ export interface BooleanToken extends TokenBase {
 export type Token = StringToken | NumberToken | BooleanToken;
 
 // Character codes
-const CharCode = {
+const C = {
 	Tab: 9,
 	Newline: 10,
 	CarriageReturn: 13,
 	Space: 32,
-	Bang: 33, // !
-	Quote: 34, // "
-	Dot: 46, // .
-	Slash: 47, // /
+	Bang: 33,
+	Quote: 34,
+	LParen: 40,
+	RParen: 41,
+	Comma: 44,
+	Minus: 45,
+	Dot: 46,
+	Slash: 47,
 	Zero: 48,
 	Nine: 57,
-	Colon: 58, // :
-	LessThan: 60, // <
-	Equals: 61, // =
-	GreaterThan: 62, // >
-	Question: 63, // ?
+	Colon: 58,
+	LessThan: 60,
+	Equals: 61,
+	GreaterThan: 62,
+	Question: 63,
 	UpperA: 65,
 	UpperZ: 90,
-	LBracket: 91, // [
-	Backslash: 92, // \
-	RBracket: 93, // ]
-	Underscore: 95, // _
+	LBracket: 91,
+	Backslash: 92,
+	RBracket: 93,
+	Underscore: 95,
 	LowerA: 97,
-	LowerZ: 122,
-	Tilde: 126, // ~
-	LParen: 40, // (
-	RParen: 41, // )
-	Comma: 44, // ,
-	Minus: 45, // -
 	LowerN: 110,
 	LowerR: 114,
 	LowerT: 116,
+	LowerZ: 122,
+	Tilde: 126,
 } as const;
 
 /**
@@ -162,7 +162,7 @@ export class Lexer {
 		const scanStart = pos;
 		while (pos < length) {
 			const code = input.charCodeAt(pos);
-			if (code === CharCode.Quote) {
+			if (code === C.Quote) {
 				// No escapes - just slice
 				this.pos = pos + 1;
 				return {
@@ -172,7 +172,7 @@ export class Lexer {
 					end: this.pos,
 				};
 			}
-			if (code === CharCode.Backslash) {
+			if (code === C.Backslash) {
 				hasEscape = true;
 				break;
 			}
@@ -188,31 +188,31 @@ export class Lexer {
 			while (pos < length) {
 				const code = input.charCodeAt(pos);
 
-				if (code === CharCode.Quote) {
+				if (code === C.Quote) {
 					result += input.slice(chunkStart, pos);
 					this.pos = pos + 1;
 					return { type: "STRING", value: result, start, end: this.pos };
 				}
 
-				if (code === CharCode.Backslash) {
+				if (code === C.Backslash) {
 					result += input.slice(chunkStart, pos);
 					pos++;
 					const escaped = input.charCodeAt(pos);
 					pos++;
 					switch (escaped) {
-						case CharCode.LowerN:
+						case C.LowerN:
 							result += "\n";
 							break;
-						case CharCode.LowerT:
+						case C.LowerT:
 							result += "\t";
 							break;
-						case CharCode.LowerR:
+						case C.LowerR:
 							result += "\r";
 							break;
-						case CharCode.Backslash:
+						case C.Backslash:
 							result += "\\";
 							break;
-						case CharCode.Quote:
+						case C.Quote:
 							result += '"';
 							break;
 						default:
@@ -239,25 +239,25 @@ export class Lexer {
 		let pos = this.pos;
 
 		// Handle negative sign
-		if (input.charCodeAt(pos) === CharCode.Minus) {
+		if (input.charCodeAt(pos) === C.Minus) {
 			pos++;
 		}
 
 		// Read integer part
 		while (pos < length) {
 			const code = input.charCodeAt(pos);
-			if (code < CharCode.Zero || code > CharCode.Nine) break;
+			if (code < C.Zero || code > C.Nine) break;
 			pos++;
 		}
 
 		// Check for decimal
-		if (pos < length && input.charCodeAt(pos) === CharCode.Dot && pos + 1 < length) {
+		if (pos < length && input.charCodeAt(pos) === C.Dot && pos + 1 < length) {
 			const nextCode = input.charCodeAt(pos + 1);
-			if (nextCode >= CharCode.Zero && nextCode <= CharCode.Nine) {
+			if (nextCode >= C.Zero && nextCode <= C.Nine) {
 				pos++; // skip dot
 				while (pos < length) {
 					const code = input.charCodeAt(pos);
-					if (code < CharCode.Zero || code > CharCode.Nine) break;
+					if (code < C.Zero || code > C.Nine) break;
 					pos++;
 				}
 				this.pos = pos;
@@ -292,10 +292,10 @@ export class Lexer {
 		while (pos < length) {
 			const code = input.charCodeAt(pos);
 			if (
-				(code >= CharCode.LowerA && code <= CharCode.LowerZ) ||
-				(code >= CharCode.UpperA && code <= CharCode.UpperZ) ||
-				(code >= CharCode.Zero && code <= CharCode.Nine) ||
-				code === CharCode.Underscore
+				(code >= C.LowerA && code <= C.LowerZ) ||
+				(code >= C.UpperA && code <= C.UpperZ) ||
+				(code >= C.Zero && code <= C.Nine) ||
+				code === C.Underscore
 			) {
 				pos++;
 			} else {
@@ -389,22 +389,13 @@ export class Lexer {
 		let pos = this.pos;
 		while (pos < length) {
 			const c = input.charCodeAt(pos);
-			if (
-				c === CharCode.Space ||
-				c === CharCode.Tab ||
-				c === CharCode.Newline ||
-				c === CharCode.CarriageReturn
-			) {
+			if (c === C.Space || c === C.Tab || c === C.Newline || c === C.CarriageReturn) {
 				pos++;
 				continue;
 			}
-			if (
-				c === CharCode.Slash &&
-				pos + 1 < length &&
-				input.charCodeAt(pos + 1) === CharCode.Slash
-			) {
+			if (c === C.Slash && pos + 1 < length && input.charCodeAt(pos + 1) === C.Slash) {
 				pos += 2;
-				while (pos < length && input.charCodeAt(pos) !== CharCode.Newline) {
+				while (pos < length && input.charCodeAt(pos) !== C.Newline) {
 					pos++;
 				}
 				continue;
@@ -421,31 +412,31 @@ export class Lexer {
 
 		// Single character tokens (most common first)
 		switch (code) {
-			case CharCode.LParen:
+			case C.LParen:
 				this.pos = pos + 1;
 				return { type: "LPAREN", value: "(", start: pos, end: pos + 1 };
-			case CharCode.RParen:
+			case C.RParen:
 				this.pos = pos + 1;
 				return { type: "RPAREN", value: ")", start: pos, end: pos + 1 };
-			case CharCode.LBracket:
+			case C.LBracket:
 				this.pos = pos + 1;
 				return { type: "LBRACKET", value: "[", start: pos, end: pos + 1 };
-			case CharCode.RBracket:
+			case C.RBracket:
 				this.pos = pos + 1;
 				return { type: "RBRACKET", value: "]", start: pos, end: pos + 1 };
-			case CharCode.Comma:
+			case C.Comma:
 				this.pos = pos + 1;
 				return { type: "COMMA", value: ",", start: pos, end: pos + 1 };
-			case CharCode.Question:
+			case C.Question:
 				this.pos = pos + 1;
 				return { type: "QUESTION", value: "?", start: pos, end: pos + 1 };
-			case CharCode.Equals:
+			case C.Equals:
 				this.pos = pos + 1;
 				return { type: "EQ", value: "=", start: pos, end: pos + 1 };
-			case CharCode.Tilde:
+			case C.Tilde:
 				this.pos = pos + 1;
 				return { type: "LIKE", value: "~", start: pos, end: pos + 1 };
-			case CharCode.Colon:
+			case C.Colon:
 				this.pos = pos + 1;
 				return { type: "COLON", value: ":", start: pos, end: pos + 1 };
 		}
@@ -453,19 +444,19 @@ export class Lexer {
 		// Two-character operators
 		const nextCode = pos + 1 < this.length ? input.charCodeAt(pos + 1) : 0;
 
-		if (code === CharCode.Bang) {
-			if (nextCode === CharCode.Equals) {
+		if (code === C.Bang) {
+			if (nextCode === C.Equals) {
 				this.pos = pos + 2;
 				return { type: "NEQ", value: "!=", start: pos, end: pos + 2 };
 			}
-			if (nextCode === CharCode.Colon) {
+			if (nextCode === C.Colon) {
 				this.pos = pos + 2;
 				return { type: "NOT_COLON", value: "!:", start: pos, end: pos + 2 };
 			}
 		}
 
-		if (code === CharCode.GreaterThan) {
-			if (nextCode === CharCode.Equals) {
+		if (code === C.GreaterThan) {
+			if (nextCode === C.Equals) {
 				this.pos = pos + 2;
 				return { type: "GTE", value: ">=", start: pos, end: pos + 2 };
 			}
@@ -473,8 +464,8 @@ export class Lexer {
 			return { type: "GT", value: ">", start: pos, end: pos + 1 };
 		}
 
-		if (code === CharCode.LessThan) {
-			if (nextCode === CharCode.Equals) {
+		if (code === C.LessThan) {
+			if (nextCode === C.Equals) {
 				this.pos = pos + 2;
 				return { type: "LTE", value: "<=", start: pos, end: pos + 2 };
 			}
@@ -482,8 +473,8 @@ export class Lexer {
 			return { type: "LT", value: "<", start: pos, end: pos + 1 };
 		}
 
-		if (code === CharCode.Dot) {
-			if (nextCode === CharCode.Dot) {
+		if (code === C.Dot) {
+			if (nextCode === C.Dot) {
 				this.pos = pos + 2;
 				return { type: "DOTDOT", value: "..", start: pos, end: pos + 2 };
 			}
@@ -492,23 +483,23 @@ export class Lexer {
 		}
 
 		// String literal
-		if (code === CharCode.Quote) {
+		if (code === C.Quote) {
 			return this.readString();
 		}
 
 		// Number
-		if (code >= CharCode.Zero && code <= CharCode.Nine) {
+		if (code >= C.Zero && code <= C.Nine) {
 			return this.readNumber();
 		}
-		if (code === CharCode.Minus && nextCode >= CharCode.Zero && nextCode <= CharCode.Nine) {
+		if (code === C.Minus && nextCode >= C.Zero && nextCode <= C.Nine) {
 			return this.readNumber();
 		}
 
 		// Identifier or keyword
 		if (
-			(code >= CharCode.LowerA && code <= CharCode.LowerZ) ||
-			(code >= CharCode.UpperA && code <= CharCode.UpperZ) ||
-			code === CharCode.Underscore
+			(code >= C.LowerA && code <= C.LowerZ) ||
+			(code >= C.UpperA && code <= C.UpperZ) ||
+			code === C.Underscore
 		) {
 			return this.readIdentifier();
 		}

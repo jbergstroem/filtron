@@ -227,6 +227,7 @@ describe("Verify tag", () => {
 				packages.push({
 					name: `@filtron/${shortName}`,
 					version,
+					tag: tag,
 					dir: packageDir,
 				});
 			}
@@ -235,11 +236,13 @@ describe("Verify tag", () => {
 			expect(packages[0]).toEqual({
 				name: "@filtron/core",
 				version: "1.0.0",
+				tag: "core-1.0.0",
 				dir: "packages/core",
 			});
 			expect(packages[1]).toEqual({
 				name: "@filtron/sql",
 				version: "2.0.0",
+				tag: "sql-2.0.0",
 				dir: "packages/sql",
 			});
 		});

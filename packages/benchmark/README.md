@@ -6,6 +6,8 @@ Continuous performance benchmarks for Filtron using [tinybench](https://github.c
 
 This package contains the benchmark suite for tracking Filtron's performance over time. Benchmarks run automatically on every commit and pull request via GitHub Actions, with results tracked by CodSpeed.
 
+It also exports shared utilities for running package-specific benchmarks locally (e.g., `bun run bench` within individual packages).
+
 **Benchmarked packages:**
 
 - `@filtron/core` - Parser performance

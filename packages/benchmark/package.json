@@ -2,28 +2,58 @@
 	"$schema": "https://json.schemastore.org/package.json",
 	"name": "@filtron/benchmark",
 	"version": "1.0.0",
-	"private": true,
-	"description": "Continuous performance benchmarks for Filtron using tinybench + CodSpeed",
+	"description": "Benchmark utilities and performance tests for Filtron packages",
+	"keywords": [
+		"benchmark",
+		"filtron",
+		"performance",
+		"testing"
+	],
+	"homepage": "https://github.com/jbergstroem/filtron#readme",
+	"bugs": {
+		"url": "https://github.com/jbergstroem/filtron/issues"
+	},
+	"license": "MIT",
+	"author": "Johan Bergström <bugs@bergstroem.nu>",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/jbergstroem/filtron.git",
+		"directory": "packages/benchmark"
+	},
+	"files": [
+		"dist",
+		"LICENSE",
+		"README.md"
+	],
 	"type": "module",
+	"main": "./dist/index.js",
+	"module": "./dist/index.js",
+	"types": "./dist/index.d.ts",
 	"exports": {
-		".": "./src/index.ts"
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js",
+			"default": "./dist/index.js"
+		}
 	},
 	"scripts": {
 		"bench": "bun run bench:core && bun run bench:sql && bun run bench:js",
 		"bench:core": "node core.bench.ts",
 		"bench:sql": "node sql.bench.ts",
-		"bench:js": "node js.bench.ts"
+		"bench:js": "node js.bench.ts",
+		"build": "bun build --target=bun --production --sourcemap=linked --outdir=dist src/index.ts && tsc --emitDeclarationOnly --declaration --declarationMap --outDir dist --skipLibCheck",
+		"prepublishOnly": "bun run build"
 	},
 	"dependencies": {
+		"mitata": "1.0.34"
+	},
+	"devDependencies": {
 		"@codspeed/tinybench-plugin": "5.0.1",
 		"@filtron/core": "workspace:*",
 		"@filtron/js": "workspace:*",
 		"@filtron/sql": "workspace:*",
-		"mitata": "1.0.34",
+		"@types/bun": "catalog:",
 		"tinybench": "5.1.0"
-	},
-	"devDependencies": {
-		"@types/bun": "catalog:"
 	},
 	"peerDependencies": {
 		"typescript": "catalog:"
@@ -37,5 +67,5 @@
 		"bun": ">=1.1.0",
 		"node": ">=20.0.0"
 	},
-	"packageManager": "bun@1.3.3"
+	"packageManager": "bun@1.3.5"
 }

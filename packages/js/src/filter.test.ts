@@ -616,7 +616,7 @@ describe("toFilter", () => {
 	});
 
 	describe("Optimization Behaviors", () => {
-		test("oneOf with >12 items uses Set path", () => {
+		test("oneOf with >10 items uses Set path", () => {
 			const values = Array.from({ length: 15 }, (_, i) => ({
 				type: "string" as const,
 				value: `item${i}`,
@@ -628,7 +628,7 @@ describe("toFilter", () => {
 			expect(filter({ status: "notfound" })).toBe(false);
 		});
 
-		test("case-insensitive oneOf with >12 items uses Set path", () => {
+		test("case-insensitive oneOf with >10 items uses Set path", () => {
 			const values = Array.from({ length: 15 }, (_, i) => ({
 				type: "string" as const,
 				value: `Item${i}`,
@@ -638,6 +638,28 @@ describe("toFilter", () => {
 			expect(filter({ status: "item0" })).toBe(true);
 			expect(filter({ status: "ITEM0" })).toBe(true);
 			expect(filter({ status: "item15" })).toBe(false);
+		});
+
+		test("notOneOf with >10 items uses Set path", () => {
+			const values = Array.from({ length: 15 }, (_, i) => ({
+				type: "string" as const,
+				value: `item${i}`,
+			}));
+			const ast: NotOneOfExpression = { type: "notOneOf", field: "status", values };
+			const filter = toFilter(ast);
+			expect(filter({ status: "allowed" })).toBe(true);
+			expect(filter({ status: "item0" })).toBe(false);
+		});
+
+		test("case-insensitive notOneOf with >10 items uses Set path", () => {
+			const values = Array.from({ length: 15 }, (_, i) => ({
+				type: "string" as const,
+				value: `Item${i}`,
+			}));
+			const ast: NotOneOfExpression = { type: "notOneOf", field: "status", values };
+			const filter = toFilter(ast, { caseInsensitive: true });
+			expect(filter({ status: "allowed" })).toBe(true);
+			expect(filter({ status: "ITEM0" })).toBe(false);
 		});
 
 		test("numeric operators return false for non-numeric values", () => {
@@ -661,6 +683,42 @@ describe("toFilter", () => {
 			};
 			const filter = toFilter(ast);
 			expect(filter({ name: "test123" })).toBe(false);
+		});
+
+		test("case-insensitive equals handles non-string field values", () => {
+			const ast: ComparisonExpression = {
+				type: "comparison",
+				field: "value",
+				operator: "=",
+				value: { type: "string", value: "test" },
+			};
+			const filter = toFilter(ast, { caseInsensitive: true });
+			expect(filter({ value: 123 })).toBe(false);
+			expect(filter({ value: "TEST" })).toBe(true);
+		});
+
+		test("case-insensitive not-equals handles non-string field values", () => {
+			const ast: ComparisonExpression = {
+				type: "comparison",
+				field: "value",
+				operator: "!=",
+				value: { type: "string", value: "test" },
+			};
+			const filter = toFilter(ast, { caseInsensitive: true });
+			expect(filter({ value: 123 })).toBe(true);
+			expect(filter({ value: "TEST" })).toBe(false);
+		});
+
+		test("nestedAccessor handles non-object intermediate values", () => {
+			const ast: ComparisonExpression = {
+				type: "comparison",
+				field: "user.name",
+				operator: "=",
+				value: { type: "string", value: "Alice" },
+			};
+			const filter = toFilter(ast, { fieldAccessor: nestedAccessor() });
+			expect(filter({ user: "not-an-object" })).toBe(false);
+			expect(filter({ user: 123 })).toBe(false);
 		});
 	});
 });

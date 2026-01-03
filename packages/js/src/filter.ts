@@ -85,6 +85,7 @@ interface GeneratorState {
 	fieldAccessor: (obj: Record<string, unknown>, field: string) => unknown;
 	caseInsensitive: boolean;
 	fieldMapping?: Record<string, string>;
+	fieldMappingCache: Map<string, string>;
 }
 
 /**
@@ -123,6 +124,7 @@ export function toFilter<T extends Record<string, unknown> = Record<string, unkn
 		fieldAccessor: options.fieldAccessor ?? ((obj, field) => obj[field]),
 		caseInsensitive: options.caseInsensitive ?? false,
 		fieldMapping: options.fieldMapping,
+		fieldMappingCache: new Map(),
 	};
 
 	return generateFilter(ast, state) as FilterPredicate<T>;
@@ -130,9 +132,19 @@ export function toFilter<T extends Record<string, unknown> = Record<string, unkn
 
 /**
  * Resolves a field name using fieldMapping if provided
+ * Uses a cache to avoid repeated lookups
  */
 function resolveFieldName(field: string, state: GeneratorState): string {
-	return state.fieldMapping?.[field] ?? field;
+	if (!state.fieldMapping) {
+		return field;
+	}
+
+	let resolved = state.fieldMappingCache.get(field);
+	if (resolved === undefined) {
+		resolved = state.fieldMapping[field] ?? field;
+		state.fieldMappingCache.set(field, resolved);
+	}
+	return resolved;
 }
 
 /**
@@ -216,6 +228,7 @@ function generateNot(
 
 /**
  * Generates predicate for comparison expression
+ * Pre-computes case-insensitive values during compilation
  */
 function generateComparison(
 	node: ComparisonExpression,
@@ -226,12 +239,15 @@ function generateComparison(
 	const targetValue = extractValue(node.value);
 	const accessor = state.fieldAccessor;
 
+	// Pre-compute case-insensitive values at compile time
+	const isTargetString = typeof targetValue === "string";
+	const lowerTarget = isTargetString && state.caseInsensitive ? targetValue.toLowerCase() : null;
+
 	// Inline simple comparisons to avoid function call overhead
 	switch (node.operator) {
 		case "=":
 		case ":":
-			if (state.caseInsensitive && typeof targetValue === "string") {
-				const lowerTarget = targetValue.toLowerCase();
+			if (lowerTarget !== null) {
 				return (item) => {
 					const fieldValue = accessor(item, mappedField);
 					return typeof fieldValue === "string"
@@ -242,8 +258,7 @@ function generateComparison(
 			return (item) => accessor(item, mappedField) === targetValue;
 
 		case "!=":
-			if (state.caseInsensitive && typeof targetValue === "string") {
-				const lowerTarget = targetValue.toLowerCase();
+			if (lowerTarget !== null) {
 				return (item) => {
 					const fieldValue = accessor(item, mappedField);
 					return typeof fieldValue === "string"
@@ -254,11 +269,10 @@ function generateComparison(
 			return (item) => accessor(item, mappedField) !== targetValue;
 
 		case "~":
-			if (typeof targetValue !== "string") {
+			if (!isTargetString) {
 				return () => false;
 			}
-			if (state.caseInsensitive) {
-				const lowerTarget = targetValue.toLowerCase();
+			if (lowerTarget !== null) {
 				return (item) => {
 					const fieldValue = accessor(item, mappedField);
 					return typeof fieldValue === "string" && fieldValue.toLowerCase().includes(lowerTarget);
@@ -266,7 +280,7 @@ function generateComparison(
 			}
 			return (item) => {
 				const fieldValue = accessor(item, mappedField);
-				return typeof fieldValue === "string" && fieldValue.includes(targetValue);
+				return typeof fieldValue === "string" && fieldValue.includes(targetValue as string);
 			};
 
 		case ">":
@@ -305,6 +319,7 @@ function generateComparison(
 
 /**
  * Generates predicate for one-of expression
+ * Pre-computes case-insensitive values and uses optimized Set threshold
  */
 function generateOneOf(
 	node: OneOfExpression,
@@ -319,12 +334,13 @@ function generateOneOf(
 		return () => false;
 	}
 
+	// Pre-compute case-insensitive values at compile time
 	if (state.caseInsensitive) {
 		const lowerValues = values.map((v: string | number | boolean) =>
 			typeof v === "string" ? v.toLowerCase() : v,
 		);
-		// Use Set for O(1) lookup on larger lists (threshold ~12 based on typical benchmarks)
-		if (lowerValues.length > 12) {
+		// Use Set for O(1) lookup on larger lists (threshold based on Codspeed benchmarks showing Set is faster at ~10 items)
+		if (lowerValues.length > 10) {
 			const valueSet = new Set(lowerValues);
 			return (item) => {
 				const fieldValue = accessor(item, mappedField);
@@ -339,8 +355,8 @@ function generateOneOf(
 		};
 	}
 
-	// For small arrays (<=12 items), Array.includes is faster than Set lookup
-	if (values.length <= 12) {
+	// For small arrays (<=10 items), Array.includes is faster than Set lookup
+	if (values.length <= 10) {
 		return (item) => values.includes(accessor(item, mappedField) as string | number | boolean);
 	}
 
@@ -351,6 +367,7 @@ function generateOneOf(
 
 /**
  * Generates predicate for not-one-of expression
+ * Pre-computes case-insensitive values and uses optimized Set threshold
  */
 function generateNotOneOf(
 	node: NotOneOfExpression,
@@ -365,12 +382,12 @@ function generateNotOneOf(
 		return () => true;
 	}
 
+	// Pre-compute case-insensitive values at compile time
 	if (state.caseInsensitive) {
 		const lowerValues = values.map((v: string | number | boolean) =>
 			typeof v === "string" ? v.toLowerCase() : v,
 		);
-		// Use Set for O(1) lookup on larger lists (threshold ~12 based on typical benchmarks)
-		if (lowerValues.length > 12) {
+		if (lowerValues.length > 10) {
 			const valueSet = new Set(lowerValues);
 			return (item) => {
 				const fieldValue = accessor(item, mappedField);
@@ -385,8 +402,7 @@ function generateNotOneOf(
 		};
 	}
 
-	// For small arrays (<=12 items), Array.includes is faster than Set lookup
-	if (values.length <= 12) {
+	if (values.length <= 10) {
 		return (item) => !values.includes(accessor(item, mappedField) as string | number | boolean);
 	}
 

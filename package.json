@@ -16,10 +16,7 @@
 	},
 	"workspaces": {
 		"packages": [
-			"packages/core",
-			"packages/sql",
-			"packages/js",
-			"packages/benchmark",
+			"packages/*",
 			"examples/elysia-sqlite"
 		],
 		"catalog": {

@@ -1,9 +1,18 @@
 {
+	"$schema": "https://json.schemastore.org/tsconfig",
 	"compilerOptions": {
+		"target": "ES2022",
 		"module": "ESNext",
-		"target": "ESNext",
 		"moduleResolution": "bundler",
 		"strict": true,
-		"skipLibCheck": true
-	}
+		"skipLibCheck": true,
+		"declaration": true,
+		"declarationMap": true,
+		"emitDeclarationOnly": true,
+		"outDir": "./dist",
+		"rootDir": "./src",
+		"isolatedModules": true
+	},
+	"include": ["src/**/*.ts"],
+	"exclude": ["node_modules", "dist"]
 }

@@ -220,11 +220,12 @@ try {
 
 Filtron is a monorepo with focused packages:
 
-| Package                          | Description                                    |
-| -------------------------------- | ---------------------------------------------- |
-| [@filtron/core](./packages/core) | Core parser — parses expressions into an AST   |
-| [@filtron/sql](./packages/sql)   | Generates parameterized SQL WHERE clauses      |
-| [@filtron/js](./packages/js)     | Creates filter functions for JavaScript arrays |
+| Package                                    | Version                                                 | Bundle Size                                                                    | Description                                    |
+| ------------------------------------------ | ------------------------------------------------------- | ------------------------------------------------------------------------------ | ---------------------------------------------- |
+| [@filtron/core](./packages/core)           | ![npm](https://img.shields.io/npm/v/@filtron/core)      | ![npm bundle size](https://img.shields.io/bundlephobia/min/@filtron/core)      | Core parser — parses expressions into an AST   |
+| [@filtron/sql](./packages/sql)             | ![npm](https://img.shields.io/npm/v/@filtron/sql)       | ![npm bundle size](https://img.shields.io/bundlephobia/min/@filtron/sql)       | Generates parameterized SQL WHERE clauses      |
+| [@filtron/js](./packages/js)               | ![npm](https://img.shields.io/npm/v/@filtron/js)        | ![npm bundle size](https://img.shields.io/bundlephobia/min/@filtron/js)        | Creates filter functions for JavaScript arrays |
+| [@filtron/benchmark](./packages/benchmark) | ![npm](https://img.shields.io/npm/v/@filtron/benchmark) | ![npm bundle size](https://img.shields.io/bundlephobia/min/@filtron/benchmark) | Benchmark utilities and performance tests      |
 
 ## Advanced
 

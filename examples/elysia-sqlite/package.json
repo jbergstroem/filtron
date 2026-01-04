@@ -11,7 +11,7 @@
 		"test": "bun test"
 	},
 	"dependencies": {
-		"@faker-js/faker": "10.1.0",
+		"@faker-js/faker": "10.2.0",
 		"@filtron/core": "workspace:*",
 		"@filtron/sql": "workspace:*",
 		"elysia": "1.4.19"

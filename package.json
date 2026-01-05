@@ -27,7 +27,8 @@
 	"scripts": {
 		"bench": "cd packages/core && bun run bench",
 		"build": "bun run --filter '@filtron/core' build && bun run --filter '!@filtron/core' build",
-		"lint": "oxlint --type-aware --type-check; oxfmt --check; exit $(( $? ))"
+		"lint": "oxlint --type-aware --type-check; oxfmt --check; exit $(( $? ))",
+		"knip": "knip"
 	},
 	"devDependencies": {
 		"@types/bun": "catalog:",

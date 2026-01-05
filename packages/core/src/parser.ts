@@ -7,6 +7,20 @@ import { LexerError } from "./lexer";
 import { parseQuery, ParseError as RDParseError } from "./rd-parser";
 
 /**
+ * Error thrown by parseOrThrow when parsing fails.
+ * Includes the position in the query where the error occurred.
+ */
+export class FiltronParseError extends Error {
+	constructor(
+		message: string,
+		public position?: number,
+	) {
+		super(message);
+		this.name = "FiltronParseError";
+	}
+}
+
+/**
  * Result of a successful parse operation
  */
 export interface ParseSuccess {
@@ -21,6 +35,7 @@ export interface ParseError {
 	success: false;
 	error: string;
 	message: string;
+	position?: number;
 }
 
 /**
@@ -32,7 +47,7 @@ export type ParseResult = ParseSuccess | ParseError;
  * Parses a Filtron query string into an Abstract Syntax Tree (AST).
  *
  * @param query - The Filtron query string to parse
- * @returns A ParseResult containing either the AST or an error message
+ * @returns A ParseResult containing either the AST or an error
  *
  * @example
  * ```typescript
@@ -53,9 +68,11 @@ export const parse = (query: string): ParseResult => {
 		};
 	} catch (error) {
 		let message: string;
+		let position: number | undefined;
 
 		if (error instanceof RDParseError || error instanceof LexerError) {
 			message = error.message;
+			position = error.position;
 		} else if (error instanceof Error) {
 			message = error.message;
 		} else {
@@ -66,6 +83,7 @@ export const parse = (query: string): ParseResult => {
 			success: false,
 			error: message,
 			message,
+			position,
 		};
 	}
 };
@@ -76,7 +94,7 @@ export const parse = (query: string): ParseResult => {
  *
  * @param query - The Filtron query string to parse
  * @returns The parsed AST
- * @throws Error if parsing fails
+ * @throws FiltronParseError if parsing fails, with position information
  *
  * @example
  * ```typescript
@@ -84,7 +102,9 @@ export const parse = (query: string): ParseResult => {
  *   const ast = parseOrThrow('age > 18');
  *   console.log(ast);
  * } catch (error) {
- *   console.error('Parse failed:', error.message);
+ *   if (error instanceof FiltronParseError) {
+ *     console.error('Parse failed at position', error.position, ':', error.message);
+ *   }
  * }
  * ```
  */
@@ -95,5 +115,5 @@ export const parseOrThrow = (query: string): ASTNode => {
 		return result.ast;
 	}
 
-	throw new Error(`Failed to parse Filtron query: ${result.error}`);
+	throw new FiltronParseError(`Failed to parse Filtron query: ${result.error}`, result.position);
 };

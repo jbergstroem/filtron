@@ -27,6 +27,7 @@ describe("Parser API", () => {
 				expect(result.error).toBeDefined();
 				expect(result.message).toBeDefined();
 				expect(typeof result.error).toBe("string");
+				expect(result.position).toBe(5);
 			}
 		});
 
@@ -35,6 +36,7 @@ describe("Parser API", () => {
 			expect(result.success).toBe(false);
 			if (!result.success) {
 				expect(result.error).toContain("Empty query");
+				expect(result.position).toBe(0);
 			}
 		});
 
@@ -43,6 +45,7 @@ describe("Parser API", () => {
 			expect(result.success).toBe(false);
 			if (!result.success) {
 				expect(result.error).toContain("Unterminated string literal");
+				expect(result.position).toBe(0);
 			}
 		});
 
@@ -51,6 +54,7 @@ describe("Parser API", () => {
 			expect(result.success).toBe(false);
 			if (!result.success) {
 				expect(result.error).toBeDefined();
+				expect(result.position).toBe(9);
 			}
 		});
 
@@ -59,6 +63,7 @@ describe("Parser API", () => {
 			expect(result.success).toBe(false);
 			if (!result.success) {
 				expect(result.error).toContain("Unexpected character");
+				expect(result.position).toBe(4);
 			}
 		});
 

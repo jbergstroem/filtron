@@ -21,6 +21,7 @@ export interface ParseError {
 	success: false;
 	error: string;
 	message: string;
+	position?: number;
 }
 
 /**
@@ -53,9 +54,11 @@ export const parse = (query: string): ParseResult => {
 		};
 	} catch (error) {
 		let message: string;
+		let position: number | undefined;
 
 		if (error instanceof RDParseError || error instanceof LexerError) {
 			message = error.message;
+			position = error.position;
 		} else if (error instanceof Error) {
 			message = error.message;
 		} else {
@@ -66,6 +69,7 @@ export const parse = (query: string): ParseResult => {
 			success: false,
 			error: message,
 			message,
+			position,
 		};
 	}
 };

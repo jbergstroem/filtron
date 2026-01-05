@@ -13,7 +13,7 @@
  */
 
 // Parser functions
-export { parse, parseOrThrow } from "./parser";
+export { parse, parseOrThrow, FiltronParseError } from "./parser";
 export type { ParseResult, ParseSuccess, ParseError } from "./parser";
 
 // AST type definitions

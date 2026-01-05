@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import { parse, parseOrThrow } from "./parser";
+import { parse, parseOrThrow, FiltronParseError } from "./parser";
 
 describe("Parser API", () => {
 	describe("parse()", () => {
@@ -104,32 +104,49 @@ describe("Parser API", () => {
 			expect(ast.type).toBe("and");
 		});
 
-		test("throws error on parse failure", () => {
-			expect(() => parseOrThrow("age >")).toThrow();
+		test("throws FiltronParseError on parse failure", () => {
+			expect(() => parseOrThrow("age >")).toThrow(FiltronParseError);
 			expect(() => parseOrThrow("age >")).toThrow("Failed to parse Filtron query");
 		});
 
-		test("throws error for empty query", () => {
-			expect(() => parseOrThrow("")).toThrow();
-			expect(() => parseOrThrow("")).toThrow("Empty query");
+		test("throws FiltronParseError for empty query with position", () => {
+			try {
+				parseOrThrow("");
+			} catch (error) {
+				expect(error).toBeInstanceOf(FiltronParseError);
+				expect((error as FiltronParseError).position).toBe(0);
+				expect((error as FiltronParseError).message).toContain("Empty query");
+			}
 		});
 
-		test("throws error for lexer errors", () => {
-			expect(() => parseOrThrow('"unterminated')).toThrow();
-			expect(() => parseOrThrow('"unterminated')).toThrow("Unterminated string literal");
+		test("throws FiltronParseError for lexer errors with position", () => {
+			try {
+				parseOrThrow('"unterminated');
+			} catch (error) {
+				expect(error).toBeInstanceOf(FiltronParseError);
+				expect((error as FiltronParseError).position).toBe(0);
+				expect((error as FiltronParseError).message).toContain("Unterminated string literal");
+			}
 		});
 
-		test("throws error for invalid syntax", () => {
-			expect(() => parseOrThrow("(age > 18")).toThrow();
+		test("throws FiltronParseError for invalid syntax with position", () => {
+			try {
+				parseOrThrow("(age > 18");
+			} catch (error) {
+				expect(error).toBeInstanceOf(FiltronParseError);
+				expect((error as FiltronParseError).position).toBe(9);
+			}
 		});
 
-		test("error message includes original error details", () => {
+		test("error includes position and original error details", () => {
 			try {
 				parseOrThrow("status : []");
 				expect(true).toBe(false); // Should not reach here
 			} catch (error) {
-				expect((error as Error).message).toContain("Failed to parse Filtron query");
-				expect((error as Error).message).toContain("Array cannot be empty");
+				expect(error).toBeInstanceOf(FiltronParseError);
+				expect((error as FiltronParseError).message).toContain("Failed to parse Filtron query");
+				expect((error as FiltronParseError).message).toContain("Array cannot be empty");
+				expect((error as FiltronParseError).position).toBeDefined();
 			}
 		});
 	});

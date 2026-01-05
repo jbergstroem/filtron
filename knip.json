@@ -1,0 +1,31 @@
+{
+	"$schema": "https://unpkg.com/knip@5/schema.json",
+	"workspaces": {
+		".": {
+			"entry": "scripts/*.ts!",
+			"project": "scripts/*.ts"
+		},
+		"packages/core": {
+			"entry": ["index.ts!", "examples/*.ts!"],
+			"project": ["**/*.ts"]
+		},
+		"packages/js": {
+			"entry": "index.ts!",
+			"project": ["**/*.ts"]
+		},
+		"packages/sql": {
+			"entry": ["index.ts!", "overhead.ts!", "examples/*.ts!"],
+			"project": ["**/*.ts"]
+		},
+		"packages/benchmark": {
+			"entry": "*.bench.ts!",
+			"project": ["**/*.ts"]
+		},
+		"examples/*": {
+			"project": "**/*.ts"
+		}
+	},
+	"ignore": ["**/dist/**"],
+	"ignoreBinaries": ["tsc"],
+	"ignoreExportsUsedInFile": true
+}

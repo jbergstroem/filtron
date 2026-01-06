@@ -16,6 +16,10 @@
 export { parse, parseOrThrow, FiltronParseError } from "./parser";
 export type { ParseResult, ParseSuccess, ParseError } from "./parser";
 
+// Lexer for tokenization
+export { Lexer, LexerError } from "./lexer";
+export type { Token, TokenType, StringToken, NumberToken, BooleanToken } from "./lexer";
+
 // AST type definitions
 export type {
 	ASTNode,

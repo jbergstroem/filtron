@@ -98,21 +98,27 @@ Parses a filter expression and returns a result object.
 const result = parse('age > 18');
 
 if (result.success) {
-  result.ast;   // ASTNode
+  result.ast;      // ASTNode
 } else {
-  result.error; // string
+  result.error;    // string - error message
+  result.position; // number - position in input where error occurred
 }
 ```
 
 ### `parseOrThrow(input: string): ASTNode`
 
-Parses a filter expression, throwing on invalid input.
+Parses a filter expression, throwing `FiltronParseError` on invalid input.
 
 ```typescript
+import { parseOrThrow, FiltronParseError } from "@filtron/core";
+
 try {
   const ast = parseOrThrow('age > 18');
 } catch (error) {
-  console.error(error.message);
+  if (error instanceof FiltronParseError) {
+    console.error(error.message);  // error description
+    console.error(error.position); // position in input where error occurred
+  }
 }
 ```
 
@@ -121,24 +127,25 @@ try {
 All AST types are exported for building custom consumers:
 
 ```typescript
-import type {
-  ParseResult,
-  ASTNode,
-  AndExpression,
-  OrExpression,
-  NotExpression,
-  ComparisonExpression,
-  ExistsExpression,
-  BooleanFieldExpression,
-  OneOfExpression,
-  NotOneOfExpression,
-  RangeExpression,
-  Value,
-  ComparisonOperator,
-  StringValue,
-  NumberValue,
-  BooleanValue,
-  IdentifierValue,
+import {
+  FiltronParseError,        // Error class thrown by parseOrThrow
+  type ParseResult,
+  type ASTNode,
+  type AndExpression,
+  type OrExpression,
+  type NotExpression,
+  type ComparisonExpression,
+  type ExistsExpression,
+  type BooleanFieldExpression,
+  type OneOfExpression,
+  type NotOneOfExpression,
+  type RangeExpression,
+  type Value,
+  type ComparisonOperator,
+  type StringValue,
+  type NumberValue,
+  type BooleanValue,
+  type IdentifierValue,
 } from "@filtron/core";
 ```
 

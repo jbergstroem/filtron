@@ -207,12 +207,14 @@ order.shipping.address.country = "PT"
 Use `parseOrThrow` if you prefer exceptions over result objects:
 
 ```typescript
-import { parseOrThrow } from "@filtron/core";
+import { parseOrThrow, FiltronParseError } from "@filtron/core";
 
 try {
   const ast = parseOrThrow('age > 18 AND status = "active"');
 } catch (error) {
-  console.error(error.message);
+  if (error instanceof FiltronParseError) {
+    console.error(error.message, error.position);  // error description and position
+  }
 }
 ```
 

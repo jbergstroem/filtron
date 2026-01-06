@@ -260,7 +260,7 @@ Full TypeScript types are exported for building custom AST consumers.
 
 Filtron currently uses a hand-written lexer and recursive descent parser and has no runtime dependencies (~9 KB minified). We continuously monitor performance with [CodSpeed](https://codspeed.io/) to test out new optimizations.
 
-The AST syntax is seen as stable and any changes follows strict semantic versioning (we for instance switched from a PEG parser to a hand-written recursive descent parser after the initial release).
+The AST syntax is seen as stable and any changes follows strict semantic versioning (we for instance switched from a PEG parser to a recursive descent parser after the initial release).
 
 | Query Complexity | Parse Time | Throughput        |
 | ---------------- | ---------- | ----------------- |

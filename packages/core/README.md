@@ -142,6 +142,19 @@ import type {
 } from "@filtron/core";
 ```
 
+The Lexer types are also available if you want to use them for syntax highlighting or other purposes:
+
+```typescript
+import { Lexer, LexerError } from "@filtron/core";
+import type {
+  Token,
+  TokenType,
+  StringToken,
+  NumberToken,
+  BooleanToken,
+} from "@filtron/core";
+```
+
 ### AST structure
 
 | Node Type      | Fields                       | Example input          |
@@ -184,7 +197,7 @@ parse('age > 18 AND status = "active"')
 
 ## Performance
 
-Hand-written recursive descent parser. ~9 KB minified, zero dependencies.
+Recursive descent parser. ~9 KB minified, zero dependencies.
 
 | Query complexity | Parse time | Throughput        |
 | ---------------- | ---------- | ----------------- |

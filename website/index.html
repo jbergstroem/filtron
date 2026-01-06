@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta
+			name="description"
+			content="Parse human-friendly filter expressions into SQL, JavaScript filters, or custom integrations. A fast, dependency-free query parser."
+		/>
+		<title>Filtron - Human-friendly filter language</title>
+		<link rel="stylesheet" href="styles.css" />
+	</head>
+	<body>
+		<canvas id="grid-canvas"></canvas>
+
+		<div class="page">
+			<section class="hero">
+				<header>
+					<h1 class="text-glow">Filtron</h1>
+					<p class="tagline text-glow">Human-friendly filter expressions for your data</p>
+				</header>
+
+				<div class="filter-container">
+					<div class="filter-input-wrapper">
+						<textarea
+							id="filter-input"
+							class="filter-input"
+							rows="1"
+							spellcheck="false"
+							autocomplete="off"
+							autocorrect="off"
+							autocapitalize="off"
+							placeholder='Try: color = "blue" OR size > 3'
+						>
+shape = "circle" AND size > 2</textarea
+						>
+						<div id="filter-highlighted" class="filter-highlighted" aria-hidden="true"></div>
+						<div id="error-tooltip" class="error-tooltip" aria-hidden="true"></div>
+						<span
+							id="filter-stats"
+							class="filter-stats tooltip"
+							aria-label="Matching particles in the background"
+						></span>
+					</div>
+					<button
+						id="randomize-btn"
+						class="randomize-btn tooltip"
+						type="button"
+						aria-label="Generate random query"
+					>
+						<i data-icon="redo"></i>
+					</button>
+				</div>
+
+				<table class="hints font-mono text-muted">
+					<caption>
+						Available fields
+					</caption>
+					<tr>
+						<td class="hint-name">shape</td>
+						<td class="hint-values">["circle", "triangle", "square"]</td>
+					</tr>
+					<tr>
+						<td class="hint-name">color</td>
+						<td class="hint-values">["red", "blue", "green", "orange", "purple"]</td>
+					</tr>
+					<tr>
+						<td class="hint-name">size</td>
+						<td class="hint-values">1..5</td>
+					</tr>
+				</table>
+
+				<a href="#about" class="scroll-hint text-glow text-muted">Learn more ↓</a>
+			</section>
+
+			<section id="about" class="content-section">
+				<div class="section-inner">
+					<h2>What is Filtron?</h2>
+					<p>
+						Filtron parses human-friendly filter strings into a typed AST (Abstract Syntax Tree).
+						The core parser only handles parsing, giving you full control over what happens next.
+						Use the included adapters to generate SQL or JavaScript filters, or traverse the AST to
+						build your own integrations.
+					</p>
+					<div class="tabs font-mono text-muted">
+						<input type="radio" name="tab" id="tab-core" class="tab-radio" checked />
+						<label for="tab-core" class="tab-label"
+							><span class="tab-full">@filtron/core</span><span class="tab-short">core</span></label
+						>
+						<input type="radio" name="tab" id="tab-sql" class="tab-radio" />
+						<label for="tab-sql" class="tab-label"
+							><span class="tab-full">@filtron/sql</span><span class="tab-short">sql</span></label
+						>
+						<input type="radio" name="tab" id="tab-js" class="tab-radio" />
+						<label for="tab-js" class="tab-label"
+							><span class="tab-full">@filtron/js</span><span class="tab-short">js</span></label
+						>
+						<div class="tab-panel" id="panel-core">
+							<div class="code-block">
+								<pre><code class="language-typescript">import { parse } from "@filtron/core";
+
+const result = parse('age > 18 AND status = "active"');
+
+if (result.success) {
+  // result.ast contains the parsed query
+}</code></pre>
+							</div>
+						</div>
+						<div class="tab-panel" id="panel-sql">
+							<div class="code-block">
+								<pre><code class="language-typescript">import { parse } from "@filtron/core";
+import { toSQL } from "@filtron/sql";
+
+const { sql, params } = toSQL(parse('age > 18 AND status = "active"').ast);
+
+const query = `SELECT * FROM users WHERE ${sql}`;
+// SELECT * FROM users WHERE (age > $1 AND status = $2)
+
+console.log(params);
+// [18, "active"]</code></pre>
+							</div>
+						</div>
+						<div class="tab-panel" id="panel-js">
+							<div class="code-block">
+								<pre><code class="language-typescript">import { parse } from "@filtron/core";
+import { toFilter } from "@filtron/js";
+
+const users = [
+  { name: "Alice", age: 25 },
+  { name: "Bob", age: 32 },
+];
+
+const filter = toFilter(parse('age > 18').ast);
+const adults = users.filter(filter);
+// [{ name: "Alice", age: 25 }, { name: "Bob", age: 32 }]</code></pre>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<section class="content-section alt">
+				<div class="section-inner">
+					<h2>Syntax</h2>
+
+					<h3>Comparisons</h3>
+					<div class="code-block">
+						<pre><code class="syntax-example">age > 18
+price <= 99.99
+status = "active"
+role != "guest"</code></pre>
+					</div>
+
+					<h3>Boolean logic</h3>
+					<div class="code-block">
+						<pre><code class="syntax-example">age > 18 AND verified
+admin OR moderator
+NOT suspended
+(admin OR mod) AND active</code></pre>
+					</div>
+
+					<h3>Field existence</h3>
+					<div class="code-block">
+						<pre><code class="syntax-example">email?
+profile EXISTS</code></pre>
+					</div>
+
+					<h3>Contains and one-of</h3>
+					<div class="code-block">
+						<pre><code class="syntax-example">name ~ "john"
+status : ["pending", "approved", "rejected"]</code></pre>
+					</div>
+
+					<h3>Ranges</h3>
+					<div class="code-block">
+						<pre><code class="syntax-example">age = 18..65
+temperature = -10..10</code></pre>
+					</div>
+				</div>
+			</section>
+
+			<section class="content-section">
+				<div class="section-inner">
+					<h2>Operators</h2>
+					<table>
+						<thead>
+							<tr>
+								<th>Operator</th>
+								<th>Meaning</th>
+								<th>Example</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td><code>=</code>&nbsp;<code>:</code></td>
+								<td>Equal</td>
+								<td><code class="syntax-example">status = "active"</code></td>
+							</tr>
+							<tr>
+								<td><code>!=</code>&nbsp;<code>!:</code></td>
+								<td>Not equal</td>
+								<td><code class="syntax-example">role != "guest"</code></td>
+							</tr>
+							<tr>
+								<td>
+									<code>></code>&nbsp;<code>>=</code>&nbsp;<code><</code>&nbsp;<code><=</code>
+								</td>
+								<td>Comparison</td>
+								<td><code class="syntax-example">age >= 18</code></td>
+							</tr>
+							<tr>
+								<td><code>~</code></td>
+								<td>Contains</td>
+								<td><code class="syntax-example">name ~ "john"</code></td>
+							</tr>
+							<tr>
+								<td><code>?</code>&nbsp;<code>EXISTS</code></td>
+								<td>Field exists</td>
+								<td><code class="syntax-example">email?</code></td>
+							</tr>
+							<tr>
+								<td><code>..</code></td>
+								<td>Range</td>
+								<td><code class="syntax-example">age = 18..65</code></td>
+							</tr>
+							<tr>
+								<td><code>: [...]</code></td>
+								<td>One of</td>
+								<td><code class="syntax-example">status : ["a", "b"]</code></td>
+							</tr>
+							<tr>
+								<td><code>AND</code>&nbsp;<code>OR</code>&nbsp;<code>NOT</code></td>
+								<td>Boolean</td>
+								<td><code class="syntax-example">a AND (b OR c)</code></td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</section>
+
+			<section class="content-section alt">
+				<div class="section-inner">
+					<h2>Performance</h2>
+					<p>Recursive descent parser. No runtime dependencies. ~9KB minified.</p>
+
+					<div class="perf-bars text-muted">
+						<div class="perf-item">
+							<div class="perf-bar-wrap"><div class="perf-bar" style="width: 100%"></div></div>
+							<div class="perf-label">Simple query</div>
+							<div class="perf-value">14M ops/sec</div>
+							<div class="perf-query" data-query="age &gt; 18"></div>
+						</div>
+						<div class="perf-item">
+							<div class="perf-bar-wrap"><div class="perf-bar" style="width: 50%"></div></div>
+							<div class="perf-label">Medium query</div>
+							<div class="perf-value">7M ops/sec</div>
+							<div class="perf-query" data-query='status = "active" AND age &gt;= 18'></div>
+						</div>
+						<div class="perf-item">
+							<div class="perf-bar-wrap"><div class="perf-bar" style="width: 21%"></div></div>
+							<div class="perf-label">Complex query</div>
+							<div class="perf-value">3M ops/sec</div>
+							<div
+								class="perf-query"
+								data-query='(role = "admin" OR role = "moderator") AND status = "active" AND age &gt;= 18'
+							></div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<section class="content-section alt">
+				<div class="section-inner">
+					<h2>Installation</h2>
+					<div class="code-block">
+						<pre><code class="language-bash">npm install @filtron/core
+
+# Optional helpers
+npm install @filtron/sql   # SQL WHERE clauses
+npm install @filtron/js    # Array filtering</code></pre>
+					</div>
+				</div>
+			</section>
+
+			<footer class="text-glow">
+				<nav class="links">
+					<a href="https://github.com/jbergstroem/filtron"><i data-icon="github"></i>GitHub</a>
+					<a href="https://www.npmjs.com/package/@filtron/core"><i data-icon="package"></i>npm</a>
+					<a href="https://github.com/jbergstroem/filtron#readme"
+						><i data-icon="book-open"></i>Docs</a
+					>
+				</nav>
+				<p class="copyright">MIT License</p>
+			</footer>
+		</div>
+
+		<script type="module" src="./main.js"></script>
+	</body>
+</html>

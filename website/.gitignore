@@ -1,0 +1,6 @@
+# Build output
+playground.js
+playground.js.map
+
+# Dependencies
+node_modules/

@@ -85,15 +85,11 @@ html = html
 	.replace(/&#10;/g, "\n")
 	.trim();
 
-// Inline CSS and JS after minification to avoid corrupting their content
-// Escape $ in replacement strings to prevent special replacement patterns ($&, $`, $', etc.)
-html = html.replace(
-	/<link rel="stylesheet" href="styles.css" ?\/>/,
-	`<style>${css.replace(/\$/g, "$$$$")}</style>`,
-);
+// Inline CSS and JS
+html = html.replace(/<link rel="stylesheet" href="styles.css" ?\/>/, `<style>${css}</style>`);
 html = html.replace(
 	/<script type="module" src="\.\/main\.js"><\/script>/,
-	`<script type="module">${js.replace(/\$/g, "$$$$")}</script>`,
+	`<script type="module">${js}</script>`,
 );
 
 await write("dist/index.html", html);

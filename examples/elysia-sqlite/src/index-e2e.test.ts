@@ -72,7 +72,9 @@ describe("Elysia E2E Tests", () => {
 	});
 
 	test("should filter with comparison operators", async () => {
-		const response1 = await fetch(`${getBaseUrl()}/users?filter=${encodeURIComponent("age >= 30")}`);
+		const response1 = await fetch(
+			`${getBaseUrl()}/users?filter=${encodeURIComponent("age >= 30")}`,
+		);
 		const data1 = await response1.json();
 		expect(data1.count).toBe(369);
 		expect(data1.data.every((u: any) => u.age >= 30)).toBe(true);
@@ -84,7 +86,9 @@ describe("Elysia E2E Tests", () => {
 	});
 
 	test("should filter with range expression syntax", async () => {
-		const response = await fetch(`${getBaseUrl()}/users?filter=${encodeURIComponent("age = 30..40")}`);
+		const response = await fetch(
+			`${getBaseUrl()}/users?filter=${encodeURIComponent("age = 30..40")}`,
+		);
 		const data = await response.json();
 
 		expect(response.status).toBe(200);
@@ -95,7 +99,9 @@ describe("Elysia E2E Tests", () => {
 	});
 
 	test("should filter with contains operator", async () => {
-		const response = await fetch(`${getBaseUrl()}/users?filter=${encodeURIComponent('name ~ "%a%"')}`);
+		const response = await fetch(
+			`${getBaseUrl()}/users?filter=${encodeURIComponent('name ~ "%a%"')}`,
+		);
 		const data = await response.json();
 
 		expect(response.status).toBe(200);

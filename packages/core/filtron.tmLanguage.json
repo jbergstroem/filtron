@@ -1,0 +1,57 @@
+{
+	"name": "Filtron",
+	"scopeName": "source.filtron",
+	"patterns": [
+		{
+			"include": "#keywords"
+		},
+		{
+			"include": "#operators"
+		},
+		{
+			"include": "#strings"
+		},
+		{
+			"include": "#numbers"
+		},
+		{
+			"include": "#fields"
+		},
+		{
+			"include": "#brackets"
+		}
+	],
+	"repository": {
+		"keywords": {
+			"match": "\\b(AND|OR|NOT|EXISTS|TRUE|FALSE)\\b",
+			"name": "keyword.control.filtron"
+		},
+		"operators": {
+			"match": "(>=|<=|!=|!:|:|=|>|<|~|\\?|\\.\\.)",
+			"name": "keyword.operator.filtron"
+		},
+		"strings": {
+			"begin": "\"",
+			"end": "\"",
+			"name": "string.quoted.double.filtron",
+			"patterns": [
+				{
+					"match": "\\\\.",
+					"name": "constant.character.escape.filtron"
+				}
+			]
+		},
+		"numbers": {
+			"match": "-?\\d+(\\.\\d+)?",
+			"name": "constant.numeric.filtron"
+		},
+		"fields": {
+			"match": "[a-zA-Z_][a-zA-Z0-9_.]*",
+			"name": "variable.other.filtron"
+		},
+		"brackets": {
+			"match": "[\\[\\]\\(\\)]",
+			"name": "punctuation.bracket.filtron"
+		}
+	}
+}

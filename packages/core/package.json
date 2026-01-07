@@ -27,6 +27,7 @@
 	},
 	"files": [
 		"dist",
+		"filtron.tmLanguage.json",
 		"LICENSE",
 		"README.md"
 	],
@@ -39,7 +40,8 @@
 			"types": "./dist/index.d.ts",
 			"import": "./dist/index.js",
 			"default": "./dist/index.js"
-		}
+		},
+		"./filtron.tmLanguage.json": "./filtron.tmLanguage.json"
 	},
 	"scripts": {
 		"bench": "bun run build && bun --expose-gc run benchmark.ts",

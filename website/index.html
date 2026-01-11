@@ -39,6 +39,7 @@ shape = "circle" AND size > 2</textarea
 						<span
 							id="filter-stats"
 							class="filter-stats tooltip"
+							role="status"
 							aria-label="Matching particles in the background"
 						></span>
 					</div>
@@ -52,10 +53,8 @@ shape = "circle" AND size > 2</textarea
 					</button>
 				</div>
 
+				<span class="hints-label text-glow text-muted">Available fields</span>
 				<table class="hints font-mono text-muted">
-					<caption>
-						Available fields
-					</caption>
 					<tr>
 						<td class="hint-name">shape</td>
 						<td class="hint-values">["circle", "triangle", "square"]</td>
@@ -99,7 +98,7 @@ shape = "circle" AND size > 2</textarea
 							<div class="code-block">
 								<pre><code class="language-typescript">import { parse } from "@filtron/core";
 
-const result = parse('age > 18 AND status = "active"');
+const result = parse('age &gt; 18 AND status = "active"');
 
 if (result.success) {
   // result.ast contains the parsed query
@@ -111,10 +110,10 @@ if (result.success) {
 								<pre><code class="language-typescript">import { parse } from "@filtron/core";
 import { toSQL } from "@filtron/sql";
 
-const { sql, params } = toSQL(parse('age > 18 AND status = "active"').ast);
+const { sql, params } = toSQL(parse('age &gt; 18 AND status = "active"').ast);
 
 const query = `SELECT * FROM users WHERE ${sql}`;
-// SELECT * FROM users WHERE (age > $1 AND status = $2)
+// SELECT * FROM users WHERE (age &gt; $1 AND status = $2)
 
 console.log(params);
 // [18, "active"]</code></pre>
@@ -130,7 +129,7 @@ const users = [
   { name: "Bob", age: 32 },
 ];
 
-const filter = toFilter(parse('age > 18').ast);
+const filter = toFilter(parse('age &gt; 18').ast);
 const adults = users.filter(filter);
 // [{ name: "Alice", age: 25 }, { name: "Bob", age: 32 }]</code></pre>
 							</div>
@@ -145,15 +144,15 @@ const adults = users.filter(filter);
 
 					<h3>Comparisons</h3>
 					<div class="code-block">
-						<pre><code class="syntax-example">age > 18
-price <= 99.99
+						<pre><code class="syntax-example">age &gt; 18
+price &lt;= 99.99
 status = "active"
 role != "guest"</code></pre>
 					</div>
 
 					<h3>Boolean logic</h3>
 					<div class="code-block">
-						<pre><code class="syntax-example">age > 18 AND verified
+						<pre><code class="syntax-example">age &gt; 18 AND verified
 admin OR moderator
 NOT suspended
 (admin OR mod) AND active</code></pre>
@@ -203,10 +202,12 @@ temperature = -10..10</code></pre>
 							</tr>
 							<tr>
 								<td>
-									<code>></code>&nbsp;<code>>=</code>&nbsp;<code><</code>&nbsp;<code><=</code>
+									<code>&gt;</code>&nbsp;<code>&gt;=</code>&nbsp;<code>&lt;</code>&nbsp;<code
+										>&lt;=</code
+									>
 								</td>
 								<td>Comparison</td>
-								<td><code class="syntax-example">age >= 18</code></td>
+								<td><code class="syntax-example">age &gt;= 18</code></td>
 							</tr>
 							<tr>
 								<td><code>~</code></td>
@@ -241,31 +242,104 @@ temperature = -10..10</code></pre>
 			<section class="content-section alt">
 				<div class="section-inner">
 					<h2>Performance</h2>
-					<p>Recursive descent parser. No runtime dependencies. ~9KB minified.</p>
+					<p>
+						Overhead added by Filtron when processing a query. Parse converts the query string to an
+						AST; the adapters generate SQL or a JavaScript filter function. Both are one-time costs
+						per query.
+					</p>
 
-					<div class="perf-bars text-muted">
-						<div class="perf-item">
-							<div class="perf-bar-wrap"><div class="perf-bar" style="width: 100%"></div></div>
-							<div class="perf-label">Simple query</div>
-							<div class="perf-value">14M ops/sec</div>
-							<div class="perf-query" data-query="age &gt; 18"></div>
+					<table class="perf-table">
+						<thead>
+							<tr>
+								<th>Query</th>
+								<th>Parse</th>
+								<th>SQL</th>
+								<th>Filter</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td><code class="syntax-example">level &gt; 3 AND message ~ "timeout"</code></td>
+								<td>2μs</td>
+								<td>1μs</td>
+								<td>1μs</td>
+							</tr>
+							<tr>
+								<td>
+									<code class="syntax-example">status : ["error", "warning", "critical"]</code>
+								</td>
+								<td>3μs</td>
+								<td>2μs</td>
+								<td>2μs</td>
+							</tr>
+							<tr>
+								<td><code class="syntax-example">(user? AND role = "admin") OR sudo</code></td>
+								<td>5μs</td>
+								<td>3μs</td>
+								<td>3μs</td>
+							</tr>
+						</tbody>
+					</table>
+
+					<h3>In context: API request lifecycle</h3>
+					<p>
+						Full HTTP request filtering 500 users with
+						<code class="syntax-example"
+							>(role = "admin" OR role = "moderator") AND age &gt; 25</code
+						>
+						through an
+						<a
+							href="https://github.com/jbergstroem/filtron/tree/main/examples/elysia-sqlite"
+							target="_blank"
+							rel="noopener"
+							>Elysia API with in-memory SQLite<i data-icon="external-link-alt"></i></a
+						>. Filtron adds less than 1% to total request time.
+					</p>
+
+					<div class="lifecycle-row">
+						<div class="lifecycle-bar">
+							<div class="lifecycle-segment lifecycle-request" style="flex: 41">
+								<span class="lifecycle-label">41μs</span>
+							</div>
+							<div class="lifecycle-segment lifecycle-parse" style="flex: 0.9">
+								<span class="lifecycle-label lifecycle-label-tall">883ns</span>
+							</div>
+							<div class="lifecycle-segment lifecycle-sql" style="flex: 0.2">
+								<span class="lifecycle-label">245ns</span>
+							</div>
+							<div class="lifecycle-segment lifecycle-db" style="flex: 110">
+								<span class="lifecycle-label">110μs</span>
+							</div>
+							<div class="lifecycle-segment lifecycle-response" style="flex: 41">
+								<span class="lifecycle-label lifecycle-label-tall">41μs</span>
+							</div>
 						</div>
-						<div class="perf-item">
-							<div class="perf-bar-wrap"><div class="perf-bar" style="width: 50%"></div></div>
-							<div class="perf-label">Medium query</div>
-							<div class="perf-value">7M ops/sec</div>
-							<div class="perf-query" data-query='status = "active" AND age &gt;= 18'></div>
-						</div>
-						<div class="perf-item">
-							<div class="perf-bar-wrap"><div class="perf-bar" style="width: 21%"></div></div>
-							<div class="perf-label">Complex query</div>
-							<div class="perf-value">3M ops/sec</div>
-							<div
-								class="perf-query"
-								data-query='(role = "admin" OR role = "moderator") AND status = "active" AND age &gt;= 18'
-							></div>
-						</div>
+						<div class="lifecycle-total">192μs</div>
 					</div>
+
+					<div class="lifecycle-legend">
+						<span class="lifecycle-legend-item">
+							<span class="lifecycle-legend-color lifecycle-request"></span>
+							Request
+						</span>
+						<span class="lifecycle-legend-item">
+							<span class="lifecycle-legend-color lifecycle-parse"></span>
+							Parse
+						</span>
+						<span class="lifecycle-legend-item">
+							<span class="lifecycle-legend-color lifecycle-sql"></span>
+							SQL
+						</span>
+						<span class="lifecycle-legend-item">
+							<span class="lifecycle-legend-color lifecycle-db"></span>
+							Database
+						</span>
+						<span class="lifecycle-legend-item">
+							<span class="lifecycle-legend-color lifecycle-response"></span>
+							Response
+						</span>
+					</div>
+					<p class="perf-footnote">All benchmarks were run on an Apple MacBook Pro M5</p>
 				</div>
 			</section>
 

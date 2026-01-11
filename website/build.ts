@@ -40,16 +40,23 @@ html = html.replace(
 	},
 );
 
-// Process Filtron syntax examples
-html = html.replace(/<code class="syntax-example">([\s\S]*?)<\/code>/g, (_, code) => {
+// Decode HTML entities for syntax highlighting
+function decodeHtmlEntities(text: string): string {
+	return text.replace(/&gt;/g, ">").replace(/&lt;/g, "<").replace(/&amp;/g, "&");
+}
+
+// Process Filtron syntax examples (handles formatter splitting tags across lines)
+html = html.replace(/<code class="syntax-example"\s*>([\s\S]*?)<\/code\s*>/g, (_, code) => {
 	// Highlight each line separately for inline examples
 	const lines = code.trim().split("\n");
 	const highlighted = lines
 		.map((line: string) => {
 			const trimmed = line.trim();
 			if (!trimmed) return "";
+			// Decode HTML entities before highlighting
+			const decoded = decodeHtmlEntities(trimmed);
 			// Extract spans from shiki output, preserving structure
-			const result = highlight(trimmed, "filtron");
+			const result = highlight(decoded, "filtron");
 			// Get content between <code> tags
 			const match = result.match(/<code[^>]*>([\s\S]*?)<\/code>/);
 			return match ? match[1] : trimmed;

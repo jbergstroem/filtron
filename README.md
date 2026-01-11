@@ -39,11 +39,9 @@ WHERE (price < $1 AND category IN ($2, $3) AND inStock = $4)
 **Output (JavaScript):**
 
 ```javascript
-items.filter(item =>
-  item.price < 100 &&
-  ["electronics", "books"].includes(item.category) &&
-  item.inStock
-)
+items.filter(
+	(item) => item.price < 100 && ["electronics", "books"].includes(item.category) && item.inStock,
+);
 ```
 
 ## Use Cases
@@ -73,9 +71,9 @@ import { parse } from "@filtron/core";
 const result = parse('age > 18 AND status = "active"');
 
 if (result.success) {
-  // result.ast contains the parsed query
+	// result.ast contains the parsed query
 } else {
-  // result.error contains what went wrong
+	// result.error contains what went wrong
 }
 ```
 
@@ -88,11 +86,11 @@ import { toSQL } from "@filtron/sql";
 const result = parse('age > 18 AND status = "active"');
 
 if (result.success) {
-  const { sql, params } = toSQL(result.ast);
-  // sql: "(age > $1 AND status = $2)"
-  // params: [18, "active"]
+	const { sql, params } = toSQL(result.ast);
+	// sql: "(age > $1 AND status = $2)"
+	// params: [18, "active"]
 
-  await db.query(`SELECT * FROM users WHERE ${sql}`, params);
+	await db.query(`SELECT * FROM users WHERE ${sql}`, params);
 }
 ```
 
@@ -105,15 +103,15 @@ import { toFilter } from "@filtron/js";
 const result = parse('age > 18 AND status = "active"');
 
 if (result.success) {
-  const filter = toFilter(result.ast);
+	const filter = toFilter(result.ast);
 
-  const users = [
-    { name: "Alice", age: 25, status: "active" },
-    { name: "Bob", age: 16, status: "active" },
-  ];
+	const users = [
+		{ name: "Alice", age: 25, status: "active" },
+		{ name: "Bob", age: 16, status: "active" },
+	];
 
-  users.filter(filter);
-  // => [{ name: "Alice", age: 25, status: "active" }]
+	users.filter(filter);
+	// => [{ name: "Alice", age: 25, status: "active" }]
 }
 ```
 
@@ -210,11 +208,11 @@ Use `parseOrThrow` if you prefer exceptions over result objects:
 import { parseOrThrow, FiltronParseError } from "@filtron/core";
 
 try {
-  const ast = parseOrThrow('age > 18 AND status = "active"');
+	const ast = parseOrThrow('age > 18 AND status = "active"');
 } catch (error) {
-  if (error instanceof FiltronParseError) {
-    console.error(error.message, error.position);  // error description and position
-  }
+	if (error instanceof FiltronParseError) {
+		console.error(error.message, error.position); // error description and position
+	}
 }
 ```
 

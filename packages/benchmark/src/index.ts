@@ -67,6 +67,20 @@ export function printMemory(results: Array<{ label: string; kbPerOp: number }>):
 	}
 }
 
+/** Format time in appropriate unit (ms input) */
+export function formatTime(ms: number): string {
+	if (ms >= 1000) {
+		return `${(ms / 1000).toFixed(2)}s`;
+	}
+	if (ms >= 1) {
+		return `${ms.toFixed(2)}ms`;
+	}
+	if (ms >= 0.001) {
+		return `${(ms * 1000).toFixed(1)}μs`;
+	}
+	return `${(ms * 1000000).toFixed(0)}ns`;
+}
+
 /** Print overhead summary */
 export function printOverhead(
 	name: string,
@@ -78,10 +92,10 @@ export function printOverhead(
 	const throughput = Math.round(1000 / effectiveTotal).toLocaleString();
 
 	console.log(`\n${name}:`);
-	console.log(`  parse: ${(parseTime * 1000).toFixed(1)}μs`);
+	console.log(`  parse: ${formatTime(parseTime)}`);
 	if (convertTime !== undefined && convertTime > 0) {
 		const overheadPct = ((convertTime / parseTime) * 100).toFixed(0);
-		console.log(`  convert: ${(convertTime * 1000).toFixed(1)}μs (${overheadPct}% of parse)`);
+		console.log(`  convert: ${formatTime(convertTime)} (${overheadPct}% of parse)`);
 	}
 	console.log(`  throughput: ${throughput} ops/sec`);
 }

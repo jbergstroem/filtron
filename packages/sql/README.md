@@ -21,11 +21,11 @@ import { toSQL } from "@filtron/sql";
 const result = parse('age > 18 AND status = "active"');
 
 if (result.success) {
-  const { sql, params } = toSQL(result.ast);
-  // sql: "(age > $1 AND status = $2)"
-  // params: [18, "active"]
+	const { sql, params } = toSQL(result.ast);
+	// sql: "(age > $1 AND status = $2)"
+	// params: [18, "active"]
 
-  await db.query(`SELECT * FROM users WHERE ${sql}`, params);
+	await db.query(`SELECT * FROM users WHERE ${sql}`, params);
 }
 ```
 
@@ -39,8 +39,8 @@ Converts a Filtron AST to a parameterized SQL WHERE clause.
 
 ```typescript
 interface SQLResult {
-  sql: string;      // The WHERE clause (without "WHERE" keyword)
-  params: unknown[]; // Parameter values in order
+	sql: string; // The WHERE clause (without "WHERE" keyword)
+	params: unknown[]; // Parameter values in order
 }
 ```
 
@@ -66,7 +66,7 @@ const { sql, params } = toSQL(ast);
 
 ```typescript
 const { sql, params } = toSQL(ast, {
-  parameterStyle: "question",
+	parameterStyle: "question",
 });
 // sql: "(age > ? AND status = ?)"
 ```
@@ -77,7 +77,7 @@ const { sql, params } = toSQL(ast, {
 
 ```typescript
 const { sql, params } = toSQL(ast, {
-  fieldMapper: (field) => `users.${field}`,
+	fieldMapper: (field) => `users.${field}`,
 });
 // "age > 18" becomes "users.age > $1"
 ```
@@ -86,7 +86,7 @@ const { sql, params } = toSQL(ast, {
 
 ```typescript
 const { sql, params } = toSQL(ast, {
-  fieldMapper: (field) => `"${field}"`,  // Quote column names
+	fieldMapper: (field) => `"${field}"`, // Quote column names
 });
 ```
 
@@ -94,7 +94,7 @@ const { sql, params } = toSQL(ast, {
 
 ```typescript
 const { sql, params } = toSQL(ast, {
-  startIndex: 3,
+	startIndex: 3,
 });
 // Placeholders start at $3
 ```
@@ -118,7 +118,7 @@ import { toSQL, contains, prefix, suffix, escapeLike } from "@filtron/sql";
 
 ```typescript
 const { sql, params } = toSQL(ast, {
-  valueMapper: contains,
+	valueMapper: contains,
 });
 // Query "name ~ 'john'" produces params: ["%john%"]
 ```
@@ -131,15 +131,15 @@ For APIs with repeated filter queries, cache parsed results to avoid redundant p
 const cache = new Map<string, SQLResult>();
 
 function getFilterSQL(filter: string): SQLResult | null {
-  const cached = cache.get(filter);
-  if (cached) return cached;
+	const cached = cache.get(filter);
+	if (cached) return cached;
 
-  const result = parse(filter);
-  if (!result.success) return null;
+	const result = parse(filter);
+	if (!result.success) return null;
 
-  const sql = toSQL(result.ast, { parameterStyle: "question" });
-  cache.set(filter, sql);
-  return sql;
+	const sql = toSQL(result.ast, { parameterStyle: "question" });
+	cache.set(filter, sql);
+	return sql;
 }
 ```
 
@@ -167,7 +167,7 @@ All queries are parameterized to prevent SQL injection:
 
 ```typescript
 // User input with SQL injection attempt
-const result = parse('name = "admin\' OR \'1\'=\'1"');
+const result = parse("name = \"admin' OR '1'='1\"");
 const { sql, params } = toSQL(result.ast);
 
 // sql: "(name = $1)"

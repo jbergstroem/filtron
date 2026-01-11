@@ -1,9 +1,10 @@
+/* source-code-pro-regular - latin_latin-ext */
 @font-face {
-	font-display: swap;
-	font-family: "Geist Mono";
-	font-style: normal;
-	font-weight: 400;
-	src: url("geist-mono-v4-latin-regular.woff2") format("woff2");
+  font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+  font-family: 'Source Code Pro';
+  font-style: normal;
+  font-weight: 400;
+  src: url('./source-code-pro-v31-latin_latin-ext-regular.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
 }
 
 @layer reset, theme, layout, components, utilities;
@@ -67,7 +68,7 @@
 		--transition-base: 0.2s;
 		--transition-slow: 0.5s;
 
-		--font-mono: "Berkeley Mono", "Geist Mono", Monaco, "Courier New", monospace;
+		--font-mono: "Source Code Pro", Monaco, "Courier New", monospace;
 
 		@media (prefers-color-scheme: dark) {
 			--color-bg: #1a1a1a;
@@ -226,6 +227,36 @@
 	p {
 		color: var(--color-text-muted);
 		margin-block-end: var(--space-5);
+
+		& a {
+			color: var(--color-text);
+			text-decoration: underline;
+			text-decoration-color: var(--color-border);
+			text-underline-offset: 2px;
+			transition: text-decoration-color var(--transition-fast);
+
+			&:hover {
+				text-decoration-color: currentColor;
+			}
+
+			& .icon {
+				display: inline-block;
+				vertical-align: middle;
+				width: 0.75rem;
+				height: 0.75rem;
+				margin-inline-start: 0.125rem;
+				fill: currentColor;
+				opacity: 0.6;
+			}
+		}
+
+		& code {
+			font-family: var(--font-mono);
+			font-size: 0.875em;
+			background: var(--color-code);
+			padding: 0.125rem 0.375rem;
+			border-radius: var(--radius-sm);
+		}
 	}
 
 	.tagline {
@@ -342,6 +373,13 @@
 		}
 	}
 
+	.hints-label {
+		display: block;
+		text-align: center;
+		font-size: 0.8125rem;
+		margin-block-end: var(--space-2);
+	}
+
 	.hints {
 		font-size: 0.6875rem;
 		border-radius: var(--radius-md);
@@ -351,13 +389,6 @@
 		border-collapse: separate;
 		border-spacing: 0;
 		inline-size: auto;
-
-		& caption {
-			caption-side: top;
-			padding-block-end: var(--space-2);
-			font-size: 0.6875rem;
-			font-family: var(--font-sans);
-		}
 
 		& td {
 			border: none;
@@ -536,49 +567,164 @@
 		display: block;
 	}
 
-	.perf-bars {
-		margin-block: var(--space-6);
+	.perf-table {
+		font-family: var(--font-mono);
+
+		& td:not(:first-child),
+		& th:not(:first-child) {
+			text-align: end;
+			white-space: nowrap;
+		}
+
+		& td:last-child {
+			font-weight: 500;
+		}
 	}
 
-	.perf-item {
+	.perf-footnote {
+		font-size: 0.75rem;
+		font-style: italic;
+		margin-block-start: var(--space-3);
+		margin-block-end: 0;
+	}
+
+	.lifecycle-row {
 		display: grid;
 		grid-template-columns: 1fr auto;
-		grid-template-rows: auto auto;
-		gap: var(--space-1) var(--space-4);
-		margin-block-end: var(--space-6);
+		gap: var(--space-3);
+		align-items: center;
+		margin-block-start: var(--space-6);
+		margin-block-end: var(--space-8);
 	}
 
-	.perf-bar-wrap {
-		grid-column: 1 / -1;
+	.lifecycle-bar {
+		display: flex;
 		block-size: 0.5rem;
-		background: var(--color-border);
 		border-radius: var(--radius-md);
-		overflow: hidden;
+		overflow: visible;
 	}
 
-	.perf-label {
-		font-size: 0.8125rem;
+	.lifecycle-segment {
+		min-inline-size: 2px;
+		position: relative;
 	}
 
-	.perf-value {
-		font-size: 0.875rem;
-		font-weight: 500;
-		text-align: end;
-		color: var(--color-text);
+	.lifecycle-segment:first-child {
+		border-radius: var(--radius-md) 0 0 var(--radius-md);
 	}
 
-	.perf-query {
-		grid-column: 1 / -1;
+	.lifecycle-segment:last-child {
+		border-radius: 0 var(--radius-md) var(--radius-md) 0;
+	}
+
+	.lifecycle-request,
+	.lifecycle-response {
+		background: var(--color-text-muted);
+	}
+
+	.lifecycle-parse {
+		background: var(--syntax-field);
+	}
+
+	.lifecycle-sql {
+		background: var(--syntax-keyword);
+	}
+
+	.lifecycle-db {
+		background: var(--syntax-string);
+	}
+
+	.lifecycle-label {
+		position: absolute;
+		top: calc(100% + 6px);
+		left: 50%;
+		translate: -50% 0;
 		font-family: var(--font-mono);
-		font-size: 0.6875rem;
-		opacity: 0.7;
+		font-size: 0.625rem;
+		white-space: nowrap;
+		background: var(--color-bg);
+		padding-inline: 2px;
 	}
 
-	.perf-bar {
-		block-size: 100%;
-		background: var(--color-text);
-		border-radius: var(--radius-md);
-		transition: inline-size var(--transition-slow) ease-out;
+	.lifecycle-label::before {
+		content: "";
+		position: absolute;
+		bottom: 100%;
+		left: 50%;
+		translate: -50% 0;
+		width: 1px;
+		height: 6px;
+		background: currentColor;
+	}
+
+	.lifecycle-label-tall {
+		top: calc(100% + 24px);
+		background: none;
+	}
+
+	.lifecycle-label-tall::before {
+		height: 24px;
+	}
+
+	.lifecycle-segment.lifecycle-request .lifecycle-label,
+	.lifecycle-segment.lifecycle-response .lifecycle-label {
+		color: var(--color-text-muted);
+	}
+
+	.lifecycle-segment.lifecycle-parse .lifecycle-label {
+		color: var(--syntax-field);
+	}
+
+	.lifecycle-segment.lifecycle-sql .lifecycle-label {
+		color: var(--syntax-keyword);
+	}
+
+	.lifecycle-segment.lifecycle-db .lifecycle-label {
+		color: var(--syntax-string);
+	}
+
+	.lifecycle-total {
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		font-weight: 500;
+	}
+
+	.lifecycle-legend {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-5);
+		font-size: 0.6875rem;
+		color: var(--color-text-muted);
+	}
+
+	.lifecycle-legend-item {
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+	}
+
+	.lifecycle-legend-color {
+		display: inline-block;
+		inline-size: 0.75rem;
+		block-size: 0.75rem;
+		border-radius: var(--radius-sm);
+	}
+
+	.lifecycle-legend-color.lifecycle-request,
+	.lifecycle-legend-color.lifecycle-response {
+		background: var(--color-text-muted);
+	}
+
+	.lifecycle-legend-color.lifecycle-parse {
+		background: var(--syntax-field);
+	}
+
+	.lifecycle-legend-color.lifecycle-sql {
+		background: var(--syntax-keyword);
+	}
+
+	.lifecycle-legend-color.lifecycle-db {
+		background: var(--syntax-string);
 	}
 }
 
@@ -596,6 +742,7 @@
 		padding: var(--space-2) var(--space-3);
 		background: var(--color-text);
 		color: var(--color-bg);
+		font-family: var(--font-mono);
 		font-size: 0.75rem;
 		white-space: nowrap;
 		border-radius: var(--radius-md);

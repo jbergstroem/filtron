@@ -21,15 +21,15 @@ import { toFilter } from "@filtron/js";
 const result = parse('age > 18 AND status = "active"');
 
 if (result.success) {
-  const filter = toFilter(result.ast);
+	const filter = toFilter(result.ast);
 
-  const users = [
-    { name: "Alice", age: 25, status: "active" },
-    { name: "Bob", age: 16, status: "active" },
-  ];
+	const users = [
+		{ name: "Alice", age: 25, status: "active" },
+		{ name: "Bob", age: 16, status: "active" },
+	];
 
-  users.filter(filter);
-  // => [{ name: "Alice", age: 25, status: "active" }]
+	users.filter(filter);
+	// => [{ name: "Alice", age: 25, status: "active" }]
 }
 ```
 
@@ -54,7 +54,7 @@ Converts a Filtron AST to a predicate function.
 
 ```typescript
 const filter = toFilter(ast, {
-  allowedFields: ["name", "email", "age"],
+	allowedFields: ["name", "email", "age"],
 });
 // Querying "password" will throw an error
 ```
@@ -63,7 +63,7 @@ const filter = toFilter(ast, {
 
 ```typescript
 const filter = toFilter(ast, {
-  caseInsensitive: true,
+	caseInsensitive: true,
 });
 // "status = 'ACTIVE'" matches { status: "active" }
 ```
@@ -72,10 +72,10 @@ const filter = toFilter(ast, {
 
 ```typescript
 const filter = toFilter(ast, {
-  fieldMapping: {
-    email: "emailAddress",
-    age: "userAge",
-  },
+	fieldMapping: {
+		email: "emailAddress",
+		age: "userAge",
+	},
 });
 // Query "email" maps to object property "emailAddress"
 ```
@@ -84,9 +84,9 @@ const filter = toFilter(ast, {
 
 ```typescript
 const filter = toFilter(ast, {
-  fieldMapping: { user_email: "email" },
-  allowedFields: ["user_email"],  // Validates against query field names
-  caseInsensitive: true,
+	fieldMapping: { user_email: "email" },
+	allowedFields: ["user_email"], // Validates against query field names
+	caseInsensitive: true,
 });
 ```
 
@@ -98,7 +98,7 @@ Creates a field accessor for dot-notation nested properties:
 import { toFilter, nestedAccessor } from "@filtron/js";
 
 const filter = toFilter(ast, {
-  fieldAccessor: nestedAccessor(),
+	fieldAccessor: nestedAccessor(),
 });
 
 // Query: "user.profile.age > 18"
@@ -109,7 +109,7 @@ Custom separator:
 
 ```typescript
 const filter = toFilter(ast, {
-  fieldAccessor: nestedAccessor("/"),
+	fieldAccessor: nestedAccessor("/"),
 });
 // Query: "user/profile/age > 18"
 ```
@@ -120,7 +120,7 @@ When accepting user input, use `allowedFields` to prevent access to sensitive pr
 
 ```typescript
 const filter = toFilter(ast, {
-  allowedFields: ["name", "email", "status"],
+	allowedFields: ["name", "email", "status"],
 });
 // Queries against "password", "token", etc. will throw
 ```

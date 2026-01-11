@@ -6,8 +6,8 @@
 	"description": "Example API using Elysia, SQLite, and Filtron for dynamic filtering",
 	"type": "module",
 	"scripts": {
-	  "bench": "bun run bench.ts",
-	  "dev": "bun --watch run src/index.ts",
+		"bench": "bun run bench.ts",
+		"dev": "bun --watch run src/index.ts",
 		"start": "bun run src/index.ts",
 		"test": "bun test"
 	},

@@ -55,3 +55,21 @@ Start the dev server and benchmark:
 ```bash
 oha -z 10s --urls-from-file oha-urls.txt
 ```
+
+## Component benchmarking
+
+The `bench.ts` script measures each phase of the request lifecycle separately:
+
+```bash
+bun bench.ts
+```
+
+This runs 500 iterations of sample queries and reports timing for:
+
+- Full HTTP round-trip
+- Elysia framework overhead
+- Filtron parse time
+- SQL generation time
+- Database query time
+
+This is primarily used for displaying performance on the Filtron website.

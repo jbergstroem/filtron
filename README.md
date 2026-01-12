@@ -39,14 +39,36 @@ WHERE (price < $1 AND category IN ($2, $3) AND inStock = $4)
 **Output (JavaScript):**
 
 ```javascript
-items.filter(item =>
-  item.price < 100 &&
-  ["electronics", "books"].includes(item.category) &&
-  item.inStock
-)
+items.filter(
+	(item) => item.price < 100 && ["electronics", "books"].includes(item.category) && item.inStock,
+);
 ```
 
-## Use Cases
+## When to use Filtron
+
+Filtron is a great fit when your data has dynamic or user-defined fields that aren't part of your type system:
+
+- E-commerce catalogs: Products have arbitrary attributes like `brand`, `material`, `screen_size` that vary by category
+- Log or service aggregation: Log entries contain unpredictable fields from different services
+- CMS/tagging systems: User-defined taxonomies, custom metadata, flexible categorization
+- Multi-tenant platforms: Each tenant defines their own filterable attributes
+
+For data with a fixed, known schema where both client and server share types, consider typed query builders or RPC instead. Filtron shines when the fields themselves are data-driven.
+
+### Example: filtering products with dynamic attributes
+
+```typescript
+// Product attributes vary by category - not part of your type system
+const products = [
+	{ name: "Laptop", category: "electronics", brand: "Acme", screen_size: 15 },
+	{ name: "T-Shirt", category: "clothing", material: "cotton", size: "M" },
+];
+
+// Users can query any attribute, even ones you didn't anticipate
+const filter = toFilter(parse('brand = "Acme" OR material = "cotton"').ast);
+```
+
+### Common patterns
 
 - **Search UIs** — Let users type natural filter expressions instead of building complex form interfaces
 - **API query parameters** — Accept `?filter=price < 50 AND rating >= 4` in your REST endpoints
@@ -73,9 +95,9 @@ import { parse } from "@filtron/core";
 const result = parse('age > 18 AND status = "active"');
 
 if (result.success) {
-  // result.ast contains the parsed query
+	// result.ast contains the parsed query
 } else {
-  // result.error contains what went wrong
+	// result.error contains what went wrong
 }
 ```
 
@@ -88,11 +110,11 @@ import { toSQL } from "@filtron/sql";
 const result = parse('age > 18 AND status = "active"');
 
 if (result.success) {
-  const { sql, params } = toSQL(result.ast);
-  // sql: "(age > $1 AND status = $2)"
-  // params: [18, "active"]
+	const { sql, params } = toSQL(result.ast);
+	// sql: "(age > $1 AND status = $2)"
+	// params: [18, "active"]
 
-  await db.query(`SELECT * FROM users WHERE ${sql}`, params);
+	await db.query(`SELECT * FROM users WHERE ${sql}`, params);
 }
 ```
 
@@ -105,15 +127,15 @@ import { toFilter } from "@filtron/js";
 const result = parse('age > 18 AND status = "active"');
 
 if (result.success) {
-  const filter = toFilter(result.ast);
+	const filter = toFilter(result.ast);
 
-  const users = [
-    { name: "Alice", age: 25, status: "active" },
-    { name: "Bob", age: 16, status: "active" },
-  ];
+	const users = [
+		{ name: "Alice", age: 25, status: "active" },
+		{ name: "Bob", age: 16, status: "active" },
+	];
 
-  users.filter(filter);
-  // => [{ name: "Alice", age: 25, status: "active" }]
+	users.filter(filter);
+	// => [{ name: "Alice", age: 25, status: "active" }]
 }
 ```
 
@@ -210,11 +232,11 @@ Use `parseOrThrow` if you prefer exceptions over result objects:
 import { parseOrThrow, FiltronParseError } from "@filtron/core";
 
 try {
-  const ast = parseOrThrow('age > 18 AND status = "active"');
+	const ast = parseOrThrow('age > 18 AND status = "active"');
 } catch (error) {
-  if (error instanceof FiltronParseError) {
-    console.error(error.message, error.position);  // error description and position
-  }
+	if (error instanceof FiltronParseError) {
+		console.error(error.message, error.position); // error description and position
+	}
 }
 ```
 

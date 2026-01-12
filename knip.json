@@ -23,6 +23,11 @@
 		},
 		"examples/*": {
 			"project": "**/*.ts"
+		},
+		"website": {
+			"entry": ["src/main.ts!"],
+			"project": ["src/**/*.ts"],
+			"ignoreDependencies": ["@iconscout/unicons", "wrangler"]
 		}
 	},
 	"ignore": ["**/dist/**"],

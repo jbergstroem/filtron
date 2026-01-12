@@ -27,12 +27,13 @@
 
 ## Commands
 
-| Task           | Command             |
-| -------------- | ------------------- |
-| Run tests      | `bun test`          |
-| Run benchmarks | `bun run bench`     |
-| Lint/format    | `bun run lint`      |
-| Type check     | `bun run typecheck` |
+| Task            | Command             |
+| --------------- | ------------------- |
+| Run tests       | `bun test`          |
+| Run benchmarks  | `bun run bench`     |
+| Lint/format     | `bun run lint`      |
+| Type check      | `bun run typecheck` |
+| Check for cruft | `bun run knip`      |
 
 ## Performance requirements
 
@@ -42,10 +43,11 @@
 ## Testing
 
 - One test file per source file: `foo.ts` → `foo.test.ts`
-- Target 100% coverage with minimal testing.
+- Target 100% coverage with minimal testing
 - No snapshot tests
 - No mocking unless absolutely required
 - Run `bun run lint` after writing code to catch issues early
+- Run `bun run knip` to check for unused files, exports, and dependencies
 
 ## Code style
 

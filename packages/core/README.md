@@ -8,7 +8,7 @@ A fast, human-friendly filter language for JavaScript and TypeScript. Parse expr
 
 ## Why Filtron?
 
-Let users filter data with readable expressions instead of building complex query UIs:
+Let users filter data with readable expressions:
 
 ```
 price < 100 AND category : ["electronics", "books"] AND inStock
@@ -16,7 +16,7 @@ price < 100 AND category : ["electronics", "books"] AND inStock
 
 Filtron parses these expressions into a structured AST you can use to generate SQL, filter arrays, or build custom query backends — safely, with no risk of injection attacks.
 
-**Use cases:** Search UIs, API query parameters, admin dashboards, real-time data filtering.
+Filtron works best when your data has dynamic or user-defined fields that aren't part of your type system: e-commerce catalogs, log aggregation, CMS taxonomies, or multi-tenant platforms with custom metadata.
 
 ## Installation
 
@@ -37,9 +37,9 @@ import { parse } from "@filtron/core";
 const result = parse('age > 18 AND status = "active"');
 
 if (result.success) {
-  console.log(result.ast);
+	console.log(result.ast);
 } else {
-  console.error(result.error);
+	console.error(result.error);
 }
 ```
 
@@ -47,19 +47,19 @@ if (result.success) {
 
 ```typescript
 // Comparisons
-parse('age > 18');
+parse("age > 18");
 parse('status = "active"');
 parse('role != "guest"');
 
 // Boolean logic
-parse('age > 18 AND verified');
-parse('admin OR moderator');
-parse('NOT suspended');
-parse('(admin OR mod) AND active');
+parse("age > 18 AND verified");
+parse("admin OR moderator");
+parse("NOT suspended");
+parse("(admin OR mod) AND active");
 
 // Field existence
-parse('email?');
-parse('profile EXISTS');
+parse("email?");
+parse("profile EXISTS");
 
 // Contains (substring)
 parse('name ~ "john"');
@@ -68,11 +68,11 @@ parse('name ~ "john"');
 parse('status : ["pending", "approved"]');
 
 // Ranges
-parse('age = 18..65');
-parse('price = 9.99..99.99');
+parse("age = 18..65");
+parse("price = 9.99..99.99");
 
 // Nested fields
-parse('user.profile.age >= 18');
+parse("user.profile.age >= 18");
 ```
 
 ## Operators
@@ -95,13 +95,13 @@ parse('user.profile.age >= 18');
 Parses a filter expression and returns a result object.
 
 ```typescript
-const result = parse('age > 18');
+const result = parse("age > 18");
 
 if (result.success) {
-  result.ast;      // ASTNode
+	result.ast; // ASTNode
 } else {
-  result.error;    // string - error message
-  result.position; // number - position in input where error occurred
+	result.error; // string - error message
+	result.position; // number - position in input where error occurred
 }
 ```
 
@@ -113,12 +113,12 @@ Parses a filter expression, throwing `FiltronParseError` on invalid input.
 import { parseOrThrow, FiltronParseError } from "@filtron/core";
 
 try {
-  const ast = parseOrThrow('age > 18');
+	const ast = parseOrThrow("age > 18");
 } catch (error) {
-  if (error instanceof FiltronParseError) {
-    console.error(error.message);  // error description
-    console.error(error.position); // position in input where error occurred
-  }
+	if (error instanceof FiltronParseError) {
+		console.error(error.message); // error description
+		console.error(error.position); // position in input where error occurred
+	}
 }
 ```
 
@@ -128,24 +128,24 @@ All AST types are exported for building custom consumers:
 
 ```typescript
 import {
-  FiltronParseError,        // Error class thrown by parseOrThrow
-  type ParseResult,
-  type ASTNode,
-  type AndExpression,
-  type OrExpression,
-  type NotExpression,
-  type ComparisonExpression,
-  type ExistsExpression,
-  type BooleanFieldExpression,
-  type OneOfExpression,
-  type NotOneOfExpression,
-  type RangeExpression,
-  type Value,
-  type ComparisonOperator,
-  type StringValue,
-  type NumberValue,
-  type BooleanValue,
-  type IdentifierValue,
+	FiltronParseError, // Error class thrown by parseOrThrow
+	type ParseResult,
+	type ASTNode,
+	type AndExpression,
+	type OrExpression,
+	type NotExpression,
+	type ComparisonExpression,
+	type ExistsExpression,
+	type BooleanFieldExpression,
+	type OneOfExpression,
+	type NotOneOfExpression,
+	type RangeExpression,
+	type Value,
+	type ComparisonOperator,
+	type StringValue,
+	type NumberValue,
+	type BooleanValue,
+	type IdentifierValue,
 } from "@filtron/core";
 ```
 
@@ -153,13 +153,7 @@ The Lexer types are also available if you want to use them for syntax highlighti
 
 ```typescript
 import { Lexer, LexerError } from "@filtron/core";
-import type {
-  Token,
-  TokenType,
-  StringToken,
-  NumberToken,
-  BooleanToken,
-} from "@filtron/core";
+import type { Token, TokenType, StringToken, NumberToken, BooleanToken } from "@filtron/core";
 ```
 
 ### AST structure

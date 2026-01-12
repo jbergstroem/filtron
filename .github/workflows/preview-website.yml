@@ -30,6 +30,7 @@ jobs:
           bun-version-file: package.json
           no-cache: true
       - run: bun ci
+        working-directory: website
       - run: bun run build
         working-directory: website
       - uses: chrnorm/deployment-action@55729fcebec3d284f60f5bcabbd8376437d696b1 # v2.0.7

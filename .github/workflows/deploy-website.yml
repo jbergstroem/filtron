@@ -25,6 +25,7 @@ jobs:
           bun-version-file: package.json
           no-cache: true
       - run: bun ci
+        working-directory: website
       - run: bun run build
         working-directory: website
       - uses: cloudflare/wrangler-action@da0e0dfe58b7a431659754fdf3f186c529afbe65 # v3

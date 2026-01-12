@@ -380,15 +380,18 @@
 		margin-block-end: var(--space-2);
 	}
 
-	.hints {
-		font-size: 0.6875rem;
+	.hints-wrapper {
 		border-radius: var(--radius-md);
 		border: 1px solid var(--color-border);
 		backdrop-filter: blur(4px);
 		margin-block-end: var(--space-6);
-		border-collapse: separate;
-		border-spacing: 0;
-		inline-size: auto;
+		overflow: hidden;
+		inline-size: fit-content;
+	}
+
+	.hints {
+		font-size: 0.6875rem;
+		border-collapse: collapse;
 
 		& td {
 			border: none;
@@ -402,22 +405,6 @@
 		& .hint-values {
 			background: var(--color-input);
 			padding: var(--space-1) var(--space-2);
-		}
-
-		& tr:first-child .hint-name {
-			border-start-start-radius: var(--radius-md);
-		}
-
-		& tr:first-child .hint-values {
-			border-start-end-radius: var(--radius-md);
-		}
-
-		& tr:last-child .hint-name {
-			border-end-start-radius: var(--radius-md);
-		}
-
-		& tr:last-child .hint-values {
-			border-end-end-radius: var(--radius-md);
 		}
 	}
 

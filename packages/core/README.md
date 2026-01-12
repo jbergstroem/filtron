@@ -8,7 +8,7 @@ A fast, human-friendly filter language for JavaScript and TypeScript. Parse expr
 
 ## Why Filtron?
 
-Let users filter data with readable expressions instead of building complex query UIs:
+Let users filter data with readable expressions:
 
 ```
 price < 100 AND category : ["electronics", "books"] AND inStock
@@ -16,7 +16,7 @@ price < 100 AND category : ["electronics", "books"] AND inStock
 
 Filtron parses these expressions into a structured AST you can use to generate SQL, filter arrays, or build custom query backends — safely, with no risk of injection attacks.
 
-**Use cases:** Search UIs, API query parameters, admin dashboards, real-time data filtering.
+Filtron works best when your data has dynamic or user-defined fields that aren't part of your type system: e-commerce catalogs, log aggregation, CMS taxonomies, or multi-tenant platforms with custom metadata.
 
 ## Installation
 

@@ -44,7 +44,31 @@ items.filter(
 );
 ```
 
-## Use Cases
+## When to use Filtron
+
+Filtron is a great fit when your data has dynamic or user-defined fields that aren't part of your type system:
+
+- E-commerce catalogs: Products have arbitrary attributes like `brand`, `material`, `screen_size` that vary by category
+- Log or service aggregation: Log entries contain unpredictable fields from different services
+- CMS/tagging systems: User-defined taxonomies, custom metadata, flexible categorization
+- Multi-tenant platforms: Each tenant defines their own filterable attributes
+
+For data with a fixed, known schema where both client and server share types, consider typed query builders or RPC instead. Filtron shines when the fields themselves are data-driven.
+
+### Example: filtering products with dynamic attributes
+
+```typescript
+// Product attributes vary by category - not part of your type system
+const products = [
+	{ name: "Laptop", category: "electronics", brand: "Acme", screen_size: 15 },
+	{ name: "T-Shirt", category: "clothing", material: "cotton", size: "M" },
+];
+
+// Users can query any attribute, even ones you didn't anticipate
+const filter = toFilter(parse('brand = "Acme" OR material = "cotton"').ast);
+```
+
+### Common patterns
 
 - **Search UIs** — Let users type natural filter expressions instead of building complex form interfaces
 - **API query parameters** — Accept `?filter=price < 50 AND rating >= 4` in your REST endpoints

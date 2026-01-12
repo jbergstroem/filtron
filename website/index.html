@@ -76,7 +76,12 @@ shape = "circle" AND size > 2</textarea
 				<div class="section-inner">
 					<h2>What is Filtron?</h2>
 					<p>
-						Filtron parses human-friendly filter strings into a typed AST (Abstract Syntax Tree).
+						Filtron parses human-friendly filter strings into a typed AST (Abstract Syntax Tree). It
+						works best when your data has dynamic or user-defined fields that aren't part of your
+						type system: e-commerce catalogs with varying product attributes, log entries with
+						arbitrary fields, CMS taxonomies, or multi-tenant platforms with custom metadata.
+					</p>
+					<p>
 						The core parser only handles parsing, giving you full control over what happens next.
 						Use the included adapters to generate SQL or JavaScript filters, or traverse the AST to
 						build your own integrations.

@@ -102,7 +102,9 @@ html = html.replace(
 await write("dist/index.html", html);
 
 // Copy font file
-await write("dist/geist-mono-v4-latin-regular.woff2", file("geist-mono-v4-latin-regular.woff2"));
+const font = "source-code-pro-v31-latin_latin-ext-regular.woff2";
+
+await write(`dist/${font}`, file(font));
 
 // Clean up intermediate files
 await Promise.all([file("dist/main.js").unlink(), file("dist/styles.css").unlink()]);

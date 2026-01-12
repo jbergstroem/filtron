@@ -3,6 +3,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, closed]
     paths:
+      - .github/workflows/preview-website.yml
       - website/**
 
 permissions:
@@ -41,6 +42,7 @@ jobs:
       - uses: cloudflare/wrangler-action@da0e0dfe58b7a431659754fdf3f186c529afbe65 # v3
         id: deploy
         with:
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           workingDirectory: website
           command: deploy --name=filtron --env=pr-${{ github.event.pull_request.number }}
@@ -67,6 +69,7 @@ jobs:
     steps:
       - uses: cloudflare/wrangler-action@da0e0dfe58b7a431659754fdf3f186c529afbe65 # v3
         with:
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           workingDirectory: website
           command: delete --name=filtron --env=pr-${{ github.event.pull_request.number }} --yes

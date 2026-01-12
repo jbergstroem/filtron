@@ -4,6 +4,7 @@ on:
     branches:
       - main
     paths:
+      - .github/workflows/deploy-website.yml
       - website/**
 
 permissions:
@@ -16,6 +17,9 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      deployments: write
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
         with:
@@ -26,8 +30,29 @@ jobs:
           no-cache: true
       - run: bun ci
       - run: bun run build
-      - uses: cloudflare/wrangler-action@da0e0dfe58b7a431659754fdf3f186c529afbe65 # v3
+      - uses: chrnorm/deployment-action@55729fcebec3d284f60f5bcabbd8376437d696b1 # v2.0.7
+        id: create-deployment
         with:
+          token: ${{ github.token }}
+          environment: production
+          production-environment: true
+      - uses: cloudflare/wrangler-action@da0e0dfe58b7a431659754fdf3f186c529afbe65 # v3
+        id: deploy
+        with:
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           workingDirectory: website
           command: deploy --name=filtron
+      - uses: chrnorm/deployment-status@9a72af4586197112e0491ea843682b5dc280d806 # v2.0.3
+        if: success()
+        with:
+          token: ${{ github.token }}
+          deployment-id: ${{ steps.create-deployment.outputs.deployment_id }}
+          environment-url: https://filtron.dev
+          state: success
+      - uses: chrnorm/deployment-status@9a72af4586197112e0491ea843682b5dc280d806 # v2.0.3
+        if: failure()
+        with:
+          token: ${{ github.token }}
+          deployment-id: ${{ steps.create-deployment.outputs.deployment_id }}
+          state: failure

@@ -32,18 +32,19 @@ for (const [full, svg] of iconReplacements) {
 	html = html.replace(full, svg);
 }
 
-// Process code blocks with language class
-html = html.replace(
-	/<div class="code-block">\s*<pre><code class="language-(\w+)">([\s\S]*?)<\/code><\/pre>\s*<\/div>/g,
-	(_, lang, code) => {
-		return `<div class="code-block">${highlight(code, lang)}</div>`;
-	},
-);
-
 // Decode HTML entities for syntax highlighting
 function decodeHtmlEntities(text: string): string {
 	return text.replace(/&gt;/g, ">").replace(/&lt;/g, "<").replace(/&amp;/g, "&");
 }
+
+// Process code blocks with language class
+html = html.replace(
+	/<div class="code-block">\s*<pre><code class="language-(\w+)">([\s\S]*?)<\/code><\/pre>\s*<\/div>/g,
+	(_, lang, code) => {
+		const decoded = decodeHtmlEntities(code);
+		return `<div class="code-block">${highlight(decoded, lang)}</div>`;
+	},
+);
 
 // Process Filtron syntax examples (handles formatter splitting tags across lines)
 html = html.replace(/<code class="syntax-example"\s*>([\s\S]*?)<\/code\s*>/g, (_, code) => {

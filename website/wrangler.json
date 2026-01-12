@@ -3,15 +3,15 @@
 	"name": "filtron",
 	"compatibility_date": "2025-09-27",
 	"observability": {
-		"enabled": true,
+		"enabled": true
 	},
 	"assets": {
-		"directory": "./dist/",
+		"directory": "./dist/"
 	},
 	"routes": [
 		{
 			"pattern": "filtron.dev",
-			"custom_domain": true,
-		},
-	],
+			"custom_domain": true
+		}
+	]
 }

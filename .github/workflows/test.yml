@@ -1,9 +1,23 @@
 name: test
 on:
   pull_request:
+    paths:
+      - .github/workflows/test.yml
+      - packages/**
+      - examples/**
+      - package.json
+      - bun.lock
+      - tsconfig.json
   push:
     branches:
       - main
+    paths:
+      - .github/workflows/test.yml
+      - packages/**
+      - examples/**
+      - package.json
+      - bun.lock
+      - tsconfig.json
 
 permissions:
   contents: read

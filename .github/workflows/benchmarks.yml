@@ -4,7 +4,17 @@ on:
   push:
     branches:
       - main
+    paths:
+      - .github/workflows/benchmarks.yml
+      - packages/**
+      - package.json
+      - bun.lock
   pull_request:
+    paths:
+      - .github/workflows/benchmarks.yml
+      - packages/**
+      - package.json
+      - bun.lock
   workflow_dispatch:
 
 permissions:

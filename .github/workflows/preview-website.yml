@@ -33,11 +33,11 @@ jobs:
       - run: bun ci
       - run: bun run build
       - run: |
-          cd website
           jq --arg pr "pr-${{ github.event.pull_request.number }}" \
-             --arg route "pr-${{ github.event.pull_request.number }}.pr.filtron.dev" \
+             --arg route "pr-${{ github.event.pull_request.number }}.filtron.dev" \
              '.env[$pr] = { routes: [{ pattern: $route, custom_domain: true }] }' \
              wrangler.json > wrangler.tmp.json && mv wrangler.tmp.json wrangler.json
+        working-directory: website
       - uses: chrnorm/deployment-action@55729fcebec3d284f60f5bcabbd8376437d696b1 # v2.0.7
         id: create-deployment
         with:
@@ -45,13 +45,17 @@ jobs:
           environment: pr-${{ github.event.pull_request.number }}
           transient-environment: true
           production-environment: false
-      - uses: cloudflare/wrangler-action@da0e0dfe58b7a431659754fdf3f186c529afbe65 # v3
+      - run: |
+          output=$(bun wrangler deploy --env=pr-${{ github.event.pull_request.number }})
+          echo "$output"
+          domain=$(echo "$output" | grep -oP '^\s+\K[^\s]+(?=\s+\(custom domain\))')
+          echo "deployment-url=https://$domain" >> "$GITHUB_OUTPUT"
         id: deploy
-        with:
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          workingDirectory: website
-          command: deploy --env=pr-${{ github.event.pull_request.number }}
+        working-directory: website
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          WRANGLER_SEND_METRICS: false
       - uses: chrnorm/deployment-status@9a72af4586197112e0491ea843682b5dc280d806 # v2.0.3
         if: success()
         with:
@@ -70,14 +74,27 @@ jobs:
     if: github.event.action == 'closed'
     runs-on: ubuntu-24.04
     permissions:
-      contents: read
       deployments: write
     steps:
-      - uses: cloudflare/wrangler-action@da0e0dfe58b7a431659754fdf3f186c529afbe65 # v3
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
         with:
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          command: delete filtron-pr-${{ github.event.pull_request.number }} --force
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@b7a1c7ccf290d58743029c4f6903da283811b979 # v2
+        with:
+          bun-version-file: package.json
+          no-cache: true
+      - run: bun ci
+      - run: |
+          jq --arg pr "pr-${{ github.event.pull_request.number }}" \
+             '.env[$pr] = {}' \
+             wrangler.json > wrangler.tmp.json && mv wrangler.tmp.json wrangler.json
+        working-directory: website
+      - run: bun wrangler delete --env=pr-${{ github.event.pull_request.number }} --force
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          WRANGLER_SEND_METRICS: false
+        working-directory: website
       - uses: strumwolf/delete-deployment-environment@a4825dd9648c57da8437a4885c3fcad58beac69c # v3
         with:
           token: ${{ github.token }}

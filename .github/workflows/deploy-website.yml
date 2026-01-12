@@ -30,4 +30,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           workingDirectory: website
-          command: deploy --project-name=filtron
+          command: deploy --name=filtron

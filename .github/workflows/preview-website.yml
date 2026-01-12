@@ -43,13 +43,20 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           workingDirectory: website
-          command: deploy --project-name=filtron --env=pr-${{ github.event.pull_request.number }}
+          command: deploy --name=filtron --env=pr-${{ github.event.pull_request.number }}
       - uses: chrnorm/deployment-status@9a72af4586197112e0491ea843682b5dc280d806 # v2.0.3
+        if: success()
         with:
           token: ${{ github.token }}
           deployment-id: ${{ steps.create-deployment.outputs.deployment_id }}
           environment-url: ${{ steps.deploy.outputs.deployment-url }}
           state: success
+      - uses: chrnorm/deployment-status@9a72af4586197112e0491ea843682b5dc280d806 # v2.0.3
+        if: failure()
+        with:
+          token: ${{ github.token }}
+          deployment-id: ${{ steps.create-deployment.outputs.deployment_id }}
+          state: failure
 
   cleanup:
     if: github.event.action == 'closed'
@@ -62,7 +69,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           workingDirectory: website
-          command: delete --project-name=filtron --env=pr-${{ github.event.pull_request.number }} --yes
+          command: delete --name=filtron --env=pr-${{ github.event.pull_request.number }} --yes
       - uses: strumwolf/delete-deployment-environment@a4825dd9648c57da8437a4885c3fcad58beac69c # v3
         with:
           token: ${{ github.token }}

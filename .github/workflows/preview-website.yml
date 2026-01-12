@@ -36,8 +36,8 @@ jobs:
           cd website
           jq --arg pr "pr-${{ github.event.pull_request.number }}" \
              --arg route "pr-${{ github.event.pull_request.number }}.pr.filtron.dev" \
-             '.env[$pr] = { "routes": [{ "pattern": $route, "custom_domain": true }] }' \
-             wrangler.jsonc > wrangler.json
+             '.env[$pr] = { routes: [{ pattern: $route, custom_domain: true }] }' \
+             wrangler.json > wrangler.tmp.json && mv wrangler.tmp.json wrangler.json
       - uses: chrnorm/deployment-action@55729fcebec3d284f60f5bcabbd8376437d696b1 # v2.0.7
         id: create-deployment
         with:

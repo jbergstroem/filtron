@@ -86,7 +86,8 @@ jobs:
       - run: bun ci
       - run: |
           jq --arg pr "pr-${{ github.event.pull_request.number }}" \
-             '.env[$pr] = {}' \
+             --arg route "pr-${{ github.event.pull_request.number }}.filtron.dev" \
+             '.env[$pr] = { routes: [{ pattern: $route, custom_domain: true }] }' \
              wrangler.json > wrangler.tmp.json && mv wrangler.tmp.json wrangler.json
         working-directory: website
       - run: bun wrangler delete --env=pr-${{ github.event.pull_request.number }} --force

@@ -21,6 +21,10 @@ function highlight(code: string, lang: string): string {
 	});
 }
 
+function decodeHtmlEntities(text: string): string {
+	return text.replace(/&gt;/g, ">").replace(/&lt;/g, "<").replace(/&amp;/g, "&");
+}
+
 let html = await file("index.html").text();
 
 // Inline icons
@@ -30,11 +34,6 @@ const iconReplacements = await Promise.all(
 );
 for (const [full, svg] of iconReplacements) {
 	html = html.replace(full, svg);
-}
-
-// Decode HTML entities for syntax highlighting
-function decodeHtmlEntities(text: string): string {
-	return text.replace(/&gt;/g, ">").replace(/&lt;/g, "<").replace(/&amp;/g, "&");
 }
 
 // Process code blocks with language class
@@ -48,17 +47,13 @@ html = html.replace(
 
 // Process Filtron syntax examples (handles formatter splitting tags across lines)
 html = html.replace(/<code class="syntax-example"\s*>([\s\S]*?)<\/code\s*>/g, (_, code) => {
-	// Highlight each line separately for inline examples
 	const lines = code.trim().split("\n");
 	const highlighted = lines
 		.map((line: string) => {
 			const trimmed = line.trim();
 			if (!trimmed) return "";
-			// Decode HTML entities before highlighting
 			const decoded = decodeHtmlEntities(trimmed);
-			// Extract spans from shiki output, preserving structure
 			const result = highlight(decoded, "filtron");
-			// Get content between <code> tags
 			const match = result.match(/<code[^>]*>([\s\S]*?)<\/code>/);
 			return match ? match[1] : trimmed;
 		})
@@ -83,7 +78,7 @@ const cssResult = await build({
 });
 const css = await cssResult.outputs[0].text();
 
-// Minify HTML before inlining CSS/JS (preserve whitespace in pre/code blocks)
+// Minify HTML (preserve whitespace in pre/code blocks)
 html = html
 	.replace(/(<pre[^>]*>[\s\S]*?<\/pre>)/g, (match) => match.replace(/\n/g, "&#10;"))
 	.replace(/>\s+</g, "><")
@@ -104,7 +99,6 @@ await write("dist/index.html", html);
 
 // Copy font file
 const font = "source-code-pro-v31-latin_latin-ext-regular.woff2";
-
 await write(`dist/${font}`, file(font));
 
 // Clean up intermediate files

@@ -165,8 +165,12 @@ export class ParticleGrid {
 		}
 	}
 
-	public applyFilter(filterFn: ((item: Record<string, unknown>) => boolean) | null): void {
+	public applyFilter(filterFn: ((item: Record<string, unknown>) => boolean) | null): {
+		total: number;
+		matched: number;
+	} {
 		this.currentFilter = filterFn;
+		let matched = 0;
 		for (const particle of this.particles) {
 			if (filterFn) {
 				try {
@@ -181,14 +185,11 @@ export class ParticleGrid {
 			} else {
 				particle.active = false;
 			}
+			if (particle.active) matched++;
 			particle.targetAlpha = particle.active ? ACTIVE_ALPHA : INACTIVE_ALPHA;
 		}
 		// Start animating when filter changes
 		this.startAnimation();
-	}
-
-	public getStats(): { total: number; matched: number } {
-		const matched = this.particles.filter((p) => p.active).length;
 		return { total: this.particles.length, matched };
 	}
 

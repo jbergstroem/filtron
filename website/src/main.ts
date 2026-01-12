@@ -127,6 +127,9 @@ function init(): void {
 
 	const grid = new ParticleGrid(canvas);
 
+	let updatePending = false;
+	let pendingValue = "";
+
 	function updateFilter(expression: string): void {
 		// Clear tooltip and highlighted content
 		errorTooltip.textContent = "";
@@ -145,9 +148,7 @@ function init(): void {
 			filterHighlighted.innerHTML = toHtml(expression);
 			try {
 				const filter = toFilter(result.ast);
-				grid.applyFilter(filter);
-
-				const stats = grid.getStats();
+				const stats = grid.applyFilter(filter);
 				filterStats.textContent = `${stats.matched}/${stats.total}`;
 			} catch (error) {
 				grid.applyFilter(null);
@@ -165,7 +166,13 @@ function init(): void {
 	}
 
 	filterInput.addEventListener("input", () => {
-		updateFilter(filterInput.value);
+		pendingValue = filterInput.value;
+		if (updatePending) return;
+		updatePending = true;
+		requestAnimationFrame(() => {
+			updatePending = false;
+			updateFilter(pendingValue);
+		});
 	});
 
 	randomizeBtn.addEventListener("click", () => {
@@ -181,8 +188,7 @@ function init(): void {
 			if (result.success) {
 				try {
 					const filter = toFilter(result.ast);
-					grid.applyFilter(filter);
-					const stats = grid.getStats();
+					const stats = grid.applyFilter(filter);
 					matchRatio = stats.total > 0 ? stats.matched / stats.total : 0;
 				} catch {
 					matchRatio = 0;

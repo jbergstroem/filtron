@@ -28,7 +28,6 @@ ${formatSection(optional)}
 }
 
 export async function copyLlmsDocs(): Promise<void> {
-
 	await mkdir("dist/llms", { recursive: true });
 	await mkdir("dist/llms/packages", { recursive: true });
 	await mkdir("dist/llms/examples", { recursive: true });

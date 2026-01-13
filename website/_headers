@@ -1,1 +1,2 @@
-Content-Security-Policy: default-src 'self';script-src 'self' static.cloudflareinsights.com
+/*
+	Content-Security-Policy: default-src 'self';script-src 'self' static.cloudflareinsights.com

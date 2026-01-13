@@ -1,6 +1,9 @@
 import filtronGrammar from "@filtron/core/filtron.tmLanguage.json";
 import { build, file, write } from "bun";
+import { rm } from "node:fs/promises";
 import { createHighlighter } from "shiki";
+
+await rm("dist", { recursive: true, force: true });
 
 const ICONS_DIR = "node_modules/@iconscout/unicons/svg/line";
 
@@ -101,7 +104,9 @@ await write("dist/index.html", html);
 const font = "source-code-pro-v31-latin_latin-ext-regular.woff2";
 await write(`dist/${font}`, file(font));
 
+// Copy headers file
+const headers = "_headers";
+await write("dist/_headers", file(headers));
+
 // Clean up intermediate files
 await Promise.all([file("dist/main.js").unlink(), file("dist/styles.css").unlink()]);
-
-console.log("Build complete: dist/index.html");

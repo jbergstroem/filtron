@@ -1,17 +1,21 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "filtron",
-	"compatibility_date": "2025-09-27",
-	"observability": {
-		"enabled": true
-	},
+	"compatibility_date": "2026-01-13",
 	"assets": {
 		"directory": "./dist/"
+	},
+	"build": {
+		"command": "bun run build"
+	},
+	"dev": {
+		"port": 3000
 	},
 	"routes": [
 		{
 			"pattern": "filtron.dev",
 			"custom_domain": true
 		}
-	]
+	],
+	"send_metrics": false
 }

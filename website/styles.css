@@ -121,7 +121,7 @@
 		will-change: transform;
 	}
 
-	.page {
+	main {
 		position: relative;
 		z-index: 1;
 		contain: layout style paint;

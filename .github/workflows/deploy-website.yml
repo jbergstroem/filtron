@@ -36,7 +36,7 @@ jobs:
           token: ${{ github.token }}
           environment: production
           production-environment: true
-      - run: bun wrangler deploy
+      - run: bun wrangler deploy --no-bundle
         id: deploy
         working-directory: website
         env:

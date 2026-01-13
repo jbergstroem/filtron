@@ -26,8 +26,8 @@
 		},
 		"website": {
 			"entry": ["src/main.ts!"],
-			"project": ["src/**/*.ts"],
-			"ignoreDependencies": ["@iconscout/unicons", "wrangler"]
+			"project": ["src/**/*.ts", "lib/**/*.ts"],
+			"ignoreDependencies": ["@iconscout/unicons"]
 		}
 	},
 	"ignore": ["**/dist/**"],

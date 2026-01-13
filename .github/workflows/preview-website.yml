@@ -31,7 +31,6 @@ jobs:
           bun-version-file: package.json
           no-cache: true
       - run: bun ci
-      - run: bun run build
       - run: |
           jq --arg pr "pr-${{ github.event.pull_request.number }}" \
              --arg route "pr-${{ github.event.pull_request.number }}.filtron.dev" \
@@ -43,6 +42,7 @@ jobs:
         with:
           token: ${{ github.token }}
           environment: pr-${{ github.event.pull_request.number }}
+          initial-status: queued
           transient-environment: true
           production-environment: false
       - run: |

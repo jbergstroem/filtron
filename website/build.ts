@@ -3,8 +3,6 @@ import { build, file, write } from "bun";
 import { rm } from "node:fs/promises";
 import { createHighlighter } from "shiki";
 
-const start = performance.now();
-
 await rm("dist", { recursive: true, force: true });
 
 const ICONS_DIR = "node_modules/@iconscout/unicons/svg/line";
@@ -112,5 +110,3 @@ await write("dist/_headers", file(headers));
 
 // Clean up intermediate files
 await Promise.all([file("dist/main.js").unlink(), file("dist/styles.css").unlink()]);
-
-console.log(`Build complete in ${(performance.now() - start).toFixed(0)}ms`);

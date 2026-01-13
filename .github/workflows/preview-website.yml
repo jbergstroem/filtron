@@ -31,6 +31,7 @@ jobs:
           bun-version-file: package.json
           no-cache: true
       - run: bun ci
+      - run: bun run build
       - run: |
           jq --arg pr "pr-${{ github.event.pull_request.number }}" \
              --arg route "pr-${{ github.event.pull_request.number }}.filtron.dev" \
@@ -46,7 +47,7 @@ jobs:
           transient-environment: true
           production-environment: false
       - run: |
-          output=$(bun wrangler deploy --env=pr-${{ github.event.pull_request.number }})
+          output=$(bun wrangler deploy --no-bundle --env=pr-${{ github.event.pull_request.number }})
           echo "$output"
           domain=$(echo "$output" | grep -oP '^\s+\K[^\s]+(?=\s+\(custom domain\))')
           echo "deployment-url=https://$domain" >> "$GITHUB_OUTPUT"

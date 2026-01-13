@@ -1,112 +1,25 @@
-import filtronGrammar from "@filtron/core/filtron.tmLanguage.json";
-import { build, file, write } from "bun";
-import { rm } from "node:fs/promises";
-import { createHighlighter } from "shiki";
+import { file, write } from "bun";
+import { cleanBuildArtifacts, cleanDist, copyStaticAssets } from "./lib/assets.ts";
+import { inlineAssets, minifyHtml, processHtml } from "./lib/html.ts";
+import { copyLlmsDocs, generateLlmsTxt } from "./lib/llms.ts";
 
-await rm("dist", { recursive: true, force: true });
+const start = performance.now();
 
-const ICONS_DIR = "node_modules/@iconscout/unicons/svg/line";
+await cleanDist();
 
-async function getIcon(name: string): Promise<string> {
-	const svg = await file(`${ICONS_DIR}/${name}.svg`).text();
-	return svg.replace("<svg", '<svg class="icon" aria-hidden="true"');
-}
+// Generate llms.txt from README
+await generateLlmsTxt();
 
-const highlighter = await createHighlighter({
-	themes: ["github-dark", "github-light"],
-	langs: ["typescript", "bash", Object.assign({}, filtronGrammar, { name: "filtron" })],
-});
-
-function highlight(code: string, lang: string): string {
-	return highlighter.codeToHtml(code.trim(), {
-		lang,
-		themes: { dark: "github-dark", light: "github-light" },
-	});
-}
-
-function decodeHtmlEntities(text: string): string {
-	return text.replace(/&gt;/g, ">").replace(/&lt;/g, "<").replace(/&amp;/g, "&");
-}
-
+// Process HTML
 let html = await file("index.html").text();
-
-// Inline icons
-const iconMatches = [...html.matchAll(/<i data-icon="([^"]+)"><\/i>/g)];
-const iconReplacements = await Promise.all(
-	iconMatches.map(async ([full, name]) => [full, await getIcon(name)] as const),
-);
-for (const [full, svg] of iconReplacements) {
-	html = html.replace(full, svg);
-}
-
-// Process code blocks with language class
-html = html.replace(
-	/<div class="code-block">\s*<pre><code class="language-(\w+)">([\s\S]*?)<\/code><\/pre>\s*<\/div>/g,
-	(_, lang, code) => {
-		const decoded = decodeHtmlEntities(code);
-		return `<div class="code-block">${highlight(decoded, lang)}</div>`;
-	},
-);
-
-// Process Filtron syntax examples (handles formatter splitting tags across lines)
-html = html.replace(/<code class="syntax-example"\s*>([\s\S]*?)<\/code\s*>/g, (_, code) => {
-	const lines = code.trim().split("\n");
-	const highlighted = lines
-		.map((line: string) => {
-			const trimmed = line.trim();
-			if (!trimmed) return "";
-			const decoded = decodeHtmlEntities(trimmed);
-			const result = highlight(decoded, "filtron");
-			const match = result.match(/<code[^>]*>([\s\S]*?)<\/code>/);
-			return match ? match[1] : trimmed;
-		})
-		.join("\n");
-	return `<code class="syntax-example">${highlighted}</code>`;
-});
-
-// Build and minify JS
-const jsResult = await build({
-	entrypoints: ["src/main.ts"],
-	target: "browser",
-	minify: true,
-	outdir: "dist",
-});
-const js = await jsResult.outputs[0].text();
-
-// Build and minify CSS
-const cssResult = await build({
-	entrypoints: ["styles.css"],
-	minify: true,
-	outdir: "dist",
-});
-const css = await cssResult.outputs[0].text();
-
-// Minify HTML (preserve whitespace in pre/code blocks)
-html = html
-	.replace(/(<pre[^>]*>[\s\S]*?<\/pre>)/g, (match) => match.replace(/\n/g, "&#10;"))
-	.replace(/>\s+</g, "><")
-	.replace(/\s{2,}/g, " ")
-	.replace(/<!--(?!\[).*?-->/g, "")
-	.replace(/^\s+/gm, "")
-	.replace(/&#10;/g, "\n")
-	.trim();
-
-// Inline CSS and JS
-html = html.replace(/<link rel="stylesheet" href="styles.css" ?\/>/, `<style>${css}</style>`);
-html = html.replace(
-	/<script type="module" src="\.\/main\.js"><\/script>/,
-	`<script type="module">${js}</script>`,
-);
-
+html = await processHtml(html);
+html = await inlineAssets(html);
+html = minifyHtml(html);
 await write("dist/index.html", html);
 
-// Copy font file
-const font = "source-code-pro-v31-latin_latin-ext-regular.woff2";
-await write(`dist/${font}`, file(font));
+// Copy assets
+await copyStaticAssets();
+await copyLlmsDocs();
+await cleanBuildArtifacts();
 
-// Copy headers file
-const headers = "_headers";
-await write("dist/_headers", file(headers));
-
-// Clean up intermediate files
-await Promise.all([file("dist/main.js").unlink(), file("dist/styles.css").unlink()]);
+console.log(`Build complete in ${(performance.now() - start).toFixed(0)}ms`);

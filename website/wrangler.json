@@ -1,7 +1,7 @@
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "filtron",
-	"compatibility_date": "2026-01-13",
+	"compatibility_date": "2026-01-07",
 	"assets": {
 		"directory": "./dist/"
 	},

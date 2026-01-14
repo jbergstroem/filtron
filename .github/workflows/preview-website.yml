@@ -1,3 +1,13 @@
+#
+# Publish a preview of website changes to Cloudflare.
+#
+# Dynamically injects a PR-specific environment into wrangler.json at runtime
+# to create unique preview URLs (pr-N.filtron.dev) without committing config changes.
+#
+# Creates a temporary GitHub environment that links to the preview URL.
+#
+# Removes the environment and preview deployment when the PR is closed.
+#
 name: preview-website
 on:
   pull_request:

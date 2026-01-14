@@ -1,3 +1,15 @@
+#
+# Publish packages to the npm registry when a tag is created.
+#
+# For more information on how publishing works, see CONTRIBUTING.md.
+#
+# Supports pushing multiple tags at once (e.g., releasing core and sql together).
+# The verify job extracts all tags pointing at HEAD, validates them against
+# package.json versions, and outputs a matrix for parallel publishing.
+#
+# Uses npm instead of bun for publishing because bun doesn't support provenance.
+# See: https://github.com/jbergstroem/filtron/issues/114
+#
 name: publish
 
 on:

@@ -16,7 +16,7 @@
 		"@filtron/benchmark": "workspace:*",
 		"@filtron/core": "workspace:*",
 		"@filtron/sql": "workspace:*",
-		"elysia": "1.4.21"
+		"elysia": "1.4.22"
 	},
 	"devDependencies": {
 		"@types/bun": "catalog:",

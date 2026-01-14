@@ -138,9 +138,18 @@ bun run build --filter='@filtron/core'
 
 ## Releasing
 
-### Cutting a release
-
 Releases are automated via GitHub Actions when you push a tag matching the `package-version` pattern (e.g., `core-1.2.0`, `sql-2.0.0`).
+
+The publish workflow runs `scripts/verify-tag.ts` to validate that:
+
+- The tag format is valid (`package-version`, e.g., `core-1.2.0`)
+- The package directory exists
+- The version in `package.json` matches the tag
+- The version is not already published on npm
+
+If any of these checks fail, the release is aborted.
+
+### Cutting a release
 
 1. **Update the package version**
 

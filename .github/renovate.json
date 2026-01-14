@@ -31,6 +31,10 @@
 			"matchFileNames": ["/^\\.github/workflows/[^/]+\\.yml$/"],
 			"matchDepNames": ["node"],
 			"enabled": false
+		},
+		{
+			"matchDepNames": ["bun", "@types/bun"],
+			"groupName": "bun"
 		}
 	],
 	"customManagers": [
@@ -43,6 +47,13 @@
 			],
 			"datasourceTemplate": "github-releases",
 			"extractVersionTemplate": "^v(?<version>.*)$"
+		},
+		{
+			"customType": "regex",
+			"managerFilePatterns": ["**/package.json"],
+			"matchStrings": ["\"packageManager\":\\s*\"(?<depName>bun)@(?<currentValue>[^\"]+)\""],
+			"datasourceTemplate": "npm",
+			"depNameTemplate": "bun"
 		}
 	],
 	"rebaseWhen": "never",

@@ -37,8 +37,8 @@
 		--color-error-bg: #ffeef0;
 		--color-error-border: #f97583;
 
-		--syntax-keyword: #c72536;
-		--syntax-operator: #c72536;
+		--syntax-keyword: #b8212f;
+		--syntax-operator: #b8212f;
 		--syntax-string: #1a6b2e;
 		--syntax-number: #0050a8;
 		--syntax-field: #5e35a8;
@@ -50,7 +50,7 @@
 		--shiki-token-string: #1a6b2e;
 		--shiki-token-string-expression: #1a6b2e;
 		--shiki-token-comment: #4a4a4a;
-		--shiki-token-keyword: #c72536;
+		--shiki-token-keyword: #b8212f;
 		--shiki-token-parameter: #2a2a2a;
 		--shiki-token-function: #5e35a8;
 		--shiki-token-punctuation: #2a2a2a;

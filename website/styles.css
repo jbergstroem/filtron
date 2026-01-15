@@ -30,18 +30,31 @@
 		--color-glow: #e8e6e1;
 		--color-section: #f5f4f0;
 		--color-text: #2a2a2a;
-		--color-text-muted: #5a5a5a;
+		--color-text-muted: #4a4a4a;
 		--color-border: #d0cec9;
 		--color-input: rgb(245 244 240 / 0.95);
 		--color-code: #eae8e3;
 		--color-error-bg: #ffeef0;
 		--color-error-border: #f97583;
 
-		--syntax-keyword: #d73a49;
-		--syntax-operator: #d73a49;
-		--syntax-string: #22863a;
-		--syntax-number: #005cc5;
-		--syntax-field: #6f42c1;
+		--syntax-keyword: #b8212f;
+		--syntax-operator: #b8212f;
+		--syntax-string: #1a6b2e;
+		--syntax-number: #0050a8;
+		--syntax-field: #5e35a8;
+
+		/* Shiki CSS variables theme */
+		--shiki-foreground: #2a2a2a;
+		--shiki-background: transparent;
+		--shiki-token-constant: #0050a8;
+		--shiki-token-string: #1a6b2e;
+		--shiki-token-string-expression: #1a6b2e;
+		--shiki-token-comment: #4a4a4a;
+		--shiki-token-keyword: #b8212f;
+		--shiki-token-parameter: #2a2a2a;
+		--shiki-token-function: #5e35a8;
+		--shiki-token-punctuation: #2a2a2a;
+		--shiki-token-link: #0050a8;
 
 		--particle-red: #c45b4d;
 		--particle-blue: #4a7c8c;
@@ -75,7 +88,7 @@
 			--color-glow: #2a2a2a;
 			--color-section: #232323;
 			--color-text: #e5e5e5;
-			--color-text-muted: #a0a0a0;
+			--color-text-muted: #ababab;
 			--color-border: #3a3a3a;
 			--color-input: rgb(30 30 30 / 0.95);
 			--color-code: #2a2a2a;
@@ -86,6 +99,19 @@
 			--syntax-string: #7ee787;
 			--syntax-number: #79c0ff;
 			--syntax-field: #d2a8ff;
+
+			/* Shiki CSS variables theme */
+			--shiki-foreground: #e5e5e5;
+			--shiki-background: transparent;
+			--shiki-token-constant: #79c0ff;
+			--shiki-token-string: #7ee787;
+			--shiki-token-string-expression: #7ee787;
+			--shiki-token-comment: #ababab;
+			--shiki-token-keyword: #ff7b8a;
+			--shiki-token-parameter: #e5e5e5;
+			--shiki-token-function: #d2a8ff;
+			--shiki-token-punctuation: #e5e5e5;
+			--shiki-token-link: #79c0ff;
 
 			--particle-red: #e07060;
 			--particle-blue: #5a9cac;
@@ -438,23 +464,10 @@
 			margin: 0;
 			background: transparent !important;
 		}
-
-		/* Shiki dual-theme support */
-		@media (prefers-color-scheme: dark) {
-			& span {
-				color: var(--shiki-dark) !important;
-			}
-		}
 	}
 
 	.syntax-example {
 		font-family: var(--font-mono);
-
-		@media (prefers-color-scheme: dark) {
-			& span {
-				color: var(--shiki-dark) !important;
-			}
-		}
 	}
 
 	table {

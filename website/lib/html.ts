@@ -1,15 +1,23 @@
 import filtronGrammar from "@filtron/core/filtron.tmLanguage.json";
 import { build, file } from "bun";
 import { createHighlighter, type Highlighter } from "shiki";
+import { createCssVariablesTheme } from "shiki/core";
 
 const ICONS_DIR = "node_modules/@iconscout/unicons/svg/line";
+
+const cssVarsTheme = createCssVariablesTheme({
+	name: "css-variables",
+	variablePrefix: "--shiki-",
+	variableDefaults: {},
+	fontStyle: true,
+});
 
 let highlighter: Highlighter;
 
 async function getHighlighter(): Promise<Highlighter> {
 	if (!highlighter) {
 		highlighter = await createHighlighter({
-			themes: ["github-dark", "github-light"],
+			themes: [cssVarsTheme],
 			langs: ["typescript", "bash", Object.assign({}, filtronGrammar, { name: "filtron" })],
 		});
 	}
@@ -28,7 +36,7 @@ function decodeHtmlEntities(text: string): string {
 function highlight(hl: Highlighter, code: string, lang: string): string {
 	return hl.codeToHtml(code.trim(), {
 		lang,
-		themes: { dark: "github-dark", light: "github-light" },
+		theme: "css-variables",
 	});
 }
 

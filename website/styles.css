@@ -30,18 +30,18 @@
 		--color-glow: #e8e6e1;
 		--color-section: #f5f4f0;
 		--color-text: #2a2a2a;
-		--color-text-muted: #5a5a5a;
+		--color-text-muted: #4a4a4a;
 		--color-border: #d0cec9;
 		--color-input: rgb(245 244 240 / 0.95);
 		--color-code: #eae8e3;
 		--color-error-bg: #ffeef0;
 		--color-error-border: #f97583;
 
-		--syntax-keyword: #d73a49;
-		--syntax-operator: #d73a49;
-		--syntax-string: #22863a;
-		--syntax-number: #005cc5;
-		--syntax-field: #6f42c1;
+		--syntax-keyword: #c72536;
+		--syntax-operator: #c72536;
+		--syntax-string: #1a6b2e;
+		--syntax-number: #0050a8;
+		--syntax-field: #5e35a8;
 
 		--particle-red: #c45b4d;
 		--particle-blue: #4a7c8c;
@@ -75,7 +75,7 @@
 			--color-glow: #2a2a2a;
 			--color-section: #232323;
 			--color-text: #e5e5e5;
-			--color-text-muted: #a0a0a0;
+			--color-text-muted: #ababab;
 			--color-border: #3a3a3a;
 			--color-input: rgb(30 30 30 / 0.95);
 			--color-code: #2a2a2a;

@@ -7,3 +7,7 @@ junit.xml
 
 # Wrangler
 website/.wrangler
+
+# Claude stuff
+.claude
+CLAUDE.md

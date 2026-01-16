@@ -1,31 +1,78 @@
 #
-# Publish a preview of website changes to Cloudflare.
+# Deploy website to production (push to main) or preview (pull requests).
 #
-# Dynamically injects a PR-specific environment into wrangler.json at runtime
+# For PRs: Dynamically injects a PR-specific environment into wrangler.json
 # to create unique preview URLs (pr-N.filtron.dev) without committing config changes.
-#
 # Creates a temporary GitHub environment that links to the preview URL.
-#
 # Removes the environment and preview deployment when the PR is closed.
 #
-name: preview-website
+name: website
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/website.yml
+      - website/**
   pull_request:
     types: [opened, synchronize, reopened, closed]
     paths:
-      - .github/workflows/preview-website.yml
+      - .github/workflows/website.yml
       - website/**
 
 permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  group: website-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  deploy:
-    if: github.event.action != 'closed'
+  deploy-production:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@b7a1c7ccf290d58743029c4f6903da283811b979 # v2
+        with:
+          bun-version-file: package.json
+          no-cache: true
+      - run: bun ci
+      - run: bun run build
+      - uses: chrnorm/deployment-action@55729fcebec3d284f60f5bcabbd8376437d696b1 # v2.0.7
+        id: create-deployment
+        with:
+          token: ${{ github.token }}
+          environment: production
+          production-environment: true
+      - run: bun wrangler deploy --no-bundle
+        id: deploy
+        working-directory: website
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          WRANGLER_SEND_METRICS: false
+      - uses: chrnorm/deployment-status@9a72af4586197112e0491ea843682b5dc280d806 # v2.0.3
+        if: success()
+        with:
+          token: ${{ github.token }}
+          deployment-id: ${{ steps.create-deployment.outputs.deployment_id }}
+          environment-url: https://filtron.dev
+          state: success
+      - uses: chrnorm/deployment-status@9a72af4586197112e0491ea843682b5dc280d806 # v2.0.3
+        if: failure()
+        with:
+          token: ${{ github.token }}
+          deployment-id: ${{ steps.create-deployment.outputs.deployment_id }}
+          state: failure
+
+  deploy-preview:
+    if: github.event_name == 'pull_request' && github.event.action != 'closed'
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -81,8 +128,8 @@ jobs:
           deployment-id: ${{ steps.create-deployment.outputs.deployment_id }}
           state: failure
 
-  cleanup:
-    if: github.event.action == 'closed'
+  cleanup-preview:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
     runs-on: ubuntu-24.04
     permissions:
       deployments: write

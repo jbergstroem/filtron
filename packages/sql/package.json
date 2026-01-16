@@ -28,6 +28,7 @@
 	},
 	"files": [
 		"dist",
+		"examples",
 		"LICENSE",
 		"README.md"
 	],

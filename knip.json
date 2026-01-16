@@ -10,7 +10,7 @@
 			"project": ["**/*.ts"]
 		},
 		"packages/js": {
-			"entry": "index.ts!",
+			"entry": ["index.ts!", "examples/*.ts!"],
 			"project": ["**/*.ts"]
 		},
 		"packages/sql": {

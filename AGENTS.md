@@ -32,8 +32,11 @@
 | Run tests       | `bun test`          |
 | Run benchmarks  | `bun run bench`     |
 | Lint/format     | `bun run lint`      |
-| Type check      | `bun run typecheck` |
+| Type check      | `bun run lint` |
 | Check for cruft | `bun run knip`      |
+
+Note: There is no separate `typecheck` script. Type checking is handled by oxlin
+via `--type-aware --type-check` flags in the lint command.
 
 ## Performance requirements
 

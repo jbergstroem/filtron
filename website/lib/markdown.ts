@@ -64,6 +64,88 @@ export function extractFirstSection(content: string): string {
 		.trim();
 }
 
+export function extractSection(content: string, sectionName: string): string | null {
+	const lines = content.split("\n");
+	const result: string[] = [];
+	let inSection = false;
+	let inCodeBlock = false;
+	const sectionHeader = `## ${sectionName}`;
+
+	for (const line of lines) {
+		if (line.startsWith("```")) {
+			inCodeBlock = !inCodeBlock;
+		}
+
+		if (!inCodeBlock && line.startsWith("## ")) {
+			if (inSection) {
+				break;
+			}
+			if (line === sectionHeader) {
+				inSection = true;
+				continue;
+			}
+		}
+
+		if (inSection) {
+			result.push(line);
+		}
+	}
+
+	if (result.length === 0) {
+		return null;
+	}
+
+	return result.join("\n").trim();
+}
+
+export function extractTable(content: string): string | null {
+	const lines = content.split("\n");
+	const tableLines: string[] = [];
+	let inTable = false;
+
+	for (const line of lines) {
+		const trimmed = line.trim();
+		if (trimmed.startsWith("|") && trimmed.endsWith("|")) {
+			inTable = true;
+			tableLines.push(trimmed);
+		} else if (inTable) {
+			break;
+		}
+	}
+
+	if (tableLines.length === 0) {
+		return null;
+	}
+
+	return tableLines.join("\n");
+}
+
+export function extractCodeBlock(content: string, language?: string): string | null {
+	const lines = content.split("\n");
+	const result: string[] = [];
+	let inBlock = false;
+	const startPattern = language ? `\`\`\`${language}` : "```";
+
+	for (const line of lines) {
+		if (!inBlock && line.startsWith(startPattern)) {
+			inBlock = true;
+			continue;
+		}
+		if (inBlock && line.startsWith("```")) {
+			break;
+		}
+		if (inBlock) {
+			result.push(line);
+		}
+	}
+
+	if (result.length === 0) {
+		return null;
+	}
+
+	return result.join("\n");
+}
+
 export async function findDocs(): Promise<{ required: DocFile[]; optional: DocFile[] }> {
 	const required: DocFile[] = [];
 	const optional: DocFile[] = [];

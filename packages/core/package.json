@@ -27,6 +27,7 @@
 	},
 	"files": [
 		"dist",
+		"examples",
 		"filtron.tmLanguage.json",
 		"LICENSE",
 		"README.md"

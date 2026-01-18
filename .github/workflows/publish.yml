@@ -33,7 +33,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-      - uses: oven-sh/setup-bun@db6bcf6eb8d88a8aa03265b887ec7bd84d64cd68 # v2.1.1
+      - uses: oven-sh/setup-bun@3d267786b128fe76c2f16a390aa2448b815359f3 # v2.1.2
         with:
           bun-version-file: package.json
           no-cache: true
@@ -60,7 +60,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-      - uses: oven-sh/setup-bun@db6bcf6eb8d88a8aa03265b887ec7bd84d64cd68 # v2.1.1
+      - uses: oven-sh/setup-bun@3d267786b128fe76c2f16a390aa2448b815359f3 # v2.1.2
         with:
           bun-version-file: package.json
           no-cache: true

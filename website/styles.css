@@ -154,7 +154,7 @@
 	}
 
 	.hero {
-		min-block-size: 100lvh;
+		/* min-height set via JS to lock to initial viewport and prevent address bar jank */
 		display: flex;
 		flex-direction: column;
 		align-items: center;

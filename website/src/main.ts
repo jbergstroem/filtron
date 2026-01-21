@@ -98,6 +98,12 @@ function generateRandomQuery(): string {
 }
 
 function init(): void {
+	// Lock hero height to prevent mobile address bar jank
+	const hero = document.querySelector(".hero") as HTMLElement;
+	if (hero) {
+		hero.style.minHeight = `${window.innerHeight}px`;
+	}
+
 	const canvas = document.getElementById("grid-canvas") as HTMLCanvasElement;
 	const filterInput = document.getElementById("filter-input") as HTMLTextAreaElement;
 	const filterHighlighted = document.getElementById("filter-highlighted") as HTMLDivElement;

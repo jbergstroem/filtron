@@ -139,7 +139,8 @@
 		top: 0;
 		left: 0;
 		width: 100%;
-		/* Height set via JS to lock to initial viewport and prevent address bar jank */
+		/* Initial height via CSS; JS locks to fixed pixels for address bar jank */
+		height: 100svh;
 		z-index: 0;
 		transform: translateZ(0);
 		will-change: transform;
@@ -152,7 +153,8 @@
 	}
 
 	.hero {
-		/* min-height set via JS to lock to initial viewport and prevent address bar jank */
+		/* Initial height via CSS prevents layout jump; JS locks to fixed pixels for address bar jank */
+		min-height: 100svh;
 		display: flex;
 		flex-direction: column;
 		align-items: center;

@@ -51,6 +51,7 @@ export class ParticleGrid {
 	private currentFilter: ((item: Record<string, unknown>) => boolean) | null = null;
 	private lastWidth = 0;
 	private lastHeight = 0;
+	private initialHeight = 0;
 
 	constructor(canvas: HTMLCanvasElement) {
 		this.canvas = canvas;
@@ -96,13 +97,15 @@ export class ParticleGrid {
 
 	private applyResize(): void {
 		const dpr = window.devicePixelRatio || 1;
-		// Use getBoundingClientRect to get the actual CSS-rendered size
-		const rect = this.canvas.getBoundingClientRect();
-		const width = rect.width;
-		const height = rect.height;
+		const width = window.innerWidth;
+
+		// Lock height on first load - never change it after
+		if (this.initialHeight === 0) {
+			this.initialHeight = window.innerHeight;
+		}
+		const height = this.initialHeight;
 
 		// Only regenerate if width changed (rotation or actual window resize)
-		// Ignore height changes entirely - CSS 100lvh handles mobile address bar
 		const widthChanged = Math.abs(width - this.lastWidth) > 10;
 
 		if (!widthChanged && this.particles.length > 0) {
@@ -111,6 +114,9 @@ export class ParticleGrid {
 
 		this.lastWidth = width;
 		this.lastHeight = height;
+
+		// Set canvas CSS size to fixed pixels to prevent any viewport-related changes
+		this.canvas.style.height = `${height}px`;
 
 		this.canvas.width = width * dpr;
 		this.canvas.height = height * dpr;

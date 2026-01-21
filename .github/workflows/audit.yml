@@ -42,7 +42,7 @@ jobs:
 
   zizmor:
     needs: [changes]
-    if: always() && (github.event_name == 'schedule' || needs.changes.outputs.workflows == 'true')
+    if: always() && (github.event_name == 'schedule' || needs.changes.result != 'skipped' && needs.changes.outputs.workflows == 'true')
     runs-on: ubuntu-24.04
     permissions:
       security-events: write

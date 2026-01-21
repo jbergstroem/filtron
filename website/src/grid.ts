@@ -96,13 +96,13 @@ export class ParticleGrid {
 
 	private applyResize(): void {
 		const dpr = window.devicePixelRatio || 1;
-		const width = window.innerWidth;
-		// Use CSS lvh equivalent: window.screen.height gives stable height on mobile
-		// that doesn't change with address bar. Fall back to innerHeight on desktop.
-		const isMobile = "ontouchstart" in window || navigator.maxTouchPoints > 0;
-		const height = isMobile ? window.screen.height : window.innerHeight;
+		// Use getBoundingClientRect to get the actual CSS-rendered size
+		const rect = this.canvas.getBoundingClientRect();
+		const width = rect.width;
+		const height = rect.height;
 
-		// Only regenerate if width changed (rotation, actual resize)
+		// Only regenerate if width changed (rotation or actual window resize)
+		// Ignore height changes entirely - CSS 100lvh handles mobile address bar
 		const widthChanged = Math.abs(width - this.lastWidth) > 10;
 
 		if (!widthChanged && this.particles.length > 0) {

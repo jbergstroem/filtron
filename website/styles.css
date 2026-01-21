@@ -859,4 +859,37 @@
 		text-align: center;
 		padding: var(--space-2) var(--space-4);
 	}
+
+	.code-block {
+		overflow-x: hidden;
+
+		& pre,
+		& code {
+			font-size: 0.6875rem;
+			white-space: pre-wrap;
+			word-break: break-word;
+		}
+	}
+
+	.perf-table {
+		font-size: 0.6875rem;
+
+		& td code {
+			font-size: 0.625rem;
+			white-space: pre-wrap;
+			word-break: break-word;
+		}
+	}
+
+	/* Operators table: hide example column on mobile */
+	table:not(.perf-table):not(.hints) {
+		& th:last-child,
+		& td:last-child {
+			display: none;
+		}
+
+		& td code {
+			white-space: nowrap;
+		}
+	}
 }

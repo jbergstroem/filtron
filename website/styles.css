@@ -784,12 +784,9 @@
 
 	.text-glow {
 		text-shadow:
-			0 0 8px var(--color-glow),
-			0 0 16px var(--color-glow),
-			0 0 24px var(--color-glow),
-			0 0 32px var(--color-glow),
-			0 0 48px var(--color-glow),
-			0 0 64px var(--color-glow);
+			0 0 10px var(--color-bg),
+			0 0 20px var(--color-bg),
+			0 0 30px var(--color-bg);
 	}
 
 	.icon {

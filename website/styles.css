@@ -845,7 +845,7 @@
 
 	.filter-input,
 	.filter-highlighted {
-		font-size: 0.875rem;
+		font-size: 1rem;
 		padding: var(--space-3) 3.125rem var(--space-3) var(--space-4);
 	}
 

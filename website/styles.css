@@ -27,7 +27,6 @@
 	:root {
 		/* Colors - Light mode */
 		--color-bg: #e8e6e1;
-		--color-glow: #e8e6e1;
 		--color-section: #f5f4f0;
 		--color-text: #2a2a2a;
 		--color-text-muted: #4a4a4a;
@@ -85,7 +84,6 @@
 
 		@media (prefers-color-scheme: dark) {
 			--color-bg: #1a1a1a;
-			--color-glow: #2a2a2a;
 			--color-section: #232323;
 			--color-text: #e5e5e5;
 			--color-text-muted: #ababab;
@@ -784,12 +782,9 @@
 
 	.text-glow {
 		text-shadow:
-			0 0 8px var(--color-glow),
-			0 0 16px var(--color-glow),
-			0 0 24px var(--color-glow),
-			0 0 32px var(--color-glow),
-			0 0 48px var(--color-glow),
-			0 0 64px var(--color-glow);
+			0 0 10px var(--color-bg),
+			0 0 20px var(--color-bg),
+			0 0 30px var(--color-bg);
 	}
 
 	.icon {

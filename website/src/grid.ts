@@ -49,6 +49,8 @@ export class ParticleGrid {
 	private isAnimating = false;
 	private resizeTimeout: ReturnType<typeof setTimeout> | null = null;
 	private currentFilter: ((item: Record<string, unknown>) => boolean) | null = null;
+	private lastWidth = 0;
+	private initialHeight = 0;
 
 	constructor(canvas: HTMLCanvasElement) {
 		this.canvas = canvas;
@@ -94,10 +96,28 @@ export class ParticleGrid {
 
 	private applyResize(): void {
 		const dpr = window.devicePixelRatio || 1;
-		const rect = this.canvas.getBoundingClientRect();
+		const width = window.innerWidth;
 
-		this.canvas.width = rect.width * dpr;
-		this.canvas.height = rect.height * dpr;
+		// Lock height on first load - never change it after
+		if (this.initialHeight === 0) {
+			this.initialHeight = window.innerHeight;
+		}
+		const height = this.initialHeight;
+
+		// Only regenerate if width changed (rotation or actual window resize)
+		const widthChanged = Math.abs(width - this.lastWidth) > 10;
+
+		if (!widthChanged && this.particles.length > 0) {
+			return;
+		}
+
+		this.lastWidth = width;
+
+		// Set canvas CSS size to fixed pixels to prevent any viewport-related changes
+		this.canvas.style.height = `${height}px`;
+
+		this.canvas.width = width * dpr;
+		this.canvas.height = height * dpr;
 		this.ctx.scale(dpr, dpr);
 
 		this.generateParticles();
@@ -107,10 +127,9 @@ export class ParticleGrid {
 
 	private generateParticles(): void {
 		this.particles = [];
-		const rect = this.canvas.getBoundingClientRect();
 
 		// Calculate particle count based on area, aiming for ~40px average spacing
-		const area = rect.width * rect.height;
+		const area = this.lastWidth * this.initialHeight;
 		const targetCount = Math.floor(area / (this.gridSpacing * this.gridSpacing));
 
 		// Random distribution - different each visit
@@ -129,8 +148,8 @@ export class ParticleGrid {
 
 			// Try to find a non-overlapping position
 			while (attempts < maxAttempts && !valid) {
-				x = random() * rect.width;
-				y = random() * rect.height;
+				x = random() * this.lastWidth;
+				y = random() * this.initialHeight;
 				valid = true;
 
 				// Check distance to existing particles
@@ -264,8 +283,7 @@ export class ParticleGrid {
 	}
 
 	private render(): void {
-		const rect = this.canvas.getBoundingClientRect();
-		this.ctx.clearRect(0, 0, rect.width, rect.height);
+		this.ctx.clearRect(0, 0, this.lastWidth, this.initialHeight);
 
 		// Group particles by rendering state for batching
 		const batches = new Map<string, Particle[]>();

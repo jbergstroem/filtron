@@ -154,7 +154,7 @@
 	}
 
 	.hero {
-		min-block-size: 100vh;
+		min-block-size: 100dvh;
 		display: flex;
 		flex-direction: column;
 		align-items: center;

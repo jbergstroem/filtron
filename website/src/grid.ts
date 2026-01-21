@@ -50,7 +50,6 @@ export class ParticleGrid {
 	private resizeTimeout: ReturnType<typeof setTimeout> | null = null;
 	private currentFilter: ((item: Record<string, unknown>) => boolean) | null = null;
 	private lastWidth = 0;
-	private lastHeight = 0;
 	private initialHeight = 0;
 
 	constructor(canvas: HTMLCanvasElement) {
@@ -113,7 +112,6 @@ export class ParticleGrid {
 		}
 
 		this.lastWidth = width;
-		this.lastHeight = height;
 
 		// Set canvas CSS size to fixed pixels to prevent any viewport-related changes
 		this.canvas.style.height = `${height}px`;
@@ -131,7 +129,7 @@ export class ParticleGrid {
 		this.particles = [];
 
 		// Calculate particle count based on area, aiming for ~40px average spacing
-		const area = this.lastWidth * this.lastHeight;
+		const area = this.lastWidth * this.initialHeight;
 		const targetCount = Math.floor(area / (this.gridSpacing * this.gridSpacing));
 
 		// Random distribution - different each visit
@@ -151,7 +149,7 @@ export class ParticleGrid {
 			// Try to find a non-overlapping position
 			while (attempts < maxAttempts && !valid) {
 				x = random() * this.lastWidth;
-				y = random() * this.lastHeight;
+				y = random() * this.initialHeight;
 				valid = true;
 
 				// Check distance to existing particles
@@ -285,7 +283,7 @@ export class ParticleGrid {
 	}
 
 	private render(): void {
-		this.ctx.clearRect(0, 0, this.lastWidth, this.lastHeight);
+		this.ctx.clearRect(0, 0, this.lastWidth, this.initialHeight);
 
 		// Group particles by rendering state for batching
 		const batches = new Map<string, Particle[]>();

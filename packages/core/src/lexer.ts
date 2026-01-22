@@ -239,14 +239,18 @@ export class Lexer {
 		let pos = this.pos;
 
 		// Handle negative sign
+		let negative = false;
 		if (input.charCodeAt(pos) === C.Minus) {
+			negative = true;
 			pos++;
 		}
 
-		// Read integer part
+		// Read integer part directly
+		let value = 0;
 		while (pos < length) {
 			const code = input.charCodeAt(pos);
 			if (code < C.Zero || code > C.Nine) break;
+			value = value * 10 + (code - C.Zero);
 			pos++;
 		}
 
@@ -255,15 +259,20 @@ export class Lexer {
 			const nextCode = input.charCodeAt(pos + 1);
 			if (nextCode >= C.Zero && nextCode <= C.Nine) {
 				pos++; // skip dot
+				let fraction = 0;
+				let divisor = 1;
 				while (pos < length) {
 					const code = input.charCodeAt(pos);
 					if (code < C.Zero || code > C.Nine) break;
+					fraction = fraction * 10 + (code - C.Zero);
+					divisor *= 10;
 					pos++;
 				}
 				this.pos = pos;
+				const floatValue = value + fraction / divisor;
 				return {
 					type: "NUMBER",
-					value: parseFloat(input.slice(start, pos)),
+					value: negative ? -floatValue : floatValue,
 					start,
 					end: pos,
 				};
@@ -273,7 +282,7 @@ export class Lexer {
 		this.pos = pos;
 		return {
 			type: "NUMBER",
-			value: parseInt(input.slice(start, pos), 10),
+			value: negative ? -value : value,
 			start,
 			end: pos,
 		};

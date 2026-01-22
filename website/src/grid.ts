@@ -33,7 +33,6 @@ function getColorValues(): Record<Color, string> {
 const INACTIVE_ALPHA = 0.08;
 const ACTIVE_ALPHA = 0.7;
 const LERP_SPEED = 0.08;
-const FADE_IN_DURATION = 2000;
 const ALPHA_THRESHOLD = 0.001; // Consider animation done when diff is below this
 
 export class ParticleGrid {
@@ -43,8 +42,6 @@ export class ParticleGrid {
 	private animationId: number | null = null;
 	private gridSpacing = 40;
 	private lastTime = 0;
-	private startTime = 0;
-	private fadeInProgress = 0; // 0 to 1
 	private colorValues: Record<Color, string>;
 	private isAnimating = false;
 	private resizeTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -213,9 +210,6 @@ export class ParticleGrid {
 	}
 
 	private needsAnimation(): boolean {
-		// Need animation during fade-in
-		if (this.fadeInProgress < 1) return true;
-
 		// Need animation if any particle hasn't reached target
 		for (const p of this.particles) {
 			if (Math.abs(p.targetAlpha - p.currentAlpha) > ALPHA_THRESHOLD) {
@@ -230,9 +224,6 @@ export class ParticleGrid {
 		if (this.isAnimating || document.hidden) return;
 		this.isAnimating = true;
 		this.lastTime = performance.now();
-		if (this.startTime === 0) {
-			this.startTime = this.lastTime;
-		}
 		this.animate();
 	}
 
@@ -264,13 +255,6 @@ export class ParticleGrid {
 	};
 
 	private update(dt: number): void {
-		const now = performance.now();
-
-		// Update fade-in progress
-		if (this.fadeInProgress < 1) {
-			this.fadeInProgress = Math.min(1, (now - this.startTime) / FADE_IN_DURATION);
-		}
-
 		for (const particle of this.particles) {
 			// Lerp alpha toward target
 			const diff = particle.targetAlpha - particle.currentAlpha;
@@ -289,9 +273,7 @@ export class ParticleGrid {
 		const batches = new Map<string, Particle[]>();
 
 		for (const particle of this.particles) {
-			const easeOut = 1 - Math.pow(1 - this.fadeInProgress, 3);
-			const alpha = particle.currentAlpha * easeOut;
-			const roundedAlpha = Math.round(alpha * 100) / 100; // Round to 2 decimals
+			const roundedAlpha = Math.round(particle.currentAlpha * 100) / 100; // Round to 2 decimals
 			const key = `${particle.color}_${roundedAlpha}_${particle.shape}`;
 
 			if (!batches.has(key)) {

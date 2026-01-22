@@ -30,13 +30,14 @@
 		"build": "bun run --filter '@filtron/core' build && bun run --filter '!@filtron/core' build",
 		"lint": "oxlint --type-aware --type-check; oxfmt --check; exit $(( $? ))",
 		"lint:fix": "oxlint --type-aware --type-check; oxfmt; exit $(( $? ))",
-		"knip": "knip"
+		"knip": "knip",
+		"website": "cd website && bun run dev"
 	},
 	"devDependencies": {
 		"@types/bun": "catalog:",
-		"knip": "5.81.0",
-		"oxfmt": "0.24.0",
-		"oxlint": "1.39.0",
+		"knip": "5.82.1",
+		"oxfmt": "0.26.0",
+		"oxlint": "1.41.0",
 		"oxlint-tsgolint": "0.11.1"
 	},
 	"peerDependencies": {

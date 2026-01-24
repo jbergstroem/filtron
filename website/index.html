@@ -8,6 +8,14 @@
 			content="Parse human-friendly filter expressions into SQL, JavaScript filters, or custom integrations. A fast, dependency-free query parser."
 		/>
 		<title>Filtron - Human-friendly filter language</title>
+		<link rel="canonical" href="https://filtron.dev/" />
+		<meta property="og:type" content="website" />
+		<meta property="og:url" content="https://filtron.dev/" />
+		<meta property="og:title" content="Filtron - Human-friendly filter language" />
+		<meta
+			property="og:description"
+			content="Parse human-friendly filter expressions into SQL, JavaScript filters, or custom integrations. A fast, dependency-free query parser."
+		/>
 		<link rel="stylesheet" href="styles.css" />
 	</head>
 	<body>
@@ -22,6 +30,7 @@
 
 				<div class="filter-container">
 					<div class="filter-input-wrapper">
+						<label for="filter-input" class="visually-hidden">Filter expression</label>
 						<textarea
 							id="filter-input"
 							class="filter-input"
@@ -56,18 +65,26 @@ shape = "circle" AND size > 2</textarea
 				<span class="hints-label text-glow text-muted">Available fields</span>
 				<div class="hints-wrapper">
 					<table class="hints font-mono text-muted">
-						<tr>
-							<td class="hint-name">shape</td>
-							<td class="hint-values">["circle", "triangle", "square"]</td>
-						</tr>
-						<tr>
-							<td class="hint-name">color</td>
-							<td class="hint-values">["red", "blue", "green", "orange", "purple"]</td>
-						</tr>
-						<tr>
-							<td class="hint-name">size</td>
-							<td class="hint-values">1..5</td>
-						</tr>
+						<thead class="visually-hidden">
+							<tr>
+								<th scope="col">Field</th>
+								<th scope="col">Values</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td class="hint-name">shape</td>
+								<td class="hint-values">["circle", "triangle", "square"]</td>
+							</tr>
+							<tr>
+								<td class="hint-name">color</td>
+								<td class="hint-values">["red", "blue", "green", "orange", "purple"]</td>
+							</tr>
+							<tr>
+								<td class="hint-name">size</td>
+								<td class="hint-values">1..5</td>
+							</tr>
+						</tbody>
 					</table>
 				</div>
 

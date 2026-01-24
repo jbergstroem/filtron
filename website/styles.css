@@ -339,6 +339,15 @@
 		&::placeholder {
 			color: var(--color-text-muted);
 		}
+
+		&:focus-visible {
+			outline: none;
+		}
+	}
+
+	.filter-input-wrapper:has(.filter-input:focus-visible) {
+		outline: 2px solid var(--syntax-field);
+		outline-offset: 2px;
 	}
 
 	.filter-highlighted {
@@ -729,6 +738,18 @@
 }
 
 @layer utilities {
+	.visually-hidden {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
+	}
+
 	.fl-error {
 		background: var(--color-error-bg);
 		border-block-end: 2px wavy var(--color-error-border);

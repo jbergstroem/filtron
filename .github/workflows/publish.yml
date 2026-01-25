@@ -26,7 +26,7 @@ concurrency:
 
 jobs:
   verify:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-slim
     outputs:
       packages: ${{ steps.verify.outputs.packages }}
     steps:
@@ -47,7 +47,7 @@ jobs:
         id: verify
 
   publish:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-slim
     needs: verify
     if: ${{ needs.verify.outputs.packages != '[]' }}
     permissions:

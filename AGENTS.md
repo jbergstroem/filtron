@@ -126,6 +126,6 @@ Value           = STRING | NUMBER | BOOLEAN | DottedIdent
 
 - Use concise style: `uses:` and `run:` without `name:` unless clarity requires it
 - Pin action versions to full SHA with version comment: `actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6`
-- Use `ubuntu-24.04` as the default runner
+- Use `ubuntu-slim` as the default runner except for benchmarks
 - Use `bun-version-file: package.json` for setup-bun
 - Use `bun ci` (alias for `bun install --frozen-lockfile`) for dependency installation

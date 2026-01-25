@@ -30,7 +30,7 @@ concurrency:
 jobs:
   deploy:
     if: github.event_name == 'push'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-slim
     permissions:
       contents: read
       deployments: write
@@ -73,7 +73,7 @@ jobs:
 
   deploy-preview:
     if: github.event_name == 'pull_request' && github.event.action != 'closed'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-slim
     permissions:
       contents: read
       deployments: write
@@ -130,7 +130,7 @@ jobs:
 
   cleanup-preview:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-slim
     permissions:
       deployments: write
     steps:

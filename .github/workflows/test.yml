@@ -28,7 +28,7 @@ concurrency:
 
 jobs:
   unit:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-slim
     permissions:
       contents: read
       id-token: write
@@ -58,7 +58,7 @@ jobs:
 
   e2e:
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-slim
     strategy:
       matrix:
         include:

@@ -4,11 +4,12 @@
 
 We support the current major version of each package:
 
-| Package       | Supported Versions |
-| ------------- | ------------------ |
-| @filtron/core | 1.x                |
-| @filtron/sql  | 1.x                |
-| @filtron/js   | 1.x                |
+| Package            | Supported Versions |
+| ------------------ | ------------------ |
+| @filtron/core      | 1.x                |
+| @filtron/js        | 1.x                |
+| @filtron/sql       | 1.x                |
+| @filtron/benchmark | 1.x                |
 
 ## Reporting a vulnerability
 
@@ -21,7 +22,7 @@ Include in your report:
 - Steps to reproduce
 - Suggested fix (optional)
 
-We'll acknowledge your report within 72 hours and keep you informed of progress.
+We will acknowledge your report as soon as possible and keep you informed of progress.
 
 ## Security considerations
 

@@ -9,6 +9,7 @@ age > 18 AND status = "active"
 Filtron parses human-friendly filter strings into structured queries you can use anywhere — SQL databases, in-memory arrays, or your own custom backend.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+[![codecov](https://codecov.io/gh/jbergstroem/filtron/graph/badge.svg?token=FXIWJKJ9RI)](https://codecov.io/gh/jbergstroem/filtron)
 [![CodSpeed](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://codspeed.io/jbergstroem/filtron)
 
 ## Why Filtron?

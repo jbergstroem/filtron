@@ -34,6 +34,7 @@
 		},
 		{
 			"matchDepNames": ["bun", "@types/bun"],
+			"matchManagers": ["npm", "custom.regex"],
 			"groupName": "bun"
 		}
 	],

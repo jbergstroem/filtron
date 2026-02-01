@@ -38,7 +38,7 @@
 		"@types/bun": "catalog:",
 		"knip": "5.82.1",
 		"oxfmt": "catalog:",
-		"oxlint": "1.41.0",
+		"oxlint": "1.42.0",
 		"oxlint-tsgolint": "0.11.1"
 	},
 	"peerDependencies": {

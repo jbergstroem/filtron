@@ -2,8 +2,8 @@
 
 ## Goals
 
-1. **Performance** - Query parsing is mission-critical; measure all changes
-2. **Correctness** - Parse valid queries, reject invalid ones with clear errors
+1. Performance: Query parsing is mission-critical; measure all changes
+2. Correctness: Parse valid queries, reject invalid ones with clear errors
 
 ## Rules
 
@@ -73,7 +73,7 @@ Filtron uses a hand-written recursive descent parser for performance:
 
 ## Dependencies
 
-- Keep third party dependencies to an absolute minimum
+- Keep third-party dependencies to an absolute minimum
 - If dependencies are added, pin the version
 
 ### Grammar (in precedence order, lowest to highest)

@@ -63,7 +63,7 @@ bun run lint
    - **README.md** - Quick start and overview
    - **packages/\*/README.md** - Package-specific documentation
    - **CONTRIBUTING.md** - Development guide
-   - **AGENTS.md** - Agent collaboration guide
+   - **CLAUDE.md** - Agent collaboration guide
    - **JSDoc comments** - In-code documentation
 
 6. **Commit your changes**
@@ -130,7 +130,7 @@ bun run build --filter='@filtron/core'
 
 - [ ] All tests pass: `bun test`
 - [ ] Code builds: `bun run build`
-- [ ] Types are correct: `bun run typecheck`
+- [ ] Types are correct: `bun run lint`
 - [ ] Linting passes: `bun run lint`
 - [ ] Documentation updated (if API changed)
 - [ ] Benchmarks run (if performance-sensitive code changed)

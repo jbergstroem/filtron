@@ -18,7 +18,14 @@ export type { ParseResult, ParseSuccess, ParseError } from "./parser";
 
 // Lexer for tokenization
 export { Lexer, LexerError } from "./lexer";
-export type { Token, TokenType, StringToken, NumberToken, BooleanToken } from "./lexer";
+export type {
+	Token,
+	TokenType,
+	StringToken,
+	NumberToken,
+	BooleanToken,
+	SymbolToken,
+} from "./lexer";
 
 // AST type definitions
 export type {

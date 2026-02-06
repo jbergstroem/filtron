@@ -27,7 +27,7 @@ import type {
 	BooleanFieldExpression,
 	RangeExpression,
 } from "./types";
-import { Lexer, type Token, type TokenType } from "./lexer";
+import { Lexer, type Token, type TokenType, type StringToken, type NumberToken } from "./lexer";
 
 /**
  * Parser error with position information
@@ -208,13 +208,13 @@ class Parser {
 
 			// Check for range expression: field = min..max
 			if (operator === "=" && this.check("NUMBER")) {
-				const minToken = this.advance();
-				const min = minToken.value as number;
+				const minToken = this.advance() as NumberToken;
+				const min = minToken.value;
 
 				if (this.check("DOTDOT")) {
 					this.advance();
-					const maxToken = this.expect("NUMBER", "Expected number after '..'");
-					const max = maxToken.value as number;
+					const maxToken = this.expect("NUMBER", "Expected number after '..'") as NumberToken;
+					const max = maxToken.value;
 					return { type: "range", field, min, max } as RangeExpression;
 				}
 
@@ -282,12 +282,12 @@ class Parser {
 	 * FieldName = IDENT ('.' IDENT)*
 	 */
 	private parseFieldName(): string {
-		const first = this.expect("IDENT", "Expected field name");
-		let name = first.value as string;
+		const first = this.expect("IDENT", "Expected field name") as StringToken;
+		let name = first.value;
 
 		while (this.check("DOT")) {
 			this.advance(); // consume .
-			const next = this.expect("IDENT", "Expected identifier after '.'");
+			const next = this.expect("IDENT", "Expected identifier after '.'") as StringToken;
 			name += "." + next.value;
 		}
 
@@ -334,14 +334,14 @@ class Parser {
 
 		// String literal
 		if (t === "STRING") {
-			const token = this.advance();
-			return { type: "string", value: token.value as string };
+			const token = this.advance() as StringToken;
+			return { type: "string", value: token.value };
 		}
 
 		// Number literal
 		if (t === "NUMBER") {
-			const token = this.advance();
-			return { type: "number", value: token.value as number };
+			const token = this.advance() as NumberToken;
+			return { type: "number", value: token.value };
 		}
 
 		// Boolean literal
@@ -356,12 +356,12 @@ class Parser {
 
 		// Identifier (possibly dotted)
 		if (t === "IDENT") {
-			const first = this.advance();
-			let value = first.value as string;
+			const first = this.advance() as StringToken;
+			let value = first.value;
 
-			while (this.current.type === "DOT") {
+			while (this.check("DOT")) {
 				this.advance(); // consume .
-				const next = this.expect("IDENT", "Expected identifier after '.'");
+				const next = this.expect("IDENT", "Expected identifier after '.'") as StringToken;
 				value += "." + next.value;
 			}
 

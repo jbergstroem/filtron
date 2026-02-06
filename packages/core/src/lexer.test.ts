@@ -317,7 +317,7 @@ describe("Lexer", () => {
 	describe("EOF Token", () => {
 		test("empty input returns EOF", () => {
 			const tokens = tokenize("");
-			expect(tokens).toEqual([{ type: "EOF", value: "", start: 0, end: 0 }]);
+			expect(tokens).toEqual([{ type: "EOF", start: 0, end: 0 }]);
 		});
 
 		test("EOF at end of input", () => {

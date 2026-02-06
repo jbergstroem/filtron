@@ -40,8 +40,14 @@ interface TokenBase {
 	end: number;
 }
 
-/** Tokens with string values (punctuation, operators, keywords, identifiers) */
+/** Tokens with string values (string literals and identifiers) */
 export interface StringToken extends TokenBase {
+	type: "STRING" | "IDENT";
+	value: string;
+}
+
+/** Tokens without values (operators, punctuation, keywords, EOF) */
+export interface SymbolToken extends TokenBase {
 	type:
 		| "LPAREN"
 		| "RPAREN"
@@ -64,10 +70,7 @@ export interface StringToken extends TokenBase {
 		| "LIKE"
 		| "COLON"
 		| "NOT_COLON"
-		| "STRING"
-		| "IDENT"
 		| "EOF";
-	value: string;
 }
 
 /** Tokens with number values */
@@ -85,7 +88,7 @@ export interface BooleanToken extends TokenBase {
 /**
  * Discriminated union of all token types for proper type narrowing
  */
-export type Token = StringToken | NumberToken | BooleanToken;
+export type Token = StringToken | NumberToken | BooleanToken | SymbolToken;
 
 // Character codes
 const C = {
@@ -322,7 +325,7 @@ export class Lexer {
 			if (len === 2) {
 				// "or"
 				if (firstCode === 111 && (input.charCodeAt(start + 1) | 0x20) === 114) {
-					return { type: "OR", value: "or", start, end: pos };
+					return { type: "OR", start, end: pos };
 				}
 			} else if (len === 3) {
 				// "and", "not"
@@ -332,7 +335,7 @@ export class Lexer {
 						(input.charCodeAt(start + 1) | 0x20) === 110 &&
 						(input.charCodeAt(start + 2) | 0x20) === 100
 					) {
-						return { type: "AND", value: "and", start, end: pos };
+						return { type: "AND", start, end: pos };
 					}
 				} else if (firstCode === 110) {
 					// 'n'
@@ -340,7 +343,7 @@ export class Lexer {
 						(input.charCodeAt(start + 1) | 0x20) === 111 &&
 						(input.charCodeAt(start + 2) | 0x20) === 116
 					) {
-						return { type: "NOT", value: "not", start, end: pos };
+						return { type: "NOT", start, end: pos };
 					}
 				}
 			} else if (len === 4) {
@@ -379,7 +382,7 @@ export class Lexer {
 						(input.charCodeAt(start + 4) | 0x20) === 116 &&
 						(input.charCodeAt(start + 5) | 0x20) === 115
 					) {
-						return { type: "EXISTS", value: "exists", start, end: pos };
+						return { type: "EXISTS", start, end: pos };
 					}
 				}
 			}
@@ -414,7 +417,7 @@ export class Lexer {
 		this.pos = pos;
 
 		if (pos >= this.length) {
-			return { type: "EOF", value: "", start: pos, end: pos };
+			return { type: "EOF", start: pos, end: pos };
 		}
 
 		const code = input.charCodeAt(pos);
@@ -423,31 +426,31 @@ export class Lexer {
 		switch (code) {
 			case C.LParen:
 				this.pos = pos + 1;
-				return { type: "LPAREN", value: "(", start: pos, end: pos + 1 };
+				return { type: "LPAREN", start: pos, end: pos + 1 };
 			case C.RParen:
 				this.pos = pos + 1;
-				return { type: "RPAREN", value: ")", start: pos, end: pos + 1 };
+				return { type: "RPAREN", start: pos, end: pos + 1 };
 			case C.LBracket:
 				this.pos = pos + 1;
-				return { type: "LBRACKET", value: "[", start: pos, end: pos + 1 };
+				return { type: "LBRACKET", start: pos, end: pos + 1 };
 			case C.RBracket:
 				this.pos = pos + 1;
-				return { type: "RBRACKET", value: "]", start: pos, end: pos + 1 };
+				return { type: "RBRACKET", start: pos, end: pos + 1 };
 			case C.Comma:
 				this.pos = pos + 1;
-				return { type: "COMMA", value: ",", start: pos, end: pos + 1 };
+				return { type: "COMMA", start: pos, end: pos + 1 };
 			case C.Question:
 				this.pos = pos + 1;
-				return { type: "QUESTION", value: "?", start: pos, end: pos + 1 };
+				return { type: "QUESTION", start: pos, end: pos + 1 };
 			case C.Equals:
 				this.pos = pos + 1;
-				return { type: "EQ", value: "=", start: pos, end: pos + 1 };
+				return { type: "EQ", start: pos, end: pos + 1 };
 			case C.Tilde:
 				this.pos = pos + 1;
-				return { type: "LIKE", value: "~", start: pos, end: pos + 1 };
+				return { type: "LIKE", start: pos, end: pos + 1 };
 			case C.Colon:
 				this.pos = pos + 1;
-				return { type: "COLON", value: ":", start: pos, end: pos + 1 };
+				return { type: "COLON", start: pos, end: pos + 1 };
 		}
 
 		// Two-character operators
@@ -456,39 +459,39 @@ export class Lexer {
 		if (code === C.Bang) {
 			if (nextCode === C.Equals) {
 				this.pos = pos + 2;
-				return { type: "NEQ", value: "!=", start: pos, end: pos + 2 };
+				return { type: "NEQ", start: pos, end: pos + 2 };
 			}
 			if (nextCode === C.Colon) {
 				this.pos = pos + 2;
-				return { type: "NOT_COLON", value: "!:", start: pos, end: pos + 2 };
+				return { type: "NOT_COLON", start: pos, end: pos + 2 };
 			}
 		}
 
 		if (code === C.GreaterThan) {
 			if (nextCode === C.Equals) {
 				this.pos = pos + 2;
-				return { type: "GTE", value: ">=", start: pos, end: pos + 2 };
+				return { type: "GTE", start: pos, end: pos + 2 };
 			}
 			this.pos = pos + 1;
-			return { type: "GT", value: ">", start: pos, end: pos + 1 };
+			return { type: "GT", start: pos, end: pos + 1 };
 		}
 
 		if (code === C.LessThan) {
 			if (nextCode === C.Equals) {
 				this.pos = pos + 2;
-				return { type: "LTE", value: "<=", start: pos, end: pos + 2 };
+				return { type: "LTE", start: pos, end: pos + 2 };
 			}
 			this.pos = pos + 1;
-			return { type: "LT", value: "<", start: pos, end: pos + 1 };
+			return { type: "LT", start: pos, end: pos + 1 };
 		}
 
 		if (code === C.Dot) {
 			if (nextCode === C.Dot) {
 				this.pos = pos + 2;
-				return { type: "DOTDOT", value: "..", start: pos, end: pos + 2 };
+				return { type: "DOTDOT", start: pos, end: pos + 2 };
 			}
 			this.pos = pos + 1;
-			return { type: "DOT", value: ".", start: pos, end: pos + 1 };
+			return { type: "DOT", start: pos, end: pos + 1 };
 		}
 
 		// String literal

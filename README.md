@@ -300,7 +300,7 @@ The helper packages add minimal overhead:
 | @filtron/js  | ~0.2μs              |
 | @filtron/sql | ~0.3μs              |
 
-Run benchmarks locally: `bun run bench` in each package directory.
+Run benchmarks locally from the repository root: `bun run bench` or `bun run --filter='@filtron/sql' bench` for a specific package.
 
 ## Contributing
 

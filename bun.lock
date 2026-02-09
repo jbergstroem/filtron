@@ -78,6 +78,7 @@
       "devDependencies": {
         "@filtron/benchmark": "workspace:*",
         "@types/bun": "catalog:",
+        "typescript": "catalog:",
       },
       "peerDependencies": {
         "typescript": "catalog:",

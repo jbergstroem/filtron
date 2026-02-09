@@ -88,7 +88,7 @@ interface GeneratorState {
  *
  * @example
  * ```typescript
- * import { parse } from 'filtron';
+ * import { parse } from '@filtron/core';
  * import { toSQL } from '@filtron/sql';
  *
  * const ast = parse('age > 18 AND status = "active"');

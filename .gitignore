@@ -4,6 +4,7 @@ dist
 *.cpuprofile
 coverage
 junit.xml
+metafile.json
 
 # Wrangler
 website/.wrangler

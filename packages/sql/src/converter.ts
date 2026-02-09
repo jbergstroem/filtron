@@ -206,13 +206,12 @@ function generateInClause(
 		return negate ? "1 = 1" : "1 = 0";
 	}
 
-	const placeholders: string[] = [];
-	for (let i = 0; i < len; i++) {
-		placeholders.push(addParameter(extractValue(values[i]), state));
-	}
-
 	const operator = negate ? "NOT IN" : "IN";
-	return `${field} ${operator} (${placeholders.join(", ")})`;
+	let result = field + " " + operator + " (" + addParameter(extractValue(values[0]), state);
+	for (let i = 1; i < len; i++) {
+		result += ", " + addParameter(extractValue(values[i]), state);
+	}
+	return result + ")";
 }
 
 /**

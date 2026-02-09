@@ -41,6 +41,9 @@ jobs:
           bun-version-file: package.json
       - run: bun ci
       - run: bun run build
+      - run: bunx metafile-codecov-bundle -f packages/core/metafile.json -n @filtron/core --output-dir packages/core/dist --upload
+      - run: bunx metafile-codecov-bundle -f packages/js/metafile.json -n @filtron/js --output-dir packages/js/dist --upload
+      - run: bunx metafile-codecov-bundle -f packages/sql/metafile.json -n @filtron/sql --output-dir packages/sql/dist --upload
       - run: bun test --reporter=junit --reporter-outfile=junit.xml --coverage --coverage-reporter=lcov --coverage-dir=coverage
       - uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         if: ${{ !cancelled() }}

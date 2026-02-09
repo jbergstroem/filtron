@@ -406,6 +406,15 @@
 			color: var(--color-text);
 			border-color: var(--color-border);
 		}
+
+		&:focus {
+			outline: none;
+		}
+
+		&:focus-visible {
+			outline: 2px solid var(--syntax-field);
+			outline-offset: 2px;
+		}
 	}
 
 	.hints-label {
@@ -846,7 +855,7 @@
 		z-index: 100;
 	}
 
-	.tooltip:hover::after {
+	.tooltip:hover:not(:focus)::after {
 		opacity: 1;
 	}
 }

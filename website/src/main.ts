@@ -207,7 +207,6 @@ function init(): void {
 
 		filterInput.value = query;
 		updateFilter(query);
-		filterInput.focus();
 	});
 
 	// Initial update

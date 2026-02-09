@@ -84,8 +84,10 @@ OrExpression    = AndExpression (OR AndExpression)*
 AndExpression   = NotExpression (AND NotExpression)*
 NotExpression   = NOT NotExpression | PrimaryExpression
 PrimaryExpression = '(' OrExpression ')' | FieldExpression
-FieldExpression = FieldName ('?' | EXISTS | ComparisonOp Value | OneOfOp '[' Values ']')?
+FieldExpression = FieldName ('?' | EXISTS | ComparisonOp Value RangeSuffix? | OneOfOp '[' Values ']')?
+RangeSuffix     = '..' NUMBER
 FieldName       = IDENT ('.' IDENT)*
+Values          = Value (',' Value)*
 Value           = STRING | NUMBER | BOOLEAN | DottedIdent
 ```
 
@@ -102,7 +104,7 @@ Value           = STRING | NUMBER | BOOLEAN | DottedIdent
 
 1. Ensure syntax follows standard SQL; use options for database-specific syntax
 2. All values must be parameterized—never concatenate
-3. Run `bun run bench` in `packages/benchmark`
+3. Run `bun run --filter='@filtron/sql' bench` — compare results
 4. Add tests in `packages/sql/src/*.test.ts`
 
 ## Checklist: modifying JS filter
@@ -110,7 +112,7 @@ Value           = STRING | NUMBER | BOOLEAN | DottedIdent
 1. Performance is critical—measure filter creation and execution overhead
 2. All field access must respect `fieldMapping` option if provided
 3. Optimize for common cases (small arrays, repeated field access)
-4. Run `bun run bench` in `packages/js`
+4. Run `bun run --filter='@filtron/js' bench` — compare results
 5. Add tests in `packages/js/src/*.test.ts`
 
 ## Documentation guidelines

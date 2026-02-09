@@ -104,11 +104,11 @@ If you are creating a new package, also add a benchmark in `packages/benchmark`,
 the other benchmarks are maintained.
 
 ```bash
-# Core parser benchmarks
-cd packages/core && bun run bench
+# All benchmarks (runs core by default)
+bun run bench
 
-# SQL converter benchmarks
-cd packages/sql && bun run bench
+# Benchmarks for a specific package
+bun run --filter='@filtron/sql' bench
 ```
 
 ## Building

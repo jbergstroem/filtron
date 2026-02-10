@@ -12,7 +12,7 @@
 		"test": "bun test"
 	},
 	"dependencies": {
-		"@faker-js/faker": "10.2.0",
+		"@faker-js/faker": "10.3.0",
 		"@filtron/benchmark": "workspace:*",
 		"@filtron/core": "workspace:*",
 		"@filtron/sql": "workspace:*",

@@ -43,8 +43,8 @@ jobs:
       - uses: CodSpeedHQ/action@4deb3275dd364fb96fb074c953133d29ec96f80f # v4.10.6
         with:
           mode: simulation
-          run: cd packages/benchmark && bun run bench
+          run: cd packages/benchmark && bun run bench:cpu
       - uses: CodSpeedHQ/action@4deb3275dd364fb96fb074c953133d29ec96f80f # v4.10.6
         with:
           mode: memory
-          run: cd packages/benchmark && bun run bench
+          run: cd packages/benchmark && bun run bench:memory

@@ -41,6 +41,8 @@
 		"bench:core": "node core.bench.ts",
 		"bench:sql": "node sql.bench.ts",
 		"bench:js": "node js.bench.ts",
+		"bench:cpu": "bun run bench:core && bun run bench:sql && bun run bench:js",
+		"bench:memory": "node --interpreted-frames-native-stack --allow-natives-syntax --hash-seed=1 --random-seed=1 --no-opt --predictable --predictable-gc-schedule --expose-gc --no-concurrent-sweeping --max-old-space-size=4096 core.bench.ts && node --interpreted-frames-native-stack --allow-natives-syntax --hash-seed=1 --random-seed=1 --no-opt --predictable --predictable-gc-schedule --expose-gc --no-concurrent-sweeping --max-old-space-size=4096 sql.bench.ts && node --interpreted-frames-native-stack --allow-natives-syntax --hash-seed=1 --random-seed=1 --no-opt --predictable --predictable-gc-schedule --expose-gc --no-concurrent-sweeping --max-old-space-size=4096 js.bench.ts",
 		"build": "bun build --target=bun --production --sourcemap=linked --outdir=dist src/index.ts && tsc --emitDeclarationOnly --declaration --declarationMap --outDir dist --skipLibCheck",
 		"prepublishOnly": "bun run build"
 	},
@@ -48,7 +50,7 @@
 		"mitata": "1.0.34"
 	},
 	"devDependencies": {
-		"@codspeed/tinybench-plugin": "5.1.0",
+		"@codspeed/tinybench-plugin": "5.2.0",
 		"@filtron/core": "workspace:*",
 		"@filtron/js": "workspace:*",
 		"@filtron/sql": "workspace:*",

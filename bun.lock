@@ -40,7 +40,7 @@
         "mitata": "1.0.34",
       },
       "devDependencies": {
-        "@codspeed/tinybench-plugin": "5.1.0",
+        "@codspeed/tinybench-plugin": "5.2.0",
         "@filtron/core": "workspace:*",
         "@filtron/js": "workspace:*",
         "@filtron/sql": "workspace:*",
@@ -56,7 +56,7 @@
     },
     "packages/core": {
       "name": "@filtron/core",
-      "version": "1.4.0",
+      "version": "2.0.0",
       "devDependencies": {
         "@filtron/benchmark": "workspace:*",
         "@types/bun": "catalog:",
@@ -141,9 +141,9 @@
 
     "@cloudflare/workerd-windows-64": ["@cloudflare/workerd-windows-64@1.20260205.0", "", { "os": "win32", "cpu": "x64" }, "sha512-SMPW5jCZYOG7XFIglSlsgN8ivcl0pCrSAYxCwxtWvZ88whhcDB/aISNtiQiDZujPH8tIo2hE5dEkxW7tGEwc3A=="],
 
-    "@codspeed/core": ["@codspeed/core@5.1.0", "", { "dependencies": { "axios": "^1.4.0", "find-up": "^6.3.0", "form-data": "^4.0.4", "node-gyp-build": "^4.6.0" } }, "sha512-DFO8c7/wd42QbabBdTYR7UsO8g77eHWE9Q4Eyr6yUJSoWhb1qaSoXiqX77RtN3Sbw8RGhhXiwaUC+vVr08+OMg=="],
+    "@codspeed/core": ["@codspeed/core@5.2.0", "", { "dependencies": { "axios": "^1.4.0", "find-up": "^6.3.0", "form-data": "^4.0.4", "node-gyp-build": "^4.6.0" } }, "sha512-CmDhpWjcOJg2iBOQ/BmBnSBq8qxlM3r4h8uvYDkoUaba+EKRT3T73BZtKuml/48jZMsB+4/FG2UbTBinDWtuvw=="],
 
-    "@codspeed/tinybench-plugin": ["@codspeed/tinybench-plugin@5.1.0", "", { "dependencies": { "@codspeed/core": "^5.1.0", "stack-trace": "1.0.0-pre2" }, "peerDependencies": { "tinybench": ">=4.0.1" } }, "sha512-BGzGYoQI7cejh1zPEK96TQG5YFFPCY9lVf4rXKiTYFm59JgxNKGF8u3KRf6BxtRJWqD2dHf7kQPAE0mVZwdgjA=="],
+    "@codspeed/tinybench-plugin": ["@codspeed/tinybench-plugin@5.2.0", "", { "dependencies": { "@codspeed/core": "^5.2.0", "stack-trace": "1.0.0-pre2" }, "peerDependencies": { "tinybench": ">=4.0.1" } }, "sha512-LCmMFON3hdIRqiHC3W8oR0783cecRgA8x7cWMTnC9DgkIuyMrreHgQexnUGV3zsHgB084EXj/iPrWxR914/8Ng=="],
 
     "@cspotcode/source-map-support": ["@cspotcode/source-map-support@0.8.1", "", { "dependencies": { "@jridgewell/trace-mapping": "0.3.9" } }, "sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw=="],
 

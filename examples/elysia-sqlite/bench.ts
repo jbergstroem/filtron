@@ -3,11 +3,11 @@
  * Measures each phase: request handling, parsing, SQL generation, database query, response
  */
 
-import type { SQLResult } from "@filtron/sql";
+import { Database } from "bun:sqlite";
 import { formatTime } from "@filtron/benchmark";
 import { parse } from "@filtron/core";
+import type { SQLResult } from "@filtron/sql";
 import { toSQL } from "@filtron/sql";
-import { Database } from "bun:sqlite";
 import { Elysia } from "elysia";
 import { seedDatabase } from "./src/db";
 

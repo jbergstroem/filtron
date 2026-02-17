@@ -1,5 +1,5 @@
-import { file, write } from "bun";
 import { mkdir, readdir } from "node:fs/promises";
+import { file, write } from "bun";
 import { format } from "oxfmt";
 import pkg from "../../package.json" with { type: "json" };
 import {

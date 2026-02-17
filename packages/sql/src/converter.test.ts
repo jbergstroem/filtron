@@ -1,5 +1,5 @@
-import type { ASTNode } from "@filtron/core";
 import { describe, expect, test } from "bun:test";
+import type { ASTNode } from "@filtron/core";
 import { toSQL, contains, prefix, suffix } from "./converter";
 
 describe("SQL", () => {

@@ -16,6 +16,7 @@
  *   RangeSuffix       = '..' NUMBER
  */
 
+import { Lexer, type Token, type TokenType, type StringToken, type NumberToken } from "./lexer";
 import type {
 	ASTNode,
 	Value,
@@ -27,7 +28,6 @@ import type {
 	BooleanFieldExpression,
 	RangeExpression,
 } from "./types";
-import { Lexer, type Token, type TokenType, type StringToken, type NumberToken } from "./lexer";
 
 /**
  * Parser error with position information

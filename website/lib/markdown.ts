@@ -1,5 +1,5 @@
-import { file } from "bun";
 import { readdir } from "node:fs/promises";
+import { file } from "bun";
 import pkg from "../../package.json" with { type: "json" };
 
 const ROOT = "..";
@@ -71,9 +71,8 @@ export function extractFirstSection(content: string): string {
 			}
 			return "";
 		},
-		listItem: (children, meta) => {
-			const marker = meta?.ordered ? `${meta.number}. ` : "- ";
-			return `${marker}${children.trim()}\n`;
+		listItem: (children) => {
+			return `- ${children.trim()}\n`;
 		},
 		blockquote: (children) => {
 			if (foundTitle) {
@@ -162,9 +161,8 @@ export function extractSection(content: string, sectionName: string): string | n
 			}
 			return "";
 		},
-		listItem: (children, meta) => {
-			const marker = meta?.ordered ? `${meta.number}. ` : "- ";
-			return `${marker}${children.trim()}\n`;
+		listItem: (children) => {
+			return `- ${children.trim()}\n`;
 		},
 		blockquote: (children) => {
 			if (inSection) {
@@ -257,9 +255,8 @@ export function extractSubsection(content: string, subsectionName: string): stri
 			}
 			return "";
 		},
-		listItem: (children, meta) => {
-			const marker = meta?.ordered ? `${meta.number}. ` : "- ";
-			return `${marker}${children.trim()}\n`;
+		listItem: (children) => {
+			return `- ${children.trim()}\n`;
 		},
 		image: () => "",
 	});

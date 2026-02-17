@@ -1,5 +1,5 @@
-import { file, write } from "bun";
 import { rm } from "node:fs/promises";
+import { file, write } from "bun";
 
 export async function cleanDist(): Promise<void> {
 	await rm("dist", { recursive: true, force: true });

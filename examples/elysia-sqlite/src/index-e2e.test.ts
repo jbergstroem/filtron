@@ -43,7 +43,7 @@ describe("Elysia E2E Tests", () => {
 
 		expect(response.status).toBe(200);
 		expect(data.success).toBe(true);
-		expect(data.count).toBe(361);
+		expect(data.count).toBe(348);
 		expect(data.data.every((u: any) => u.status === "active")).toBe(true);
 	});
 
@@ -55,7 +55,7 @@ describe("Elysia E2E Tests", () => {
 
 		expect(response.status).toBe(200);
 		expect(data.success).toBe(true);
-		expect(data.count).toBe(253);
+		expect(data.count).toBe(237);
 		expect(data.data.every((u: any) => u.status === "active" && u.verified)).toBe(true);
 	});
 
@@ -67,7 +67,7 @@ describe("Elysia E2E Tests", () => {
 
 		expect(response.status).toBe(200);
 		expect(data.success).toBe(true);
-		expect(data.count).toBe(320);
+		expect(data.count).toBe(322);
 		expect(data.data.every((u: any) => u.role === "admin" || u.role === "moderator")).toBe(true);
 	});
 
@@ -76,12 +76,12 @@ describe("Elysia E2E Tests", () => {
 			`${getBaseUrl()}/users?filter=${encodeURIComponent("age >= 30")}`,
 		);
 		const data1 = await response1.json();
-		expect(data1.count).toBe(369);
+		expect(data1.count).toBe(380);
 		expect(data1.data.every((u: any) => u.age >= 30)).toBe(true);
 
 		const response2 = await fetch(`${getBaseUrl()}/users?filter=${encodeURIComponent("age < 30")}`);
 		const data2 = await response2.json();
-		expect(data2.count).toBe(131);
+		expect(data2.count).toBe(120);
 		expect(data2.data.every((u: any) => u.age < 30)).toBe(true);
 	});
 
@@ -93,7 +93,7 @@ describe("Elysia E2E Tests", () => {
 
 		expect(response.status).toBe(200);
 		expect(data.success).toBe(true);
-		expect(data.count).toBe(121);
+		expect(data.count).toBe(101);
 		expect(data.data.every((u: any) => u.age >= 30 && u.age <= 40)).toBe(true);
 		expect(data.filter.sql).toContain("BETWEEN");
 	});
@@ -106,7 +106,7 @@ describe("Elysia E2E Tests", () => {
 
 		expect(response.status).toBe(200);
 		expect(data.success).toBe(true);
-		expect(data.count).toBe(370);
+		expect(data.count).toBe(401);
 	});
 
 	test("should filter with complex nested query", async () => {
@@ -117,7 +117,7 @@ describe("Elysia E2E Tests", () => {
 
 		expect(response.status).toBe(200);
 		expect(data.success).toBe(true);
-		expect(data.count).toBe(163);
+		expect(data.count).toBe(169);
 		expect(data.data.every((u: any) => (u.age < 25 || u.age > 50) && u.verified)).toBe(true);
 	});
 

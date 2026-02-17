@@ -1,3 +1,4 @@
+import { describe, test, expect } from "bun:test";
 import type {
 	ComparisonExpression,
 	AndExpression,
@@ -9,7 +10,6 @@ import type {
 	BooleanFieldExpression,
 	RangeExpression,
 } from "@filtron/core";
-import { describe, test, expect } from "bun:test";
 import { toFilter, nestedAccessor } from "./filter.js";
 
 describe("toFilter", () => {

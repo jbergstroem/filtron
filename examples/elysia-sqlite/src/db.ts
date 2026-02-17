@@ -3,9 +3,9 @@
  * Uses Bun's built-in SQLite driver
  */
 
-import type { SQLResult } from "@filtron/sql";
-import { faker } from "@faker-js/faker";
 import { Database } from "bun:sqlite";
+import { faker } from "@faker-js/faker";
+import type { SQLResult } from "@filtron/sql";
 
 /**
  * User model interface

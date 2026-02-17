@@ -1,4 +1,5 @@
 import { describe, test, expect } from "bun:test";
+import { parseQuery, ParseError } from "./rd-parser";
 import type {
 	ComparisonExpression,
 	OrExpression,
@@ -10,7 +11,6 @@ import type {
 	NotOneOfExpression,
 	RangeExpression,
 } from "./types";
-import { parseQuery, ParseError } from "./rd-parser";
 
 describe("RD Parser", () => {
 	describe("Field Expressions", () => {

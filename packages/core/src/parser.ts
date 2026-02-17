@@ -2,9 +2,9 @@
  * The Filtron parser public API
  */
 
-import type { ASTNode } from "./types";
 import { LexerError } from "./lexer";
 import { parseQuery, ParseError as RDParseError } from "./rd-parser";
+import type { ASTNode } from "./types";
 
 /**
  * Error thrown by parseOrThrow when parsing fails.

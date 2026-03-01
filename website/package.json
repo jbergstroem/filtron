@@ -13,7 +13,7 @@
 	},
 	"devDependencies": {
 		"@iconscout/unicons": "4.2.0",
-		"shiki": "3.22.0",
+		"shiki": "4.0.0",
 		"wrangler": "4.66.0"
 	}
 }

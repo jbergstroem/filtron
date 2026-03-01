@@ -39,7 +39,7 @@
 		"knip": "5.83.1",
 		"oxfmt": "catalog:",
 		"oxlint": "1.48.0",
-		"oxlint-tsgolint": "0.14.0"
+		"oxlint-tsgolint": "0.15.0"
 	},
 	"peerDependencies": {
 		"typescript": "catalog:"

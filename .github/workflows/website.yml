@@ -44,7 +44,7 @@ jobs:
           no-cache: true
       - run: bun ci
       - run: bun run build
-      - uses: chrnorm/deployment-action@55729fcebec3d284f60f5bcabbd8376437d696b1 # v2.0.7
+      - uses: chrnorm/deployment-action@500aa6a23c81ffa1acf71072aee3cfa2cc2e556a # v2.0.8
         id: create-deployment
         with:
           token: ${{ github.token }}
@@ -95,7 +95,7 @@ jobs:
              '.env[$pr] = { routes: [{ pattern: $route, custom_domain: true }] }' \
              wrangler.json > wrangler.tmp.json && mv wrangler.tmp.json wrangler.json
         working-directory: website
-      - uses: chrnorm/deployment-action@55729fcebec3d284f60f5bcabbd8376437d696b1 # v2.0.7
+      - uses: chrnorm/deployment-action@500aa6a23c81ffa1acf71072aee3cfa2cc2e556a # v2.0.8
         id: create-deployment
         with:
           token: ${{ github.token }}

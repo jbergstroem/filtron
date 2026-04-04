@@ -52,9 +52,9 @@
 		{
 			"customType": "regex",
 			"managerFilePatterns": ["**/package.json"],
-			"matchStrings": ["\"packageManager\":\\s*\"(?<depName>bun)@(?<currentValue>[^\"]+)\""],
+			"matchStrings": ["\"packageManager\":\\s*\"(?<depName>pnpm)@(?<currentValue>[^\"]+)\""],
 			"datasourceTemplate": "npm",
-			"depNameTemplate": "bun"
+			"depNameTemplate": "pnpm"
 		}
 	],
 	"rebaseWhen": "never",

@@ -6,7 +6,7 @@
 		"directory": "./dist/"
 	},
 	"build": {
-		"command": "bun run build"
+		"command": "pnpm run build"
 	},
 	"dev": {
 		"port": 3000

@@ -13,8 +13,8 @@ catalogs:
       specifier: 0.33.0
       version: 0.33.0
     typescript:
-      specifier: 5.9.3
-      version: 5.9.3
+      specifier: 6.0.2
+      version: 6.0.2
 
 importers:
 
@@ -22,14 +22,14 @@ importers:
     dependencies:
       typescript:
         specifier: 'catalog:'
-        version: 5.9.3
+        version: 6.0.2
     devDependencies:
       '@types/bun':
         specifier: 'catalog:'
         version: 1.3.9
       knip:
         specifier: 5.83.1
-        version: 5.83.1(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(typescript@5.9.3)
+        version: 5.83.1(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(typescript@6.0.2)
       oxfmt:
         specifier: 'catalog:'
         version: 0.33.0
@@ -56,14 +56,14 @@ importers:
         version: link:../../packages/sql
       elysia:
         specifier: 1.4.27
-        version: 1.4.27(@sinclair/typebox@0.34.49)(@types/bun@1.3.9)(exact-mirror@0.2.7(@sinclair/typebox@0.34.49))(file-type@22.0.0)(openapi-types@12.1.3)(typescript@5.9.3)
+        version: 1.4.27(@sinclair/typebox@0.34.49)(@types/bun@1.3.9)(exact-mirror@0.2.7(@sinclair/typebox@0.34.49))(file-type@22.0.0)(openapi-types@12.1.3)(typescript@6.0.2)
     devDependencies:
       '@types/bun':
         specifier: 'catalog:'
         version: 1.3.9
       typescript:
         specifier: 'catalog:'
-        version: 5.9.3
+        version: 6.0.2
 
   packages/benchmark:
     dependencies:
@@ -72,7 +72,7 @@ importers:
         version: 1.0.34
       typescript:
         specifier: 'catalog:'
-        version: 5.9.3
+        version: 6.0.2
     devDependencies:
       '@codspeed/tinybench-plugin':
         specifier: 5.2.0
@@ -103,7 +103,7 @@ importers:
         version: 1.3.9
       typescript:
         specifier: 'catalog:'
-        version: 5.9.3
+        version: 6.0.2
 
   packages/js:
     dependencies:
@@ -119,7 +119,7 @@ importers:
         version: 1.3.9
       typescript:
         specifier: 'catalog:'
-        version: 5.9.3
+        version: 6.0.2
 
   packages/sql:
     dependencies:
@@ -135,7 +135,7 @@ importers:
         version: 1.3.9
       typescript:
         specifier: 'catalog:'
-        version: 5.9.3
+        version: 6.0.2
 
   website:
     dependencies:
@@ -2419,8 +2419,8 @@ packages:
     resolution: {integrity: sha512-3KS2b+kL7fsuk/eJZ7EQdnEmQoaho/r6KUef7hxvltNA5DR8NAUM+8wJMbJyZ4G9/7i3v5zPBIMN5aybAh2/Jg==}
     engines: {node: '>= 0.4'}
 
-  typescript@5.9.3:
-    resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
+  typescript@6.0.2:
+    resolution: {integrity: sha512-bGdAIrZ0wiGDo5l8c++HWtbaNCWTS4UTv7RaTH/ThVIgjkveJt83m74bBHMJkuCbslY8ixgLBVZJIOiQlQTjfQ==}
     engines: {node: '>=14.17'}
     hasBin: true
 
@@ -3593,7 +3593,7 @@ snapshots:
     dependencies:
       readable-stream: 2.3.8
 
-  elysia@1.4.27(@sinclair/typebox@0.34.49)(@types/bun@1.3.9)(exact-mirror@0.2.7(@sinclair/typebox@0.34.49))(file-type@22.0.0)(openapi-types@12.1.3)(typescript@5.9.3):
+  elysia@1.4.27(@sinclair/typebox@0.34.49)(@types/bun@1.3.9)(exact-mirror@0.2.7(@sinclair/typebox@0.34.49))(file-type@22.0.0)(openapi-types@12.1.3)(typescript@6.0.2):
     dependencies:
       '@sinclair/typebox': 0.34.49
       cookie: 1.1.1
@@ -3604,7 +3604,7 @@ snapshots:
       openapi-types: 12.1.3
     optionalDependencies:
       '@types/bun': 1.3.9
-      typescript: 5.9.3
+      typescript: 6.0.2
 
   emoji-regex@8.0.0: {}
 
@@ -4166,7 +4166,7 @@ snapshots:
 
   kleur@4.1.5: {}
 
-  knip@5.83.1(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(typescript@5.9.3):
+  knip@5.83.1(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)(@types/node@25.5.2)(typescript@6.0.2):
     dependencies:
       '@nodelib/fs.walk': 1.2.8
       '@types/node': 25.5.2
@@ -4180,7 +4180,7 @@ snapshots:
       picomatch: 4.0.4
       smol-toml: 1.6.1
       strip-json-comments: 5.0.3
-      typescript: 5.9.3
+      typescript: 6.0.2
       zod: 4.3.6
     transitivePeerDependencies:
       - '@emnapi/core'
@@ -4968,7 +4968,7 @@ snapshots:
       possible-typed-array-names: 1.1.0
       reflect.getprototypeof: 1.0.10
 
-  typescript@5.9.3: {}
+  typescript@6.0.2: {}
 
   uint8array-extras@1.5.0: {}
 

@@ -14,13 +14,25 @@
 		"type": "git",
 		"url": "git+https://github.com/jbergstroem/filtron.git"
 	},
+	"workspaces": {
+		"packages": [
+			"packages/*",
+			"examples/elysia-sqlite",
+			"website"
+		],
+		"catalog": {
+			"@types/bun": "1.3.9",
+			"oxfmt": "0.33.0",
+			"typescript": "5.9.3"
+		}
+	},
 	"scripts": {
-		"bench": "cd packages/core && pnpm run bench",
-		"build": "pnpm -r run build",
+		"bench": "cd packages/core && bun run bench",
+		"build": "bun run --filter '*' build",
 		"lint": "oxlint --type-aware --type-check; oxfmt --check; exit $(( $? ))",
 		"lint:fix": "oxlint --type-aware --type-check; oxfmt; exit $(( $? ))",
 		"knip": "knip",
-		"website": "cd website && pnpm run dev"
+		"website": "cd website && bun run dev"
 	},
 	"devDependencies": {
 		"@types/bun": "catalog:",
@@ -38,7 +50,8 @@
 		}
 	},
 	"engines": {
+		"bun": ">=1.1.0",
 		"node": ">=20.0.0"
 	},
-	"packageManager": "pnpm@10.11.0"
+	"packageManager": "bun@1.3.9"
 }

@@ -17,6 +17,7 @@
 		"wrangler": "4.71.0"
 	},
 	"engines": {
-		"node": ">=20.0.0"
-	}
+		"bun": ">=1.1.0"
+	},
+	"packageManager": "bun@1.3.10"
 }

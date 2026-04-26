@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-      - uses: crate-ci/typos@631208b7aac2daa8b707f55e7331f9112b0e062d # v1.44.0
+      - uses: crate-ci/typos@cf5f1c29a8ac336af8568821ec41919923b05a83 # v1.45.1
 
   validate-renovate-config:
     runs-on: ubuntu-slim
@@ -25,15 +25,15 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-      - uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+      - uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         id: changed-files
         with:
           files: .github/renovate.json
-      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         if: steps.changed-files.outputs.any_changed == 'true'
         with:
-          node-version: 22
-      - run: npm install -g renovate
+          bun-version-file: package.json
+      - run: bun install -g renovate
         if: steps.changed-files.outputs.any_changed == 'true'
       - run: renovate-config-validator .github/renovate.json
         if: steps.changed-files.outputs.any_changed == 'true'
@@ -44,12 +44,11 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          node-version: 22
-      - run: corepack enable && corepack install
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm exec oxlint --type-aware
+          bun-version-file: package.json
+      - run: bun ci
+      - run: bun oxlint --type-aware
 
   format:
     runs-on: ubuntu-slim
@@ -57,9 +56,8 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
-          node-version: 22
-      - run: corepack enable && corepack install
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm exec oxfmt --check
+          bun-version-file: package.json
+      - run: bun ci
+      - run: bun oxfmt --check

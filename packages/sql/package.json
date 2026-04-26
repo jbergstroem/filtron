@@ -46,7 +46,7 @@
 	"scripts": {
 		"bench": "bun --expose-gc run benchmark.ts",
 		"build": "bun build --production --splitting --sourcemap=linked --metafile=metafile.json --outdir=dist --external @filtron/core index.ts && tsc",
-		"prepublishOnly": "pnpm run build && bun test",
+		"prepublishOnly": "bun run build && bun test",
 		"test": "bun test",
 		"typecheck": "tsc --noemit"
 	},
@@ -67,6 +67,8 @@
 		}
 	},
 	"engines": {
+		"bun": ">=1.2.19",
 		"node": ">=20.0.0"
-	}
+	},
+	"packageManager": "bun@1.3.13"
 }

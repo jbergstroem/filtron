@@ -55,7 +55,7 @@
 		"@filtron/js": "workspace:*",
 		"@filtron/sql": "workspace:*",
 		"@types/bun": "catalog:",
-		"tinybench": "6.0.0"
+		"tinybench": "5.1.0"
 	},
 	"peerDependencies": {
 		"typescript": "catalog:"

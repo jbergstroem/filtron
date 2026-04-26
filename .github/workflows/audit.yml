@@ -76,7 +76,7 @@ jobs:
   knip:
     needs: [changes]
     if: needs.changes.outputs.code == 'true'
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:

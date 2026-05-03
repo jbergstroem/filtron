@@ -49,7 +49,7 @@
 		"mitata": "1.0.34"
 	},
 	"devDependencies": {
-		"@codspeed/tinybench-plugin": "5.3.0",
+		"@codspeed/tinybench-plugin": "5.4.0",
 		"@filtron/core": "workspace:*",
 		"@filtron/js": "workspace:*",
 		"@filtron/sql": "workspace:*",

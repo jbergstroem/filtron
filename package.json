@@ -36,7 +36,7 @@
 	},
 	"devDependencies": {
 		"@types/bun": "catalog:",
-		"knip": "6.7.0",
+		"knip": "6.11.0",
 		"oxfmt": "catalog:",
 		"oxlint": "1.61.0",
 		"oxlint-tsgolint": "0.22.0"

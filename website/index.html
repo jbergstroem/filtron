@@ -3,6 +3,19 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="color-scheme" content="dark light" />
+		<meta name="theme-color" content="#e8e6e1" media="(prefers-color-scheme: light)" />
+		<meta name="theme-color" content="#1a1a1a" media="(prefers-color-scheme: dark)" />
+		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+		<link rel="icon" href="/favicon.png" sizes="48x48" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link
+			rel="preload"
+			href="/source-code-pro-v31-latin_latin-ext-regular.woff2"
+			as="font"
+			type="font/woff2"
+			crossorigin
+		/>
 		<meta
 			name="description"
 			content="Parse human-friendly filter expressions into SQL, JavaScript filters, or custom integrations. A fast, dependency-free query parser."
@@ -11,11 +24,40 @@
 		<link rel="canonical" href="https://filtron.dev/" />
 		<meta property="og:type" content="website" />
 		<meta property="og:url" content="https://filtron.dev/" />
+		<meta property="og:site_name" content="Filtron" />
+		<meta property="og:locale" content="en_US" />
 		<meta property="og:title" content="Filtron - Human-friendly filter language" />
 		<meta
 			property="og:description"
 			content="Parse human-friendly filter expressions into SQL, JavaScript filters, or custom integrations. A fast, dependency-free query parser."
 		/>
+		<meta property="og:image" content="https://filtron.dev/og-image.png" />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta
+			property="og:image:alt"
+			content="Filtron - human-friendly filter expressions for your data"
+		/>
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="Filtron - Human-friendly filter language" />
+		<meta
+			name="twitter:description"
+			content="Parse human-friendly filter expressions into SQL, JavaScript filters, or custom integrations. A fast, dependency-free query parser."
+		/>
+		<meta name="twitter:image" content="https://filtron.dev/og-image.png" />
+		<script type="application/ld+json">
+			{
+				"@context": "https://schema.org",
+				"@type": "SoftwareSourceCode",
+				"name": "Filtron",
+				"description": "Parse human-friendly filter expressions into SQL, JavaScript filters, or custom integrations. A fast, dependency-free query parser.",
+				"url": "https://filtron.dev/",
+				"codeRepository": "https://github.com/jbergstroem/filtron",
+				"programmingLanguage": "TypeScript",
+				"license": "https://opensource.org/licenses/MIT",
+				"author": { "@type": "Person", "name": "Johan Bergström" }
+			}
+		</script>
 		<link rel="stylesheet" href="styles.css" />
 	</head>
 	<body>

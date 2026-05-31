@@ -1,0 +1,6 @@
+Contact: https://github.com/jbergstroem/filtron/security/advisories/new
+Contact: mailto:bugs@bergstroem.nu
+Expires: 2027-06-01T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://filtron.dev/.well-known/security.txt
+Policy: https://github.com/jbergstroem/filtron/blob/main/SECURITY.md

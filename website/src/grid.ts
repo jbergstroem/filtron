@@ -44,6 +44,7 @@ export class ParticleGrid {
 	private lastTime = 0;
 	private colorValues: Record<Color, string>;
 	private isAnimating = false;
+	private reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 	private resizeTimeout: ReturnType<typeof setTimeout> | null = null;
 	private currentFilter: ((item: Record<string, unknown>) => boolean) | null = null;
 	private lastWidth = 0;
@@ -60,9 +61,19 @@ export class ParticleGrid {
 		window
 			.matchMedia("(prefers-color-scheme: dark)")
 			.addEventListener("change", this.handleColorSchemeChange);
+		this.reducedMotionQuery.addEventListener("change", this.handleMotionPreferenceChange);
 		document.addEventListener("visibilitychange", this.handleVisibilityChange);
 		this.applyResize();
 	}
+
+	private handleMotionPreferenceChange = (): void => {
+		// Snap particles to their target state so the grid stays in sync without
+		// further animation frames.
+		if (this.reducedMotionQuery.matches) {
+			this.snapToTargets();
+			this.render();
+		}
+	};
 
 	private handleVisibilityChange = (): void => {
 		if (document.hidden) {
@@ -220,7 +231,21 @@ export class ParticleGrid {
 		return false;
 	}
 
+	private snapToTargets(): void {
+		for (const p of this.particles) {
+			p.currentAlpha = p.targetAlpha;
+		}
+	}
+
 	private startAnimation(): void {
+		// Respect reduced-motion: jump straight to the target state instead of
+		// running the lerp animation loop.
+		if (this.reducedMotionQuery.matches) {
+			this.stopAnimation();
+			this.snapToTargets();
+			this.render();
+			return;
+		}
 		if (this.isAnimating || document.hidden) return;
 		this.isAnimating = true;
 		this.lastTime = performance.now();
@@ -331,6 +356,7 @@ export class ParticleGrid {
 		window
 			.matchMedia("(prefers-color-scheme: dark)")
 			.removeEventListener("change", this.handleColorSchemeChange);
+		this.reducedMotionQuery.removeEventListener("change", this.handleMotionPreferenceChange);
 		document.removeEventListener("visibilitychange", this.handleVisibilityChange);
 	}
 }

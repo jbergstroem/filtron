@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://filtron.dev/sitemap.xml

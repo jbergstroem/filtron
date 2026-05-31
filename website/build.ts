@@ -1,6 +1,7 @@
 import { file, write } from "bun";
 import { cleanBuildArtifacts, cleanDist, copyStaticAssets } from "./lib/assets.ts";
 import { inlineAssets, minifyHtml, processHtml } from "./lib/html.ts";
+import { generateImages } from "./lib/images.ts";
 import { copyLlmsDocs, generateLlmsTxt } from "./lib/llms.ts";
 
 const start = performance.now();
@@ -9,6 +10,9 @@ await cleanDist();
 
 // Generate llms.txt from README
 await generateLlmsTxt();
+
+// Generate social card and app icons
+await generateImages();
 
 // Process HTML
 let html = await file("index.html").text();

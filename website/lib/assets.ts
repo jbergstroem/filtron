@@ -6,9 +6,16 @@ export async function cleanDist(): Promise<void> {
 }
 
 export async function copyStaticAssets(): Promise<void> {
-	const font = "source-code-pro-v31-latin_latin-ext-regular.woff2";
-	await write(`dist/${font}`, file(font));
-	await write("dist/_headers", file("_headers"));
+	const staticFiles = [
+		"source-code-pro-v31-latin_latin-ext-regular.woff2",
+		"_headers",
+		"robots.txt",
+		"sitemap.xml",
+		"favicon.svg",
+		"404.html",
+		".well-known/security.txt",
+	];
+	await Promise.all(staticFiles.map((name) => write(`dist/${name}`, file(name))));
 }
 
 export async function cleanBuildArtifacts(): Promise<void> {

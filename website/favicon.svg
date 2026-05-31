@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Filtron">
+	<rect width="32" height="32" rx="7" fill="#1a1a1a" />
+	<circle cx="10" cy="10" r="4.5" fill="#9c7caa" />
+	<polygon points="22,5.5 26.5,14.5 17.5,14.5" fill="#6ca06e" />
+	<rect x="5.5" y="17.5" width="9" height="9" rx="1" fill="#5a9cac" />
+	<circle cx="22" cy="22" r="4.5" fill="#e07060" />
+</svg>

@@ -83,14 +83,12 @@ jobs:
           - setup: bun
             version: "1.3"
             test_cmd: bun -e
+          # deno has no LTS releases; track the latest two minors
           - setup: deno
-            version: "2.5.x"
+            version: "2.8.x"
             test_cmd: deno eval
           - setup: deno
-            version: "2.6.x"
-            test_cmd: deno eval
-          - setup: deno
-            version: "2.7.x"
+            version: "2.9.x"
             test_cmd: deno eval
     name: e2e (${{ matrix.setup }} ${{ matrix.version }})
     steps:

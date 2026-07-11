@@ -615,6 +615,259 @@ describe("toFilter", () => {
 		});
 	});
 
+	describe("Custom Accessor Operator Coverage", () => {
+		const accessor = (obj: Record<string, unknown>, field: string) => obj[field];
+
+		test.each([
+			[">", 18, { age: 25 }, true],
+			[">", 18, { age: 10 }, false],
+			[">=", 18, { age: 18 }, true],
+			[">=", 18, { age: 17 }, false],
+			["<", 18, { age: 10 }, true],
+			["<", 18, { age: 25 }, false],
+			["<=", 18, { age: 18 }, true],
+			["<=", 18, { age: 25 }, false],
+		] as const)("numeric %s with custom accessor", (operator, value, item, expected) => {
+			const ast: ComparisonExpression = {
+				type: "comparison",
+				field: "age",
+				operator,
+				value: { type: "number", value },
+			};
+			const filter = toFilter(ast, { fieldAccessor: accessor });
+			expect(filter(item as Record<string, unknown>)).toBe(expected);
+		});
+
+		const comparisonWith = (operator: "=" | "!=", value: string): ComparisonExpression => ({
+			type: "comparison",
+			field: "status",
+			operator,
+			value: { type: "string", value },
+		});
+
+		test("equals and not-equals with custom accessor", () => {
+			const eq = comparisonWith("=", "active");
+			const neq = comparisonWith("!=", "active");
+			expect(toFilter(eq, { fieldAccessor: accessor })({ status: "active" })).toBe(true);
+			expect(toFilter(neq, { fieldAccessor: accessor })({ status: "active" })).toBe(false);
+		});
+
+		test("case-insensitive equals and not-equals with custom accessor", () => {
+			const eq = comparisonWith("=", "Active");
+			const neq = comparisonWith("!=", "Active");
+			const opts = { fieldAccessor: accessor, caseInsensitive: true };
+			expect(toFilter(eq, opts)({ status: "ACTIVE" })).toBe(true);
+			expect(toFilter(eq, opts)({ status: 1 })).toBe(false);
+			expect(toFilter(neq, opts)({ status: "ACTIVE" })).toBe(false);
+			expect(toFilter(neq, opts)({ status: 1 })).toBe(true);
+		});
+
+		test("contains (~) with custom accessor", () => {
+			const ast: ComparisonExpression = {
+				type: "comparison",
+				field: "name",
+				operator: "~",
+				value: { type: "string", value: "Ali" },
+			};
+			expect(toFilter(ast, { fieldAccessor: accessor })({ name: "Alice" })).toBe(true);
+			expect(toFilter(ast, { fieldAccessor: accessor })({ name: "Bob" })).toBe(false);
+			const ci = { fieldAccessor: accessor, caseInsensitive: true };
+			expect(toFilter(ast, ci)({ name: "MALICE" })).toBe(true);
+			expect(toFilter(ast, ci)({ name: 5 })).toBe(false);
+		});
+
+		test("case-insensitive contains without accessor handles non-strings", () => {
+			const ast: ComparisonExpression = {
+				type: "comparison",
+				field: "name",
+				operator: "~",
+				value: { type: "string", value: "Ali" },
+			};
+			const filter = toFilter(ast, { caseInsensitive: true });
+			expect(filter({ name: "MALICE" })).toBe(true);
+			expect(filter({ name: 5 })).toBe(false);
+		});
+
+		test("exists, booleanField and range with custom accessor", () => {
+			const exists: ExistsExpression = { type: "exists", field: "email" };
+			const boolField: BooleanFieldExpression = { type: "booleanField", field: "verified" };
+			const range: RangeExpression = { type: "range", field: "age", min: 18, max: 65 };
+			const opts = { fieldAccessor: accessor };
+			expect(toFilter(exists, opts)({ email: "a@b.c" })).toBe(true);
+			expect(toFilter(exists, opts)({ email: null })).toBe(false);
+			expect(toFilter(boolField, opts)({ verified: true })).toBe(true);
+			expect(toFilter(boolField, opts)({ verified: 1 })).toBe(false);
+			expect(toFilter(range, opts)({ age: 30 })).toBe(true);
+			expect(toFilter(range, opts)({ age: 66 })).toBe(false);
+		});
+
+		test("oneOf and notOneOf with custom accessor", () => {
+			const smallValues = [
+				{ type: "string" as const, value: "a" },
+				{ type: "string" as const, value: "b" },
+			];
+			const small: OneOfExpression = { type: "oneOf", field: "status", values: smallValues };
+			const opts = { fieldAccessor: accessor };
+			expect(toFilter(small, opts)({ status: "a" })).toBe(true);
+			expect(toFilter(small, opts)({ status: "c" })).toBe(false);
+
+			const smallNot: NotOneOfExpression = {
+				type: "notOneOf",
+				field: "status",
+				values: smallValues,
+			};
+			expect(toFilter(smallNot, opts)({ status: "a" })).toBe(false);
+			expect(toFilter(smallNot, opts)({ status: "c" })).toBe(true);
+
+			const largeValues = Array.from({ length: 15 }, (_, i) => ({
+				type: "string" as const,
+				value: `item${i}`,
+			}));
+			const large: OneOfExpression = { type: "oneOf", field: "status", values: largeValues };
+			expect(toFilter(large, opts)({ status: "item3" })).toBe(true);
+			expect(toFilter(large, opts)({ status: "nope" })).toBe(false);
+
+			const largeNot: NotOneOfExpression = {
+				type: "notOneOf",
+				field: "status",
+				values: largeValues,
+			};
+			expect(toFilter(largeNot, opts)({ status: "item3" })).toBe(false);
+			expect(toFilter(largeNot, opts)({ status: "nope" })).toBe(true);
+		});
+
+		test("case-insensitive membership with custom accessor", () => {
+			const values = [
+				{ type: "string" as const, value: "Alpha" },
+				{ type: "string" as const, value: "Beta" },
+			];
+			const oneOf: OneOfExpression = { type: "oneOf", field: "status", values };
+			const notOneOf: NotOneOfExpression = { type: "notOneOf", field: "status", values };
+			const opts = { fieldAccessor: accessor, caseInsensitive: true };
+			expect(toFilter(oneOf, opts)({ status: "ALPHA" })).toBe(true);
+			expect(toFilter(oneOf, opts)({ status: "gamma" })).toBe(false);
+			expect(toFilter(notOneOf, opts)({ status: "ALPHA" })).toBe(false);
+			expect(toFilter(notOneOf, opts)({ status: "gamma" })).toBe(true);
+
+			const largeValues = Array.from({ length: 15 }, (_, i) => ({
+				type: "string" as const,
+				value: `Item${i}`,
+			}));
+			const largeOneOf: OneOfExpression = { type: "oneOf", field: "status", values: largeValues };
+			const largeNotOneOf: NotOneOfExpression = {
+				type: "notOneOf",
+				field: "status",
+				values: largeValues,
+			};
+			expect(toFilter(largeOneOf, opts)({ status: "ITEM3" })).toBe(true);
+			expect(toFilter(largeNotOneOf, opts)({ status: "ITEM3" })).toBe(false);
+		});
+	});
+
+	describe("Chain Flattening", () => {
+		const comparison = (field: string, value: number): ComparisonExpression => ({
+			type: "comparison",
+			field,
+			operator: "=",
+			value: { type: "number", value },
+		});
+
+		const chain = (
+			type: "and" | "or",
+			leaves: ComparisonExpression[],
+		): AndExpression | OrExpression => {
+			let node: AndExpression | OrExpression = {
+				type,
+				left: leaves[0],
+				right: leaves[1],
+			} as AndExpression;
+			for (let i = 2; i < leaves.length; i++) {
+				node = { type, left: node, right: leaves[i] } as AndExpression;
+			}
+			return node;
+		};
+
+		const leaves = (n: number) => Array.from({ length: n }, (_, i) => comparison(`f${i}`, i));
+		const match = (n: number) =>
+			Object.fromEntries(Array.from({ length: n }, (_, i) => [`f${i}`, i]));
+
+		test.each([3, 4, 5])("AND chain with %i terms", (n) => {
+			const filter = toFilter(chain("and", leaves(n)));
+			expect(filter(match(n))).toBe(true);
+			expect(filter(Object.assign(match(n), { f0: -1 }))).toBe(false);
+			expect(filter(Object.assign(match(n), { [`f${n - 1}`]: -1 }))).toBe(false);
+		});
+
+		test.each([3, 4, 5])("OR chain with %i terms", (n) => {
+			const filter = toFilter(chain("or", leaves(n)));
+			const none = () => Object.fromEntries(Array.from({ length: n }, (_, i) => [`f${i}`, -1]));
+			expect(filter(none())).toBe(false);
+			expect(filter(Object.assign(none(), { f0: 0 }))).toBe(true);
+			expect(filter(Object.assign(none(), { [`f${n - 1}`]: n - 1 }))).toBe(true);
+		});
+
+		test("right-nested chains flatten and preserve semantics", () => {
+			const [a, b, c] = leaves(3);
+			const rightNested: AndExpression = {
+				type: "and",
+				left: a,
+				right: { type: "and", left: b, right: c },
+			};
+			const filter = toFilter(rightNested);
+			expect(filter(match(3))).toBe(true);
+			expect(filter(Object.assign(match(3), { f1: -1 }))).toBe(false);
+		});
+	});
+
+	describe("Small Membership Specialization", () => {
+		const oneOfWith = (count: number): OneOfExpression => ({
+			type: "oneOf",
+			field: "status",
+			values: Array.from({ length: count }, (_, i) => ({
+				type: "string" as const,
+				value: `v${i}`,
+			})),
+		});
+
+		test.each([1, 2, 3, 4])("oneOf with %i values", (n) => {
+			const filter = toFilter(oneOfWith(n));
+			for (let i = 0; i < n; i++) {
+				expect(filter({ status: `v${i}` })).toBe(true);
+			}
+			expect(filter({ status: "missing" })).toBe(false);
+		});
+
+		test.each([1, 2, 3, 4])("notOneOf with %i values", (n) => {
+			const ast: NotOneOfExpression = {
+				type: "notOneOf",
+				field: "status",
+				values: oneOfWith(n).values,
+			};
+			const filter = toFilter(ast);
+			for (let i = 0; i < n; i++) {
+				expect(filter({ status: `v${i}` })).toBe(false);
+			}
+			expect(filter({ status: "missing" })).toBe(true);
+		});
+	});
+
+	describe("Invalid AST Input", () => {
+		test("throws on unknown node type", () => {
+			const ast = { type: "bogus" } as unknown as ComparisonExpression;
+			expect(() => toFilter(ast)).toThrow("Unknown node type");
+		});
+
+		test("throws on unknown operator", () => {
+			const ast = {
+				type: "comparison",
+				field: "a",
+				operator: "**",
+				value: { type: "number", value: 1 },
+			} as unknown as ComparisonExpression;
+			expect(() => toFilter(ast)).toThrow("Unknown operator");
+		});
+	});
+
 	describe("Optimization Behaviors", () => {
 		test("oneOf with >10 items uses Set path", () => {
 			const values = Array.from({ length: 15 }, (_, i) => ({

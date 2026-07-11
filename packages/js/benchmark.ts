@@ -16,7 +16,7 @@ import {
 	type BenchState,
 } from "@filtron/benchmark";
 import { parse, parseOrThrow } from "@filtron/core";
-import { toFilter } from "./index.js";
+import { toFilter, nestedAccessor } from "./index.js";
 
 // Pre-parsed ASTs for isolated conversion benchmarks
 const asts = {
@@ -27,6 +27,10 @@ const asts = {
 	largeOneOf: parseOrThrow(
 		'status : ["s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11", "s12", "s13", "s14"]',
 	),
+	andChain: parseOrThrow(
+		'verified AND age > 18 AND status = "active" AND role = "user" AND id > 0',
+	),
+	nested: parseOrThrow('profile.age > 21 AND profile.status = "active"'),
 };
 
 // Sample data for filtering tests
@@ -38,12 +42,26 @@ const users = Array.from({ length: 1000 }, (_, i) => ({
 	role: i % 10 === 0 ? "admin" : i % 5 === 0 ? "moderator" : "user",
 }));
 
+// Data set with nested objects for accessor benchmarks
+const nestedUsers = Array.from({ length: 1000 }, (_, i) => ({
+	id: i + 1,
+	profile: {
+		age: 18 + (i % 50),
+		status: i % 3 === 0 ? "active" : "inactive",
+	},
+}));
+
 // Pre-compiled filters
 const filters = {
 	simple: toFilter(asts.simple),
 	medium: toFilter(asts.medium),
 	complex: toFilter(asts.complex),
 	largeOneOf: toFilter(asts.largeOneOf),
+	smallOneOf: toFilter(asts.oneOf),
+	andChain: toFilter(asts.andChain),
+	caseInsensitive: toFilter(asts.medium, { caseInsensitive: true }),
+	fieldMapping: toFilter(asts.medium, { fieldMapping: { status: "status", age: "age" } }),
+	nestedAccessor: toFilter(asts.nested, { fieldAccessor: nestedAccessor() }),
 };
 
 group("toFilter only", () => {
@@ -51,6 +69,7 @@ group("toFilter only", () => {
 	bench("medium", () => do_not_optimize(toFilter(asts.medium)));
 	bench("complex", () => do_not_optimize(toFilter(asts.complex)));
 	bench("oneOf", () => do_not_optimize(toFilter(asts.oneOf)));
+	bench("andChain", () => do_not_optimize(toFilter(asts.andChain)));
 });
 
 group("filter 1000 items", () => {
@@ -58,6 +77,14 @@ group("filter 1000 items", () => {
 	bench("medium", () => do_not_optimize(users.filter(filters.medium)));
 	bench("complex", () => do_not_optimize(users.filter(filters.complex)));
 	bench("largeOneOf", () => do_not_optimize(users.filter(filters.largeOneOf)));
+	bench("smallOneOf", () => do_not_optimize(users.filter(filters.smallOneOf)));
+	bench("andChain", () => do_not_optimize(users.filter(filters.andChain)));
+});
+
+group("filter 1000 items with options", () => {
+	bench("caseInsensitive", () => do_not_optimize(users.filter(filters.caseInsensitive)));
+	bench("fieldMapping", () => do_not_optimize(users.filter(filters.fieldMapping)));
+	bench("nestedAccessor", () => do_not_optimize(nestedUsers.filter(filters.nestedAccessor)));
 });
 
 group("parse + toFilter", () => {

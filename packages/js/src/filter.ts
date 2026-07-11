@@ -79,13 +79,14 @@ export interface FilterOptions {
 
 /**
  * Internal state for filter generation
+ * fieldAccessor is undefined when the default (direct property access) applies,
+ * which lets generators emit specialized predicates without the indirect call
  */
 interface GeneratorState {
 	allowedFields?: Set<string>;
-	fieldAccessor: (obj: Record<string, unknown>, field: string) => unknown;
+	fieldAccessor?: (obj: Record<string, unknown>, field: string) => unknown;
 	caseInsensitive: boolean;
 	fieldMapping?: Record<string, string>;
-	fieldMappingCache: Map<string, string>;
 }
 
 /**
@@ -121,41 +122,25 @@ export function toFilter<T extends Record<string, unknown> = Record<string, unkn
 ): FilterPredicate<T> {
 	const state: GeneratorState = {
 		allowedFields: options.allowedFields ? new Set(options.allowedFields) : undefined,
-		fieldAccessor: options.fieldAccessor ?? ((obj, field) => obj[field]),
+		fieldAccessor: options.fieldAccessor,
 		caseInsensitive: options.caseInsensitive ?? false,
 		fieldMapping: options.fieldMapping,
-		fieldMappingCache: new Map(),
 	};
 
 	return generateFilter(ast, state) as FilterPredicate<T>;
 }
 
 /**
- * Resolves a field name using fieldMapping if provided
- * Uses a cache to avoid repeated lookups
+ * Validates that a field is allowed (if allowedFields is set) and
+ * resolves it through fieldMapping if provided
  */
-function resolveFieldName(field: string, state: GeneratorState): string {
-	if (!state.fieldMapping) {
-		return field;
-	}
-
-	let resolved = state.fieldMappingCache.get(field);
-	if (resolved === undefined) {
-		resolved = state.fieldMapping[field] ?? field;
-		state.fieldMappingCache.set(field, resolved);
-	}
-	return resolved;
-}
-
-/**
- * Validates that a field is allowed (if allowedFields is set)
- */
-function validateField(field: string, state: GeneratorState): void {
+function resolveField(field: string, state: GeneratorState): string {
 	if (state.allowedFields && !state.allowedFields.has(field)) {
 		throw new Error(
 			`Field "${field}" is not allowed. Allowed fields: ${[...state.allowedFields].join(", ")}`,
 		);
 	}
+	return state.fieldMapping ? (state.fieldMapping[field] ?? field) : field;
 }
 
 /**
@@ -192,27 +177,108 @@ function generateFilter(
 }
 
 /**
+ * Collects predicates from a chain of OR nodes (left-to-right order)
+ * Flattening avoids one closure call per binary node when evaluating chains
+ */
+function collectOr(
+	node: ASTNode,
+	predicates: FilterPredicate<Record<string, unknown>>[],
+	state: GeneratorState,
+): void {
+	if (node.type === "or") {
+		collectOr(node.left, predicates, state);
+		collectOr(node.right, predicates, state);
+	} else {
+		predicates.push(generateFilter(node, state));
+	}
+}
+
+/**
+ * Collects predicates from a chain of AND nodes (left-to-right order)
+ */
+function collectAnd(
+	node: ASTNode,
+	predicates: FilterPredicate<Record<string, unknown>>[],
+	state: GeneratorState,
+): void {
+	if (node.type === "and") {
+		collectAnd(node.left, predicates, state);
+		collectAnd(node.right, predicates, state);
+	} else {
+		predicates.push(generateFilter(node, state));
+	}
+}
+
+/**
  * Generates predicate for OR expression
+ * Flattens OR chains and specializes common arities
  */
 function generateOr(
 	node: OrExpression,
 	state: GeneratorState,
 ): FilterPredicate<Record<string, unknown>> {
-	const left = generateFilter(node.left, state);
-	const right = generateFilter(node.right, state);
-	return (item) => left(item) || right(item);
+	// Fast path: plain binary OR needs no chain collection
+	if (node.left.type !== "or" && node.right.type !== "or") {
+		const a = generateFilter(node.left, state);
+		const b = generateFilter(node.right, state);
+		return (item) => a(item) || b(item);
+	}
+
+	// A chain reaching here always flattens to three or more predicates
+	const predicates: FilterPredicate<Record<string, unknown>>[] = [];
+	collectOr(node, predicates, state);
+	const len = predicates.length;
+
+	if (len === 3) {
+		const [a, b, c] = predicates;
+		return (item) => a(item) || b(item) || c(item);
+	}
+	if (len === 4) {
+		const [a, b, c, d] = predicates;
+		return (item) => a(item) || b(item) || c(item) || d(item);
+	}
+	return (item) => {
+		for (let i = 0; i < len; i++) {
+			if (predicates[i](item)) return true;
+		}
+		return false;
+	};
 }
 
 /**
  * Generates predicate for AND expression
+ * Flattens AND chains and specializes common arities
  */
 function generateAnd(
 	node: AndExpression,
 	state: GeneratorState,
 ): FilterPredicate<Record<string, unknown>> {
-	const left = generateFilter(node.left, state);
-	const right = generateFilter(node.right, state);
-	return (item) => left(item) && right(item);
+	// Fast path: plain binary AND needs no chain collection
+	if (node.left.type !== "and" && node.right.type !== "and") {
+		const a = generateFilter(node.left, state);
+		const b = generateFilter(node.right, state);
+		return (item) => a(item) && b(item);
+	}
+
+	// A chain reaching here always flattens to three or more predicates
+	const predicates: FilterPredicate<Record<string, unknown>>[] = [];
+	collectAnd(node, predicates, state);
+	const len = predicates.length;
+
+	if (len === 3) {
+		const [a, b, c] = predicates;
+		return (item) => a(item) && b(item) && c(item);
+	}
+	if (len === 4) {
+		const [a, b, c, d] = predicates;
+		return (item) => a(item) && b(item) && c(item) && d(item);
+	}
+	return (item) => {
+		for (let i = 0; i < len; i++) {
+			if (!predicates[i](item)) return false;
+		}
+		return true;
+	};
 }
 
 /**
@@ -228,14 +294,14 @@ function generateNot(
 
 /**
  * Generates predicate for comparison expression
- * Pre-computes case-insensitive values during compilation
+ * Pre-computes case-insensitive values during compilation and emits
+ * direct property access predicates when no custom accessor is set
  */
 function generateComparison(
 	node: ComparisonExpression,
 	state: GeneratorState,
 ): FilterPredicate<Record<string, unknown>> {
-	validateField(node.field, state);
-	const mappedField = resolveFieldName(node.field, state);
+	const field = resolveField(node.field, state);
 	const targetValue = extractValue(node.value);
 	const accessor = state.fieldAccessor;
 
@@ -248,66 +314,124 @@ function generateComparison(
 		case "=":
 		case ":":
 			if (lowerTarget !== null) {
+				if (accessor) {
+					return (item) => {
+						const fieldValue = accessor(item, field);
+						return typeof fieldValue === "string"
+							? fieldValue.toLowerCase() === lowerTarget
+							: fieldValue === targetValue;
+					};
+				}
 				return (item) => {
-					const fieldValue = accessor(item, mappedField);
+					const fieldValue = item[field];
 					return typeof fieldValue === "string"
 						? fieldValue.toLowerCase() === lowerTarget
 						: fieldValue === targetValue;
 				};
 			}
-			return (item) => accessor(item, mappedField) === targetValue;
+			if (accessor) {
+				return (item) => accessor(item, field) === targetValue;
+			}
+			return (item) => item[field] === targetValue;
 
 		case "!=":
 			if (lowerTarget !== null) {
+				if (accessor) {
+					return (item) => {
+						const fieldValue = accessor(item, field);
+						return typeof fieldValue === "string"
+							? fieldValue.toLowerCase() !== lowerTarget
+							: fieldValue !== targetValue;
+					};
+				}
 				return (item) => {
-					const fieldValue = accessor(item, mappedField);
+					const fieldValue = item[field];
 					return typeof fieldValue === "string"
 						? fieldValue.toLowerCase() !== lowerTarget
 						: fieldValue !== targetValue;
 				};
 			}
-			return (item) => accessor(item, mappedField) !== targetValue;
+			if (accessor) {
+				return (item) => accessor(item, field) !== targetValue;
+			}
+			return (item) => item[field] !== targetValue;
 
 		case "~":
 			if (!isTargetString) {
 				return () => false;
 			}
 			if (lowerTarget !== null) {
+				if (accessor) {
+					return (item) => {
+						const fieldValue = accessor(item, field);
+						return typeof fieldValue === "string" && fieldValue.toLowerCase().includes(lowerTarget);
+					};
+				}
 				return (item) => {
-					const fieldValue = accessor(item, mappedField);
+					const fieldValue = item[field];
 					return typeof fieldValue === "string" && fieldValue.toLowerCase().includes(lowerTarget);
 				};
 			}
+			if (accessor) {
+				return (item) => {
+					const fieldValue = accessor(item, field);
+					return typeof fieldValue === "string" && fieldValue.includes(targetValue);
+				};
+			}
 			return (item) => {
-				const fieldValue = accessor(item, mappedField);
-				return typeof fieldValue === "string" && fieldValue.includes(targetValue as string);
+				const fieldValue = item[field];
+				return typeof fieldValue === "string" && fieldValue.includes(targetValue);
 			};
 
 		case ">":
 			if (typeof targetValue !== "number") return () => false;
+			if (accessor) {
+				return (item) => {
+					const fieldValue = accessor(item, field);
+					return typeof fieldValue === "number" && fieldValue > targetValue;
+				};
+			}
 			return (item) => {
-				const fieldValue = accessor(item, mappedField);
+				const fieldValue = item[field];
 				return typeof fieldValue === "number" && fieldValue > targetValue;
 			};
 
 		case ">=":
 			if (typeof targetValue !== "number") return () => false;
+			if (accessor) {
+				return (item) => {
+					const fieldValue = accessor(item, field);
+					return typeof fieldValue === "number" && fieldValue >= targetValue;
+				};
+			}
 			return (item) => {
-				const fieldValue = accessor(item, mappedField);
+				const fieldValue = item[field];
 				return typeof fieldValue === "number" && fieldValue >= targetValue;
 			};
 
 		case "<":
 			if (typeof targetValue !== "number") return () => false;
+			if (accessor) {
+				return (item) => {
+					const fieldValue = accessor(item, field);
+					return typeof fieldValue === "number" && fieldValue < targetValue;
+				};
+			}
 			return (item) => {
-				const fieldValue = accessor(item, mappedField);
+				const fieldValue = item[field];
 				return typeof fieldValue === "number" && fieldValue < targetValue;
 			};
 
 		case "<=":
 			if (typeof targetValue !== "number") return () => false;
+			if (accessor) {
+				return (item) => {
+					const fieldValue = accessor(item, field);
+					return typeof fieldValue === "number" && fieldValue <= targetValue;
+				};
+			}
 			return (item) => {
-				const fieldValue = accessor(item, mappedField);
+				const fieldValue = item[field];
 				return typeof fieldValue === "number" && fieldValue <= targetValue;
 			};
 
@@ -318,20 +442,22 @@ function generateComparison(
 }
 
 /**
- * Generates predicate for one-of expression
- * Pre-computes case-insensitive values and uses optimized Set threshold
+ * Builds a membership predicate over extracted values
+ * Specializes small lists into direct comparisons and uses a Set above the
+ * threshold where hashing wins (~10 items, based on Codspeed benchmarks)
  */
-function generateOneOf(
-	node: OneOfExpression,
+function generateMembership(
+	field: string,
+	rawValues: Value[],
 	state: GeneratorState,
+	emptyResult: boolean,
+	negate: boolean,
 ): FilterPredicate<Record<string, unknown>> {
-	validateField(node.field, state);
-	const mappedField = resolveFieldName(node.field, state);
-	const values = node.values.map((v: Value) => extractValue(v));
+	const values = rawValues.map((v: Value) => extractValue(v));
 	const accessor = state.fieldAccessor;
 
 	if (values.length === 0) {
-		return () => false;
+		return () => emptyResult;
 	}
 
 	// Pre-compute case-insensitive values at compile time
@@ -339,76 +465,117 @@ function generateOneOf(
 		const lowerValues = values.map((v: string | number | boolean) =>
 			typeof v === "string" ? v.toLowerCase() : v,
 		);
-		// Use Set for O(1) lookup on larger lists (threshold based on Codspeed benchmarks showing Set is faster at ~10 items)
 		if (lowerValues.length > 10) {
 			const valueSet = new Set(lowerValues);
+			if (negate) {
+				return (item) => {
+					const fieldValue = accessor ? accessor(item, field) : item[field];
+					const compareValue =
+						typeof fieldValue === "string" ? fieldValue.toLowerCase() : fieldValue;
+					return !valueSet.has(compareValue as string | number | boolean);
+				};
+			}
 			return (item) => {
-				const fieldValue = accessor(item, mappedField);
+				const fieldValue = accessor ? accessor(item, field) : item[field];
 				const compareValue = typeof fieldValue === "string" ? fieldValue.toLowerCase() : fieldValue;
 				return valueSet.has(compareValue as string | number | boolean);
 			};
 		}
+		if (negate) {
+			return (item) => {
+				const fieldValue = accessor ? accessor(item, field) : item[field];
+				const compareValue = typeof fieldValue === "string" ? fieldValue.toLowerCase() : fieldValue;
+				return !lowerValues.includes(compareValue as string | number | boolean);
+			};
+		}
 		return (item) => {
-			const fieldValue = accessor(item, mappedField);
+			const fieldValue = accessor ? accessor(item, field) : item[field];
 			const compareValue = typeof fieldValue === "string" ? fieldValue.toLowerCase() : fieldValue;
 			return lowerValues.includes(compareValue as string | number | boolean);
 		};
 	}
 
+	// Small lists compile to direct comparisons, avoiding Array.includes overhead
+	if (values.length <= 3 && !accessor) {
+		const v0 = values[0];
+		if (values.length === 1) {
+			if (negate) return (item) => item[field] !== v0;
+			return (item) => item[field] === v0;
+		}
+		const v1 = values[1];
+		if (values.length === 2) {
+			if (negate) {
+				return (item) => {
+					const fieldValue = item[field];
+					return fieldValue !== v0 && fieldValue !== v1;
+				};
+			}
+			return (item) => {
+				const fieldValue = item[field];
+				return fieldValue === v0 || fieldValue === v1;
+			};
+		}
+		const v2 = values[2];
+		if (negate) {
+			return (item) => {
+				const fieldValue = item[field];
+				return fieldValue !== v0 && fieldValue !== v1 && fieldValue !== v2;
+			};
+		}
+		return (item) => {
+			const fieldValue = item[field];
+			return fieldValue === v0 || fieldValue === v1 || fieldValue === v2;
+		};
+	}
+
 	// For small arrays (<=10 items), Array.includes is faster than Set lookup
 	if (values.length <= 10) {
-		return (item) => values.includes(accessor(item, mappedField) as string | number | boolean);
+		if (accessor) {
+			if (negate) {
+				return (item) => !values.includes(accessor(item, field) as string | number | boolean);
+			}
+			return (item) => values.includes(accessor(item, field) as string | number | boolean);
+		}
+		if (negate) {
+			return (item) => !values.includes(item[field] as string | number | boolean);
+		}
+		return (item) => values.includes(item[field] as string | number | boolean);
 	}
 
 	// Use Set for O(1) lookup on larger lists
 	const valueSet = new Set(values);
-	return (item) => valueSet.has(accessor(item, mappedField) as string | number | boolean);
+	if (accessor) {
+		if (negate) {
+			return (item) => !valueSet.has(accessor(item, field) as string | number | boolean);
+		}
+		return (item) => valueSet.has(accessor(item, field) as string | number | boolean);
+	}
+	if (negate) {
+		return (item) => !valueSet.has(item[field] as string | number | boolean);
+	}
+	return (item) => valueSet.has(item[field] as string | number | boolean);
+}
+
+/**
+ * Generates predicate for one-of expression
+ */
+function generateOneOf(
+	node: OneOfExpression,
+	state: GeneratorState,
+): FilterPredicate<Record<string, unknown>> {
+	const field = resolveField(node.field, state);
+	return generateMembership(field, node.values, state, false, false);
 }
 
 /**
  * Generates predicate for not-one-of expression
- * Pre-computes case-insensitive values and uses optimized Set threshold
  */
 function generateNotOneOf(
 	node: NotOneOfExpression,
 	state: GeneratorState,
 ): FilterPredicate<Record<string, unknown>> {
-	validateField(node.field, state);
-	const mappedField = resolveFieldName(node.field, state);
-	const values = node.values.map((v: Value) => extractValue(v));
-	const accessor = state.fieldAccessor;
-
-	if (values.length === 0) {
-		return () => true;
-	}
-
-	// Pre-compute case-insensitive values at compile time
-	if (state.caseInsensitive) {
-		const lowerValues = values.map((v: string | number | boolean) =>
-			typeof v === "string" ? v.toLowerCase() : v,
-		);
-		if (lowerValues.length > 10) {
-			const valueSet = new Set(lowerValues);
-			return (item) => {
-				const fieldValue = accessor(item, mappedField);
-				const compareValue = typeof fieldValue === "string" ? fieldValue.toLowerCase() : fieldValue;
-				return !valueSet.has(compareValue as string | number | boolean);
-			};
-		}
-		return (item) => {
-			const fieldValue = accessor(item, mappedField);
-			const compareValue = typeof fieldValue === "string" ? fieldValue.toLowerCase() : fieldValue;
-			return !lowerValues.includes(compareValue as string | number | boolean);
-		};
-	}
-
-	if (values.length <= 10) {
-		return (item) => !values.includes(accessor(item, mappedField) as string | number | boolean);
-	}
-
-	// Use Set for O(1) lookup on larger lists
-	const valueSet = new Set(values);
-	return (item) => !valueSet.has(accessor(item, mappedField) as string | number | boolean);
+	const field = resolveField(node.field, state);
+	return generateMembership(field, node.values, state, true, true);
 }
 
 /**
@@ -418,11 +585,16 @@ function generateExists(
 	node: ExistsExpression,
 	state: GeneratorState,
 ): FilterPredicate<Record<string, unknown>> {
-	validateField(node.field, state);
-	const mappedField = resolveFieldName(node.field, state);
+	const field = resolveField(node.field, state);
 	const accessor = state.fieldAccessor;
+	if (accessor) {
+		return (item) => {
+			const fieldValue = accessor(item, field);
+			return fieldValue !== null && fieldValue !== undefined;
+		};
+	}
 	return (item) => {
-		const fieldValue = accessor(item, mappedField);
+		const fieldValue = item[field];
 		return fieldValue !== null && fieldValue !== undefined;
 	};
 }
@@ -434,10 +606,12 @@ function generateBooleanField(
 	node: BooleanFieldExpression,
 	state: GeneratorState,
 ): FilterPredicate<Record<string, unknown>> {
-	validateField(node.field, state);
-	const mappedField = resolveFieldName(node.field, state);
+	const field = resolveField(node.field, state);
 	const accessor = state.fieldAccessor;
-	return (item) => accessor(item, mappedField) === true;
+	if (accessor) {
+		return (item) => accessor(item, field) === true;
+	}
+	return (item) => item[field] === true;
 }
 
 /**
@@ -447,12 +621,17 @@ function generateRange(
 	node: RangeExpression,
 	state: GeneratorState,
 ): FilterPredicate<Record<string, unknown>> {
-	validateField(node.field, state);
-	const mappedField = resolveFieldName(node.field, state);
+	const field = resolveField(node.field, state);
 	const accessor = state.fieldAccessor;
 	const { min, max } = node;
+	if (accessor) {
+		return (item) => {
+			const fieldValue = accessor(item, field);
+			return typeof fieldValue === "number" && fieldValue >= min && fieldValue <= max;
+		};
+	}
 	return (item) => {
-		const fieldValue = accessor(item, mappedField);
+		const fieldValue = item[field];
 		return typeof fieldValue === "number" && fieldValue >= min && fieldValue <= max;
 	};
 }

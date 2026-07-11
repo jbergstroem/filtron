@@ -482,6 +482,22 @@ describe("SQL", () => {
 			expect(result.sql).toBe("age > $5");
 			expect(result.params).toEqual([18]);
 		});
+
+		test("numbered parameters beyond the precomputed table", () => {
+			const ast: ASTNode = {
+				type: "oneOf",
+				field: "id",
+				values: Array.from({ length: 70 }, (_, i) => ({
+					type: "number" as const,
+					value: i,
+				})),
+			};
+
+			const result = toSQL(ast);
+			expect(result.sql).toContain("$1,");
+			expect(result.sql).toContain("$70");
+			expect(result.params).toHaveLength(70);
+		});
 	});
 
 	describe("Field Mapping", () => {

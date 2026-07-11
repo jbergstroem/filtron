@@ -73,11 +73,18 @@ export interface SQLOptions {
  */
 interface GeneratorState {
 	params: unknown[];
-	parameterStyle: "numbered" | "question";
+	numbered: boolean;
 	fieldMapper: (field: string) => string;
 	valueMapper: (value: string | number | boolean) => string | number | boolean;
 	paramIndex: number;
 }
+
+/** Default mappers, hoisted to avoid allocating closures per toSQL call */
+const identityField = (field: string): string => field;
+const identityValue = (value: string | number | boolean): string | number | boolean => value;
+
+/** Precomputed placeholders for the common parameter counts */
+const NUMBERED_PLACEHOLDERS: string[] = Array.from({ length: 65 }, (_, i) => `$${i}`);
 
 /**
  * Converts a Filtron AST to a parameterized SQL WHERE clause
@@ -102,9 +109,9 @@ interface GeneratorState {
 export function toSQL(ast: ASTNode, options: SQLOptions = {}): SQLResult {
 	const state: GeneratorState = {
 		params: [],
-		parameterStyle: options.parameterStyle ?? "numbered",
-		fieldMapper: options.fieldMapper ?? ((field) => field),
-		valueMapper: options.valueMapper ?? ((value) => value),
+		numbered: options.parameterStyle !== "question",
+		fieldMapper: options.fieldMapper ?? identityField,
+		valueMapper: options.valueMapper ?? identityValue,
 		paramIndex: options.startIndex ?? 1,
 	};
 
@@ -206,13 +213,13 @@ function generateInClause(
 		return negate ? "1 = 1" : "1 = 0";
 	}
 
-	const placeholders: string[] = [];
-	for (let i = 0; i < len; i++) {
-		placeholders.push(addParameter(extractValue(values[i]), state));
+	let placeholders = addParameter(extractValue(values[0]), state);
+	for (let i = 1; i < len; i++) {
+		placeholders += ", " + addParameter(extractValue(values[i]), state);
 	}
 
 	const operator = negate ? "NOT IN" : "IN";
-	return `${field} ${operator} (${placeholders.join(", ")})`;
+	return `${field} ${operator} (${placeholders})`;
 }
 
 /**
@@ -294,8 +301,9 @@ function extractValue(value: Value): string | number | boolean {
 function addParameter(value: unknown, state: GeneratorState): string {
 	state.params.push(value);
 
-	if (state.parameterStyle === "numbered") {
-		return `$${state.paramIndex++}`;
+	if (state.numbered) {
+		const index = state.paramIndex++;
+		return index < NUMBERED_PLACEHOLDERS.length ? NUMBERED_PLACEHOLDERS[index] : `$${index}`;
 	}
 
 	return "?";

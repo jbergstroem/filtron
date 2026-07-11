@@ -33,7 +33,7 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
@@ -45,13 +45,13 @@ jobs:
       - run: bunx metafile-codecov-bundle -f packages/js/metafile.json -n @filtron/js --output-dir packages/js/dist --upload
       - run: bunx metafile-codecov-bundle -f packages/sql/metafile.json -n @filtron/sql --output-dir packages/sql/dist --upload
       - run: bun test --reporter=junit --reporter-outfile=junit.xml --coverage --coverage-reporter=lcov --coverage-dir=coverage
-      - uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6.0.0
+      - uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         if: ${{ !cancelled() }}
         with:
           use_oidc: true
           files: ./coverage/lcov.info
           disable_search: true
-      - uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2 # v6.0.0
+      - uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         if: ${{ !cancelled() }}
         with:
           use_oidc: true
@@ -94,7 +94,7 @@ jobs:
             test_cmd: deno eval
     name: e2e (${{ matrix.setup }} ${{ matrix.version }})
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
@@ -111,7 +111,7 @@ jobs:
         with:
           bun-version: ${{ matrix.version }}
       - if: matrix.setup == 'deno'
-        uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282 # v2.0.4
+        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
         with:
           deno-version: ${{ matrix.version }}
 

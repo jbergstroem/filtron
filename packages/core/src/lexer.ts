@@ -126,6 +126,53 @@ const C = {
 } as const;
 
 /**
+ * Character dispatch classes for next(). Dense small integers so the
+ * dispatch switch compiles to a jump table instead of a compare chain.
+ */
+const CLS_INVALID = 0;
+const CLS_IDENT = 1;
+const CLS_DIGIT = 2;
+const CLS_QUOTE = 3;
+const CLS_MINUS = 4;
+const CLS_BANG = 5;
+const CLS_GT = 6;
+const CLS_LT = 7;
+const CLS_DOT = 8;
+const CLS_LPAREN = 9;
+const CLS_RPAREN = 10;
+const CLS_LBRACKET = 11;
+const CLS_RBRACKET = 12;
+const CLS_COMMA = 13;
+const CLS_QUESTION = 14;
+const CLS_EQ = 15;
+const CLS_TILDE = 16;
+const CLS_COLON = 17;
+
+const CHAR_CLASS: Uint8Array = (() => {
+	const table = new Uint8Array(128);
+	for (let c = C.LowerA; c <= C.LowerZ; c++) table[c] = CLS_IDENT;
+	for (let c = C.UpperA; c <= C.UpperZ; c++) table[c] = CLS_IDENT;
+	table[C.Underscore] = CLS_IDENT;
+	for (let c = C.Zero; c <= C.Nine; c++) table[c] = CLS_DIGIT;
+	table[C.Quote] = CLS_QUOTE;
+	table[C.Minus] = CLS_MINUS;
+	table[C.Bang] = CLS_BANG;
+	table[C.GreaterThan] = CLS_GT;
+	table[C.LessThan] = CLS_LT;
+	table[C.Dot] = CLS_DOT;
+	table[C.LParen] = CLS_LPAREN;
+	table[C.RParen] = CLS_RPAREN;
+	table[C.LBracket] = CLS_LBRACKET;
+	table[C.RBracket] = CLS_RBRACKET;
+	table[C.Comma] = CLS_COMMA;
+	table[C.Question] = CLS_QUESTION;
+	table[C.Equals] = CLS_EQ;
+	table[C.Tilde] = CLS_TILDE;
+	table[C.Colon] = CLS_COLON;
+	return table;
+})();
+
+/**
  * Lexer error with position information
  */
 export class LexerError extends Error {
@@ -422,100 +469,82 @@ export class Lexer {
 
 		const code = input.charCodeAt(pos);
 
-		// Single character tokens (most common first)
-		switch (code) {
-			case C.LParen:
+		switch (code < 128 ? CHAR_CLASS[code] : CLS_INVALID) {
+			case CLS_IDENT:
+				return this.readIdentifier();
+			case CLS_DIGIT:
+				return this.readNumber();
+			case CLS_QUOTE:
+				return this.readString();
+			case CLS_LPAREN:
 				this.pos = pos + 1;
 				return { type: "LPAREN", start: pos, end: pos + 1 };
-			case C.RParen:
+			case CLS_RPAREN:
 				this.pos = pos + 1;
 				return { type: "RPAREN", start: pos, end: pos + 1 };
-			case C.LBracket:
+			case CLS_LBRACKET:
 				this.pos = pos + 1;
 				return { type: "LBRACKET", start: pos, end: pos + 1 };
-			case C.RBracket:
+			case CLS_RBRACKET:
 				this.pos = pos + 1;
 				return { type: "RBRACKET", start: pos, end: pos + 1 };
-			case C.Comma:
+			case CLS_COMMA:
 				this.pos = pos + 1;
 				return { type: "COMMA", start: pos, end: pos + 1 };
-			case C.Question:
+			case CLS_QUESTION:
 				this.pos = pos + 1;
 				return { type: "QUESTION", start: pos, end: pos + 1 };
-			case C.Equals:
+			case CLS_EQ:
 				this.pos = pos + 1;
 				return { type: "EQ", start: pos, end: pos + 1 };
-			case C.Tilde:
+			case CLS_TILDE:
 				this.pos = pos + 1;
 				return { type: "LIKE", start: pos, end: pos + 1 };
-			case C.Colon:
+			case CLS_COLON:
 				this.pos = pos + 1;
 				return { type: "COLON", start: pos, end: pos + 1 };
-		}
-
-		// Two-character operators
-		const nextCode = pos + 1 < this.length ? input.charCodeAt(pos + 1) : 0;
-
-		if (code === C.Bang) {
-			if (nextCode === C.Equals) {
-				this.pos = pos + 2;
-				return { type: "NEQ", start: pos, end: pos + 2 };
+			case CLS_BANG: {
+				const nextCode = pos + 1 < length ? input.charCodeAt(pos + 1) : 0;
+				if (nextCode === C.Equals) {
+					this.pos = pos + 2;
+					return { type: "NEQ", start: pos, end: pos + 2 };
+				}
+				if (nextCode === C.Colon) {
+					this.pos = pos + 2;
+					return { type: "NOT_COLON", start: pos, end: pos + 2 };
+				}
+				throw new LexerError(`Unexpected character: '${input[pos]}'`, pos);
 			}
-			if (nextCode === C.Colon) {
-				this.pos = pos + 2;
-				return { type: "NOT_COLON", start: pos, end: pos + 2 };
+			case CLS_GT:
+				if (pos + 1 < length && input.charCodeAt(pos + 1) === C.Equals) {
+					this.pos = pos + 2;
+					return { type: "GTE", start: pos, end: pos + 2 };
+				}
+				this.pos = pos + 1;
+				return { type: "GT", start: pos, end: pos + 1 };
+			case CLS_LT:
+				if (pos + 1 < length && input.charCodeAt(pos + 1) === C.Equals) {
+					this.pos = pos + 2;
+					return { type: "LTE", start: pos, end: pos + 2 };
+				}
+				this.pos = pos + 1;
+				return { type: "LT", start: pos, end: pos + 1 };
+			case CLS_DOT:
+				if (pos + 1 < length && input.charCodeAt(pos + 1) === C.Dot) {
+					this.pos = pos + 2;
+					return { type: "DOTDOT", start: pos, end: pos + 2 };
+				}
+				this.pos = pos + 1;
+				return { type: "DOT", start: pos, end: pos + 1 };
+			case CLS_MINUS: {
+				const nextCode = pos + 1 < length ? input.charCodeAt(pos + 1) : 0;
+				if (nextCode >= C.Zero && nextCode <= C.Nine) {
+					return this.readNumber();
+				}
+				throw new LexerError(`Unexpected character: '${input[pos]}'`, pos);
 			}
+			default:
+				throw new LexerError(`Unexpected character: '${input[pos]}'`, pos);
 		}
-
-		if (code === C.GreaterThan) {
-			if (nextCode === C.Equals) {
-				this.pos = pos + 2;
-				return { type: "GTE", start: pos, end: pos + 2 };
-			}
-			this.pos = pos + 1;
-			return { type: "GT", start: pos, end: pos + 1 };
-		}
-
-		if (code === C.LessThan) {
-			if (nextCode === C.Equals) {
-				this.pos = pos + 2;
-				return { type: "LTE", start: pos, end: pos + 2 };
-			}
-			this.pos = pos + 1;
-			return { type: "LT", start: pos, end: pos + 1 };
-		}
-
-		if (code === C.Dot) {
-			if (nextCode === C.Dot) {
-				this.pos = pos + 2;
-				return { type: "DOTDOT", start: pos, end: pos + 2 };
-			}
-			this.pos = pos + 1;
-			return { type: "DOT", start: pos, end: pos + 1 };
-		}
-
-		// String literal
-		if (code === C.Quote) {
-			return this.readString();
-		}
-
-		// Number
-		if (code >= C.Zero && code <= C.Nine) {
-			return this.readNumber();
-		}
-		if (code === C.Minus && nextCode >= C.Zero && nextCode <= C.Nine) {
-			return this.readNumber();
-		}
-
-		// Identifier or keyword
-		if (
-			(code >= C.LowerA && code <= C.LowerZ) ||
-			(code >= C.UpperA && code <= C.UpperZ) ||
-			code === C.Underscore
-		) {
-			return this.readIdentifier();
-		}
-
-		throw new LexerError(`Unexpected character: '${input[pos]}'`, pos);
 	}
 }

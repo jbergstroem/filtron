@@ -21,9 +21,18 @@ const simpleAST = parse("age > 18");
 const mediumAST = parse('status = "active" AND age >= 18');
 const complexAST = parse('(role = "admin" OR role = "moderator") AND status = "active"');
 const rangeMediumAST = parse("age = 18..65 AND salary = 50000..150000");
+const largeOneOfAST = parse(
+	'status : ["s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11", "s12", "s13", "s14"]',
+);
 
 // Validate ASTs
-if (!simpleAST.success || !mediumAST.success || !complexAST.success || !rangeMediumAST.success) {
+if (
+	!simpleAST.success ||
+	!mediumAST.success ||
+	!complexAST.success ||
+	!rangeMediumAST.success ||
+	!largeOneOfAST.success
+) {
 	throw new Error("Failed to parse test queries");
 }
 
@@ -40,6 +49,10 @@ bench
 
 bench.add("sql: range medium", () => {
 	toSQL(rangeMediumAST.ast);
+});
+
+bench.add("sql: large oneOf", () => {
+	toSQL(largeOneOfAST.ast);
 });
 
 bench

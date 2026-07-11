@@ -7,7 +7,7 @@
 
 import { withCodSpeed } from "@codspeed/tinybench-plugin";
 import { parse } from "@filtron/core";
-import { toFilter } from "@filtron/js";
+import { toFilter, nestedAccessor } from "@filtron/js";
 import { Bench } from "tinybench";
 
 const bench = withCodSpeed(
@@ -26,8 +26,18 @@ const largeOneOfAST = parse(
 	'status : ["s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11", "s12", "s13", "s14"] AND age > 18',
 );
 
+const andChainAST = parse('verified AND age > 18 AND status = "active" AND role = "user"');
+const nestedAST = parse("profile.age > 21");
+
 // Validate ASTs
-if (!simpleAST.success || !mediumAST.success || !complexAST.success || !largeOneOfAST.success) {
+if (
+	!simpleAST.success ||
+	!mediumAST.success ||
+	!complexAST.success ||
+	!largeOneOfAST.success ||
+	!andChainAST.success ||
+	!nestedAST.success
+) {
 	throw new Error("Failed to parse test queries");
 }
 
@@ -47,6 +57,14 @@ const simpleFilter = toFilter(simpleAST.ast);
 const mediumFilter = toFilter(mediumAST.ast);
 const complexFilter = toFilter(complexAST.ast);
 const largeOneOfFilter = toFilter(largeOneOfAST.ast);
+const andChainFilter = toFilter(andChainAST.ast);
+const nestedFilter = toFilter(nestedAST.ast, { fieldAccessor: nestedAccessor() });
+
+// Data set with nested objects for accessor benchmarks
+const nestedUsers = Array.from({ length: 1000 }, (_, i) => ({
+	id: i + 1,
+	profile: { age: 18 + (i % 50) },
+}));
 
 // Filter creation benchmarks (isolated overhead)
 bench
@@ -73,6 +91,12 @@ bench
 	})
 	.add("filter array: large oneOf", () => {
 		users.filter(largeOneOfFilter);
+	})
+	.add("filter array: AND chain", () => {
+		users.filter(andChainFilter);
+	})
+	.add("filter array: nested accessor", () => {
+		nestedUsers.filter(nestedFilter);
 	});
 
 // End-to-end pipeline benchmarks

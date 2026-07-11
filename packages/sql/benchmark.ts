@@ -16,7 +16,7 @@ import {
 	type BenchState,
 } from "@filtron/benchmark";
 import { parse, parseOrThrow } from "@filtron/core";
-import { toSQL } from "./index.js";
+import { toSQL, contains } from "./index.js";
 
 // Pre-parsed ASTs for isolated conversion benchmarks
 const asts = {
@@ -24,13 +24,27 @@ const asts = {
 	medium: parseOrThrow('status = "active" AND age >= 18'),
 	complex: parseOrThrow('(role = "admin" OR role = "moderator") AND verified'),
 	oneOf: parseOrThrow('status : ["pending", "approved", "active"]'),
+	largeOneOf: parseOrThrow(
+		'status : ["s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11", "s12", "s13", "s14"]',
+	),
+	like: parseOrThrow('name ~ "alice" AND email ~ "example.com"'),
 };
+
+const upperFieldMapper = (field: string): string => field.toUpperCase();
 
 group("toSQL only", () => {
 	bench("simple", () => do_not_optimize(toSQL(asts.simple)));
 	bench("medium", () => do_not_optimize(toSQL(asts.medium)));
 	bench("complex", () => do_not_optimize(toSQL(asts.complex)));
 	bench("oneOf", () => do_not_optimize(toSQL(asts.oneOf)));
+	bench("largeOneOf", () => do_not_optimize(toSQL(asts.largeOneOf)));
+});
+
+group("toSQL with options", () => {
+	bench("fieldMapper", () =>
+		do_not_optimize(toSQL(asts.medium, { fieldMapper: upperFieldMapper })));
+	bench("valueMapper (contains)", () =>
+		do_not_optimize(toSQL(asts.like, { valueMapper: contains })));
 });
 
 group("parse + toSQL", () => {

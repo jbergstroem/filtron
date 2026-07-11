@@ -54,6 +54,17 @@
         "typescript",
       ],
     },
+    "packages/conformance": {
+      "name": "@filtron/conformance",
+      "version": "1.0.0",
+      "devDependencies": {
+        "@filtron/core": "workspace:*",
+        "@filtron/js": "workspace:*",
+        "@filtron/sql": "workspace:*",
+        "@types/bun": "catalog:",
+        "typescript": "catalog:",
+      },
+    },
     "packages/core": {
       "name": "@filtron/core",
       "version": "2.0.0",
@@ -208,6 +219,8 @@
     "@faker-js/faker": ["@faker-js/faker@10.5.0", "", {}, "sha512-bsxD8WLS5lIj7aaoCx1YJkktqYj5vlBUE6HWzu2Q51ksrGJ0H737ECCKlFU7Yf8Br45z9t99frBp/J7kzbMPAg=="],
 
     "@filtron/benchmark": ["@filtron/benchmark@workspace:packages/benchmark"],
+
+    "@filtron/conformance": ["@filtron/conformance@workspace:packages/conformance"],
 
     "@filtron/core": ["@filtron/core@workspace:packages/core"],
 

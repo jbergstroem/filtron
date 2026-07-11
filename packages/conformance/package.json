@@ -1,0 +1,25 @@
+{
+	"$schema": "https://json.schemastore.org/package.json",
+	"name": "@filtron/conformance",
+	"version": "1.0.0",
+	"private": true,
+	"description": "Shared conformance fixtures that all Filtron adapters must pass",
+	"license": "MIT",
+	"author": "Johan Bergström <bugs@bergstroem.nu>",
+	"type": "module",
+	"scripts": {
+		"test": "bun test"
+	},
+	"devDependencies": {
+		"@filtron/core": "workspace:*",
+		"@filtron/js": "workspace:*",
+		"@filtron/sql": "workspace:*",
+		"@types/bun": "catalog:",
+		"typescript": "catalog:"
+	},
+	"engines": {
+		"bun": ">=1.2.19",
+		"node": ">=20.0.0"
+	},
+	"packageManager": "bun@1.3.14"
+}

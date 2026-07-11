@@ -158,6 +158,9 @@ jobs:
         with:
           app-id: ${{ secrets.GH_APP_ID }}
           private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          # deleting the environment (not just its deployments) requires administration
+          permission-administration: write
+          permission-deployments: write
         id: get-token
       - uses: strumwolf/delete-deployment-environment@035f6d27c8b8951729f4d71b2d3d6a7975139476 # v4.0.0
         with:

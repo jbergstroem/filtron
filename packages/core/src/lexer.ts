@@ -2,6 +2,8 @@
  * A Lexer for the Filtron query language
  */
 
+import { FiltronParseError } from "./errors";
+
 /**
  * Token types produced by the lexer
  */
@@ -173,19 +175,6 @@ const CHAR_CLASS: Uint8Array = (() => {
 })();
 
 /**
- * Lexer error with position information
- */
-export class LexerError extends Error {
-	constructor(
-		message: string,
-		public position: number,
-	) {
-		super(message);
-		this.name = "LexerError";
-	}
-}
-
-/**
  * Lexer for tokenizing Filtron query strings
  */
 export class Lexer {
@@ -276,7 +265,7 @@ export class Lexer {
 			}
 		}
 
-		throw new LexerError("Unterminated string literal", start);
+		throw new FiltronParseError("Unterminated string literal", start);
 	}
 
 	/**
@@ -513,7 +502,7 @@ export class Lexer {
 					this.pos = pos + 2;
 					return { type: "NOT_COLON", start: pos, end: pos + 2 };
 				}
-				throw new LexerError(`Unexpected character: '${input[pos]}'`, pos);
+				throw new FiltronParseError(`Unexpected character: '${input[pos]}'`, pos);
 			}
 			case CLS_GT:
 				if (pos + 1 < length && input.charCodeAt(pos + 1) === C.Equals) {
@@ -541,10 +530,10 @@ export class Lexer {
 				if (nextCode >= C.Zero && nextCode <= C.Nine) {
 					return this.readNumber();
 				}
-				throw new LexerError(`Unexpected character: '${input[pos]}'`, pos);
+				throw new FiltronParseError(`Unexpected character: '${input[pos]}'`, pos);
 			}
 			default:
-				throw new LexerError(`Unexpected character: '${input[pos]}'`, pos);
+				throw new FiltronParseError(`Unexpected character: '${input[pos]}'`, pos);
 		}
 	}
 }

@@ -39,7 +39,7 @@ const result = parse('age > 18 AND status = "active"');
 if (result.success) {
 	console.log(result.ast);
 } else {
-	console.error(result.error);
+	console.error(result.message);
 }
 ```
 
@@ -100,14 +100,14 @@ const result = parse("age > 18");
 if (result.success) {
 	result.ast; // ASTNode
 } else {
-	result.error; // string - error message
+	result.message; // string - error message
 	result.position; // number - position in input where error occurred
 }
 ```
 
 ### `parseOrThrow(input: string): ASTNode`
 
-Parses a filter expression, throwing `FiltronParseError` on invalid input.
+Parses a filter expression, throwing `FiltronParseError` on invalid input. The same error class is used for all parse failures, whether they originate in the lexer or the parser.
 
 ```typescript
 import { parseOrThrow, FiltronParseError } from "@filtron/core";
@@ -128,7 +128,7 @@ All AST types are exported for building custom consumers:
 
 ```typescript
 import {
-	FiltronParseError, // Error class thrown by parseOrThrow
+	FiltronParseError, // Error class for all parse failures
 	type ParseResult,
 	type ASTNode,
 	type AndExpression,
@@ -152,7 +152,7 @@ import {
 The Lexer types are also available if you want to use them for syntax highlighting or other purposes:
 
 ```typescript
-import { Lexer, LexerError } from "@filtron/core";
+import { Lexer } from "@filtron/core";
 import type { Token, TokenType, StringToken, NumberToken, BooleanToken } from "@filtron/core";
 ```
 

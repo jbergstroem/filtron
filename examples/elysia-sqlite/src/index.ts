@@ -43,7 +43,6 @@ export const app = new Elysia()
 					success: false,
 					error: "Invalid filter query",
 					message: parseResult.message,
-					details: parseResult.error,
 					hint: 'Example: ?filter=age > 30 or ?filter=status = "active"',
 				};
 			}

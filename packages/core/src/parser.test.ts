@@ -24,9 +24,8 @@ describe("Parser API", () => {
 			const result = parse("age >");
 			expect(result.success).toBe(false);
 			if (!result.success) {
-				expect(result.error).toBeDefined();
 				expect(result.message).toBeDefined();
-				expect(typeof result.error).toBe("string");
+				expect(typeof result.message).toBe("string");
 				expect(result.position).toBe(5);
 			}
 		});
@@ -35,7 +34,7 @@ describe("Parser API", () => {
 			const result = parse("");
 			expect(result.success).toBe(false);
 			if (!result.success) {
-				expect(result.error).toContain("Empty query");
+				expect(result.message).toContain("Empty query");
 				expect(result.position).toBe(0);
 			}
 		});
@@ -44,7 +43,7 @@ describe("Parser API", () => {
 			const result = parse('"unterminated string');
 			expect(result.success).toBe(false);
 			if (!result.success) {
-				expect(result.error).toContain("Unterminated string literal");
+				expect(result.message).toContain("Unterminated string literal");
 				expect(result.position).toBe(0);
 			}
 		});
@@ -53,7 +52,7 @@ describe("Parser API", () => {
 			const result = parse("(age > 18");
 			expect(result.success).toBe(false);
 			if (!result.success) {
-				expect(result.error).toBeDefined();
+				expect(result.message).toBeDefined();
 				expect(result.position).toBe(9);
 			}
 		});
@@ -62,7 +61,7 @@ describe("Parser API", () => {
 			const result = parse("age @ 18");
 			expect(result.success).toBe(false);
 			if (!result.success) {
-				expect(result.error).toContain("Unexpected character");
+				expect(result.message).toContain("Unexpected character");
 				expect(result.position).toBe(4);
 			}
 		});
@@ -83,11 +82,20 @@ describe("Parser API", () => {
 			expect(result.success).toBe(true);
 		});
 
-		test("preserves error messages from ParseError", () => {
+		test("preserves error messages from parser errors", () => {
 			const result = parse("status : []");
 			expect(result.success).toBe(false);
 			if (!result.success) {
-				expect(result.error).toContain("Array cannot be empty");
+				expect(result.message).toContain("Array cannot be empty");
+			}
+		});
+
+		test("returns error result without position for non-parse errors", () => {
+			const result = parse(null as unknown as string);
+			expect(result.success).toBe(false);
+			if (!result.success) {
+				expect(typeof result.message).toBe("string");
+				expect(result.position).toBeUndefined();
 			}
 		});
 	});
@@ -106,7 +114,7 @@ describe("Parser API", () => {
 
 		test("throws FiltronParseError on parse failure", () => {
 			expect(() => parseOrThrow("age >")).toThrow(FiltronParseError);
-			expect(() => parseOrThrow("age >")).toThrow("Failed to parse Filtron query");
+			expect(() => parseOrThrow("age >")).toThrow("Expected value");
 		});
 
 		test("throws FiltronParseError for empty query with position", () => {
@@ -144,9 +152,18 @@ describe("Parser API", () => {
 				expect(true).toBe(false); // Should not reach here
 			} catch (error) {
 				expect(error).toBeInstanceOf(FiltronParseError);
-				expect((error as FiltronParseError).message).toContain("Failed to parse Filtron query");
 				expect((error as FiltronParseError).message).toContain("Array cannot be empty");
 				expect((error as FiltronParseError).position).toBeDefined();
+			}
+		});
+
+		test("wraps non-parse errors in FiltronParseError without position", () => {
+			try {
+				parseOrThrow(null as unknown as string);
+				expect(true).toBe(false); // Should not reach here
+			} catch (error) {
+				expect(error).toBeInstanceOf(FiltronParseError);
+				expect((error as FiltronParseError).position).toBeUndefined();
 			}
 		});
 	});

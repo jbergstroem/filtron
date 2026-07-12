@@ -98,7 +98,7 @@ const result = parse('age > 18 AND status = "active"');
 if (result.success) {
 	// result.ast contains the parsed query
 } else {
-	// result.error contains what went wrong
+	// result.message contains what went wrong
 }
 ```
 

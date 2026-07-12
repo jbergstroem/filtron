@@ -16,6 +16,9 @@
 export { parse, parseOrThrow, FiltronParseError } from "./parser";
 export type { ParseResult, ParseSuccess, ParseFailure } from "./parser";
 
+// AST walker
+export { walk } from "./walker";
+
 // Lexer for tokenization
 export { Lexer } from "./lexer";
 export type {

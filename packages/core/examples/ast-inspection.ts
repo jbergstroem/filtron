@@ -1,26 +1,16 @@
 // Traversing the AST to extract all field names used in a query.
 // Run with: bun run examples/ast-inspection.ts
 
-import { parseOrThrow, type ASTNode } from "../src/index";
-
-function collectFields(node: ASTNode): string[] {
-	switch (node.type) {
-		case "or":
-		case "and":
-			return node.children.flatMap(collectFields);
-		case "not":
-			return collectFields(node.expression);
-		case "comparison":
-		case "oneOf":
-		case "exists":
-		case "booleanField":
-		case "range":
-			return [node.field];
-	}
-}
+import { parseOrThrow, walk } from "../src/index";
 
 const ast = parseOrThrow('(role = "admin" OR role = "user") AND verified AND age >= 21');
-const fields = [...new Set(collectFields(ast))];
 
-console.log("Fields:", fields);
+const fields = new Set<string>();
+walk(ast, (node) => {
+	if ("field" in node) {
+		fields.add(node.field);
+	}
+});
+
+console.log("Fields:", [...fields]);
 // Output: Fields: [ "role", "verified", "age" ]

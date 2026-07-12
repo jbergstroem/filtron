@@ -46,12 +46,13 @@ interface SQLResult {
 
 #### Options
 
-| Option           | Type                          | Default      | Description                              |
-| ---------------- | ----------------------------- | ------------ | ---------------------------------------- |
-| `parameterStyle` | `"numbered"` \| `"question"`  | `"numbered"` | Placeholder format                       |
-| `fieldMapper`    | `(field: string) => string`   | `undefined`  | Transform field names to column names    |
-| `valueMapper`    | `(value: unknown) => unknown` | `undefined`  | Transform values before parameterization |
-| `startIndex`     | `number`                      | `1`          | Starting index for numbered placeholders |
+| Option           | Type                          | Default      | Description                                   |
+| ---------------- | ----------------------------- | ------------ | --------------------------------------------- |
+| `parameterStyle` | `"numbered"` \| `"question"`  | `"numbered"` | Placeholder format                            |
+| `fieldMapper`    | `(field: string) => string`   | `undefined`  | Transform field names to column names         |
+| `valueMapper`    | `(value: unknown) => unknown` | `undefined`  | Custom transform for `~` values (see below)   |
+| `likeMode`       | `"contains"` \| `"raw"`       | `"contains"` | How `~` builds its LIKE parameter (see below) |
+| `startIndex`     | `number`                      | `1`          | Starting index for numbered placeholders      |
 
 #### Parameter styles
 
@@ -99,12 +100,38 @@ const { sql, params } = toSQL(ast, {
 // Placeholders start at $3
 ```
 
-### LIKE helpers
+### The contains operator (`~`)
 
-Helper functions for the contains operator (`~`):
+By default `~` means substring-contains, matching @filtron/js. The value is
+wrapped in `%` wildcards and LIKE metacharacters (`%`, `_`, `\`) are escaped
+before parameterization:
+
+```typescript
+const result = parse('name ~ "john"');
+const { sql, params } = toSQL(result.ast);
+// sql: "name LIKE $1"
+// params: ["%john%"]
+
+// Metacharacters in the value match literally
+toSQL(parse('name ~ "100%"').ast).params; // ["%100\\%%"]
+```
+
+Set `likeMode: "raw"` to pass the value through untouched. Wildcards and
+escaping become the caller's responsibility:
+
+```typescript
+const { sql, params } = toSQL(result.ast, { likeMode: "raw" });
+// Query 'name ~ "john%"' produces params: ["john%"]
+```
+
+For prefix or suffix matching, use `valueMapper` with the LIKE helpers.
+`valueMapper` takes precedence over `likeMode`:
 
 ```typescript
 import { toSQL, contains, prefix, suffix, escapeLike } from "@filtron/sql";
+
+const { sql, params } = toSQL(result.ast, { valueMapper: prefix });
+// Query 'name ~ "john"' produces params: ["john%"]
 ```
 
 | Function     | Input   | Output    | Use case             |
@@ -113,15 +140,6 @@ import { toSQL, contains, prefix, suffix, escapeLike } from "@filtron/sql";
 | `prefix`     | `"foo"` | `"foo%"`  | Starts with          |
 | `suffix`     | `"foo"` | `"%foo"`  | Ends with            |
 | `escapeLike` | `"a%b"` | `"a\\%b"` | Escape special chars |
-
-**Usage with valueMapper:**
-
-```typescript
-const { sql, params } = toSQL(ast, {
-	valueMapper: contains,
-});
-// Query "name ~ 'john'" produces params: ["%john%"]
-```
 
 ## Performance
 
@@ -175,6 +193,19 @@ const { sql, params } = toSQL(result.ast);
 ```
 
 Never interpolate user input directly into SQL. Always use the `params` array with your database driver's parameterized query support.
+
+LIKE patterns deserve the same care. The default `likeMode: "contains"` escapes `%`, `_` and `\` so user input cannot smuggle wildcards into the pattern:
+
+```typescript
+// Safe: default likeMode escapes metacharacters
+toSQL(ast); // 'name ~ "100%"' produces params: ["%100\\%%"]
+
+// Unsafe: raw mode passes user input straight into the LIKE pattern
+toSQL(ast, { likeMode: "raw" }); // params: ["100%"] — % acts as a wildcard
+
+// Safe raw usage: escape user input yourself
+toSQL(ast, { valueMapper: (v) => `${escapeLike(String(v))}%` });
+```
 
 ## License
 

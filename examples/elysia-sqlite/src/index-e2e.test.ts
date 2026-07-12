@@ -100,7 +100,7 @@ describe("Elysia E2E Tests", () => {
 
 	test("should filter with contains operator", async () => {
 		const response = await fetch(
-			`${getBaseUrl()}/users?filter=${encodeURIComponent('name ~ "%a%"')}`,
+			`${getBaseUrl()}/users?filter=${encodeURIComponent('name ~ "a"')}`,
 		);
 		const data = await response.json();
 

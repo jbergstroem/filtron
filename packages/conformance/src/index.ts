@@ -188,9 +188,8 @@ export const cases: ConformanceCase[] = [
 		query: 'name ~ "an"',
 		matches: [4, 6, 8],
 		sql: "name LIKE $1",
-		params: ["an"],
-		notes:
-			"Known divergence (#282): js matches substrings, sql emits LIKE without wildcards so a database would match the exact string only.",
+		params: ["%an%"],
+		notes: "~ is substring-contains in both adapters; sql wraps the parameter in % wildcards.",
 	},
 	{
 		name: "case-sensitive-default",
@@ -320,15 +319,17 @@ export const cases: ConformanceCase[] = [
 		query: `name ~ "o'neil"`,
 		matches: [6],
 		sql: "name LIKE $1",
-		params: ["o'neil"],
+		params: ["%o'neil%"],
+		notes: "The apostrophe stays in the parameter; only LIKE metacharacters are escaped.",
 	},
 	{
 		name: "like-metacharacters-in-value",
 		query: 'name ~ "100%"',
 		matches: [8],
 		sql: "name LIKE $1",
-		params: ["100%"],
-		notes: "The % passes through as a parameter; escaping is the caller's job via escapeLike.",
+		params: ["%100\\%%"],
+		notes:
+			"sql escapes LIKE metacharacters (%, _, \\) by default, so the % matches literally, as in js.",
 	},
 	{
 		name: "negative-number",

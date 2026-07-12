@@ -105,7 +105,7 @@ describe("SQL", () => {
 
 			const result = toSQL(ast);
 			expect(result.sql).toBe("name LIKE $1");
-			expect(result.params).toEqual(["john"]);
+			expect(result.params).toEqual(["%john%"]);
 		});
 
 		test("boolean value", () => {
@@ -562,6 +562,88 @@ describe("SQL", () => {
 	});
 
 	describe("LIKE Value Mapping", () => {
+		test("default likeMode wraps LIKE values for contains matching", () => {
+			const ast: ASTNode = {
+				type: "comparison",
+				field: "name",
+				operator: "~",
+				value: { type: "string", value: "an" },
+			};
+
+			const result = toSQL(ast);
+			expect(result.sql).toBe("name LIKE $1");
+			expect(result.params).toEqual(["%an%"]);
+		});
+
+		test("default likeMode escapes LIKE metacharacters", () => {
+			const ast: ASTNode = {
+				type: "comparison",
+				field: "name",
+				operator: "~",
+				value: { type: "string", value: "100%" },
+			};
+
+			const result = toSQL(ast);
+			expect(result.sql).toBe("name LIKE $1");
+			expect(result.params).toEqual(["%100\\%%"]);
+		});
+
+		test("likeMode 'raw' passes the value through untouched", () => {
+			const ast: ASTNode = {
+				type: "comparison",
+				field: "name",
+				operator: "~",
+				value: { type: "string", value: "100%" },
+			};
+
+			const result = toSQL(ast, { likeMode: "raw" });
+			expect(result.sql).toBe("name LIKE $1");
+			expect(result.params).toEqual(["100%"]);
+		});
+
+		test("likeMode 'contains' can be set explicitly", () => {
+			const ast: ASTNode = {
+				type: "comparison",
+				field: "name",
+				operator: "~",
+				value: { type: "string", value: "john" },
+			};
+
+			const result = toSQL(ast, { likeMode: "contains" });
+			expect(result.sql).toBe("name LIKE $1");
+			expect(result.params).toEqual(["%john%"]);
+		});
+
+		test("valueMapper takes precedence over likeMode", () => {
+			const ast: ASTNode = {
+				type: "comparison",
+				field: "name",
+				operator: "~",
+				value: { type: "string", value: "john" },
+			};
+
+			const result = toSQL(ast, {
+				likeMode: "raw",
+				valueMapper: prefix,
+			});
+
+			expect(result.sql).toBe("name LIKE $1");
+			expect(result.params).toEqual(["john%"]);
+		});
+
+		test("likeMode does not affect the equals operator", () => {
+			const ast: ASTNode = {
+				type: "comparison",
+				field: "name",
+				operator: "=",
+				value: { type: "string", value: "100%" },
+			};
+
+			const result = toSQL(ast);
+			expect(result.sql).toBe("name = $1");
+			expect(result.params).toEqual(["100%"]);
+		});
+
 		test("valueMapper is applied to LIKE operator", () => {
 			const ast: ASTNode = {
 				type: "comparison",
@@ -737,7 +819,7 @@ describe("SQL", () => {
 
 			const result = toSQL(ast, { parameterStyle: "question" });
 			expect(result.sql).toBe("((price <= ? AND name LIKE ?) AND category IN (?, ?))");
-			expect(result.params).toEqual([100, "laptop", "electronics", "computers"]);
+			expect(result.params).toEqual([100, "%laptop%", "electronics", "computers"]);
 		});
 
 		test("nested NOT with complex conditions", () => {

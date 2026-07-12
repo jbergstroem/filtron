@@ -47,19 +47,35 @@ export interface SQLOptions {
 
 	/**
 	 * Value mapper for LIKE operator (~)
-	 * Allows adding wildcards or escaping special characters
-	 * Applied to the value before parameterization
-	 * @default (value) => value
+	 * Full custom control over the pattern; applied to the value before
+	 * parameterization. When set, it replaces the `likeMode` behavior
+	 * entirely: no default escaping or wildcard wrapping is applied.
+	 * @default undefined
 	 *
 	 * @example
 	 * ```typescript
-	 * // Auto-wrap LIKE values with wildcards for "contains" search
+	 * // Prefix ("starts with") matching instead of the contains default
 	 * toSQL(ast, {
-	 *   valueMapper: (value) => `%${escapeLike(String(value))}%`
+	 *   valueMapper: (value) => `${escapeLike(String(value))}%`
 	 * })
 	 * ```
 	 */
 	valueMapper?: (value: string | number | boolean) => string | number | boolean;
+
+	/**
+	 * How the `~` operator builds its LIKE parameter value
+	 * - 'contains': wrap the value as `%value%`, escaping LIKE
+	 *   metacharacters (%, _, \) first, matching @filtron/js substring
+	 *   semantics
+	 * - 'raw': pass the value through untouched; wildcards and escaping
+	 *   are the caller's responsibility
+	 *
+	 * Precedence: if `valueMapper` is set it is applied and `likeMode` is
+	 * ignored; otherwise 'raw' passes the value through and 'contains'
+	 * applies the default transform.
+	 * @default 'contains'
+	 */
+	likeMode?: "contains" | "raw";
 
 	/**
 	 * Starting parameter index (for numbered parameters)
@@ -75,7 +91,8 @@ interface GeneratorState {
 	params: unknown[];
 	numbered: boolean;
 	fieldMapper: (field: string) => string;
-	valueMapper: (value: string | number | boolean) => string | number | boolean;
+	/** Resolved `~` value transform: valueMapper, identity (raw), or contains */
+	likeValue: (value: string | number | boolean) => string | number | boolean;
 	paramIndex: number;
 }
 
@@ -111,7 +128,7 @@ export function toSQL(ast: ASTNode, options: SQLOptions = {}): SQLResult {
 		params: [],
 		numbered: options.parameterStyle !== "question",
 		fieldMapper: options.fieldMapper ?? identityField,
-		valueMapper: options.valueMapper ?? identityValue,
+		likeValue: options.valueMapper ?? (options.likeMode === "raw" ? identityValue : contains),
 		paramIndex: options.startIndex ?? 1,
 	};
 
@@ -186,10 +203,10 @@ function generateComparison(node: ComparisonExpression, state: GeneratorState): 
 	const field = state.fieldMapper(node.field);
 	const operator = mapComparisonOperator(node.operator);
 
-	// Apply valueMapper for LIKE operator
+	// Apply the resolved LIKE value transform for the ~ operator
 	let value = extractValue(node.value);
 	if (node.operator === "~") {
-		value = state.valueMapper(value);
+		value = state.likeValue(value);
 	}
 
 	const param = addParameter(value, state);
@@ -335,14 +352,14 @@ export function escapeLike(value: string): string {
 /**
  * Wraps a value with wildcards for "contains" matching
  * Automatically escapes special LIKE characters
+ * This is the default `~` value transform (likeMode 'contains')
  *
  * @param value - The value to wrap
  * @returns Value wrapped with % wildcards
  *
  * @example
  * ```typescript
- * toSQL(ast, { valueMapper: contains })
- * // "foo" becomes "%foo%"
+ * contains("foo") // "%foo%"
  * ```
  */
 export function contains(value: string | number | boolean): string {

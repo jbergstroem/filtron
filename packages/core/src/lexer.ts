@@ -16,6 +16,7 @@ export type TokenType =
 	| "QUESTION"
 	| "DOT"
 	| "DOTDOT"
+	| "MINUS"
 	| "AND"
 	| "OR"
 	| "NOT"
@@ -59,6 +60,7 @@ export interface SymbolToken extends TokenBase {
 		| "QUESTION"
 		| "DOT"
 		| "DOTDOT"
+		| "MINUS"
 		| "AND"
 		| "OR"
 		| "NOT"
@@ -529,6 +531,11 @@ export class Lexer {
 				const nextCode = pos + 1 < length ? input.charCodeAt(pos + 1) : 0;
 				if (nextCode >= C.Zero && nextCode <= C.Nine) {
 					return this.readNumber();
+				}
+				// Negated exists: '-' directly before a field name
+				if (nextCode < 128 && CHAR_CLASS[nextCode] === CLS_IDENT) {
+					this.pos = pos + 1;
+					return { type: "MINUS", start: pos, end: pos + 1 };
 				}
 				throw new FiltronParseError(`Unexpected character: '${input[pos]}'`, pos);
 			}

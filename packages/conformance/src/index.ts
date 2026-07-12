@@ -243,6 +243,21 @@ export const cases: ConformanceCase[] = [
 		params: [],
 	},
 	{
+		name: "negated-exists-minus",
+		query: "-email",
+		matches: [2, 3],
+		sql: "email IS NULL",
+		params: [],
+		notes: "Negated exists (#266/#284): matches null and missing values; empty string exists.",
+	},
+	{
+		name: "negated-exists-composes",
+		query: "-email AND suspended",
+		matches: [3],
+		sql: "(email IS NULL AND suspended = $1)",
+		params: [true],
+	},
+	{
 		name: "boolean-shorthand",
 		query: "verified",
 		matches: [1, 3, 4, 6, 7],

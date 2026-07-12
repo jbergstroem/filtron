@@ -48,6 +48,14 @@ describe("Lexer", () => {
 		test("double dot (range)", () => {
 			expect(tokenTypes("..")).toEqual(["DOTDOT", "EOF"]);
 		});
+
+		test("minus before a field name", () => {
+			expect(tokenTypes("-email")).toEqual(["MINUS", "IDENT", "EOF"]);
+		});
+
+		test("minus before a digit is a negative number", () => {
+			expect(tokenTypes("-5")).toEqual(["NUMBER", "EOF"]);
+		});
 	});
 
 	describe("Operators", () => {

@@ -317,6 +317,7 @@ describe("SQL", () => {
 		test("oneOf with multiple values", () => {
 			const ast: ASTNode = {
 				type: "oneOf",
+				negated: false,
 				field: "status",
 				values: [
 					{ type: "string", value: "pending" },
@@ -333,6 +334,7 @@ describe("SQL", () => {
 		test("oneOf with single value", () => {
 			const ast: ASTNode = {
 				type: "oneOf",
+				negated: false,
 				field: "role",
 				values: [{ type: "string", value: "admin" }],
 			};
@@ -345,6 +347,7 @@ describe("SQL", () => {
 		test("oneOf with empty array", () => {
 			const ast: ASTNode = {
 				type: "oneOf",
+				negated: false,
 				field: "status",
 				values: [],
 			};
@@ -357,6 +360,7 @@ describe("SQL", () => {
 		test("oneOf with numbers", () => {
 			const ast: ASTNode = {
 				type: "oneOf",
+				negated: false,
 				field: "priority",
 				values: [
 					{ type: "number", value: 1 },
@@ -372,7 +376,8 @@ describe("SQL", () => {
 
 		test("notOneOf with multiple values", () => {
 			const ast: ASTNode = {
-				type: "notOneOf",
+				type: "oneOf",
+				negated: true,
 				field: "status",
 				values: [
 					{ type: "string", value: "inactive" },
@@ -387,7 +392,8 @@ describe("SQL", () => {
 
 		test("notOneOf with empty array", () => {
 			const ast: ASTNode = {
-				type: "notOneOf",
+				type: "oneOf",
+				negated: true,
 				field: "status",
 				values: [],
 			};
@@ -402,6 +408,7 @@ describe("SQL", () => {
 		test("exists expression", () => {
 			const ast: ASTNode = {
 				type: "exists",
+				negated: false,
 				field: "email",
 			};
 
@@ -413,6 +420,7 @@ describe("SQL", () => {
 		test("nested field exists", () => {
 			const ast: ASTNode = {
 				type: "exists",
+				negated: false,
 				field: "user.profile.avatar",
 			};
 
@@ -520,6 +528,7 @@ describe("SQL", () => {
 		test("numbered parameters beyond the precomputed table", () => {
 			const ast: ASTNode = {
 				type: "oneOf",
+				negated: false,
 				field: "id",
 				values: Array.from({ length: 70 }, (_, i) => ({
 					type: "number" as const,
@@ -579,6 +588,7 @@ describe("SQL", () => {
 					},
 					{
 						type: "oneOf",
+						negated: false,
 						field: "status",
 						values: [
 							{ type: "string", value: "active" },
@@ -847,6 +857,7 @@ describe("SQL", () => {
 					},
 					{
 						type: "oneOf",
+						negated: false,
 						field: "category",
 						values: [
 							{ type: "string", value: "electronics" },

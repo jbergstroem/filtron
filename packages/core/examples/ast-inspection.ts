@@ -12,7 +12,6 @@ function collectFields(node: ASTNode): string[] {
 			return collectFields(node.expression);
 		case "comparison":
 		case "oneOf":
-		case "notOneOf":
 		case "exists":
 		case "booleanField":
 		case "range":

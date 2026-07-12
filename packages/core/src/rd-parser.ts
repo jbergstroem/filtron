@@ -8,7 +8,7 @@
  *   OrExpression      = AndExpression (OR AndExpression)*
  *   AndExpression     = NotExpression (AND NotExpression)*
  *   NotExpression     = NOT NotExpression | PrimaryExpression
- *   PrimaryExpression = '(' OrExpression ')' | FieldExpression
+ *   PrimaryExpression = '(' OrExpression ')' | '-' FieldName | FieldExpression
  *   FieldExpression   = FieldName ('?' | EXISTS | ComparisonOp Value RangeSuffix? | OneOfOp '[' Values ']')?
  *   FieldName         = IDENT ('.' IDENT)*
  *   Value             = STRING | NUMBER | BOOLEAN | DottedIdent
@@ -24,7 +24,6 @@ import type {
 	ComparisonOperator,
 	ComparisonExpression,
 	OneOfExpression,
-	NotOneOfExpression,
 	ExistsExpression,
 	BooleanFieldExpression,
 	RangeExpression,
@@ -163,9 +162,15 @@ class Parser {
 
 	/**
 	 * Parse primary expression (highest precedence)
-	 * PrimaryExpression = '(' OrExpression ')' | FieldExpression
+	 * PrimaryExpression = '(' OrExpression ')' | '-' FieldName | FieldExpression
 	 */
 	private parsePrimaryExpression(): ASTNode {
+		// Field expressions dominate; check IDENT first to keep the common
+		// path at a single comparison
+		if (this.check("IDENT")) {
+			return this.parseFieldExpression();
+		}
+
 		// Parenthesized expression
 		if (this.check("LPAREN")) {
 			this.advance();
@@ -174,6 +179,14 @@ class Parser {
 			return expr;
 		}
 
+		// Negated exists: -field
+		if (this.check("MINUS")) {
+			this.advance();
+			const field = this.parseFieldName();
+			return { type: "exists", field, negated: true } as ExistsExpression;
+		}
+
+		// Not a valid primary; parseFieldExpression reports the error
 		return this.parseFieldExpression();
 	}
 
@@ -188,19 +201,19 @@ class Parser {
 		// Exists check with ? or EXISTS
 		if (t === "QUESTION" || t === "EXISTS") {
 			this.advance();
-			return { type: "exists", field } as ExistsExpression;
+			return { type: "exists", field, negated: false } as ExistsExpression;
 		}
 
-		// OneOf: field : [values]
+		// Membership: field : [values]
 		if (t === "COLON" && this.peekNextIsLBracket()) {
 			this.advance();
-			return this.parseOneOfArray(field, "oneOf");
+			return this.parseOneOfArray(field, false);
 		}
 
-		// NotOneOf: field !: [values]
+		// Negated membership: field !: [values]
 		if (t === "NOT_COLON") {
 			this.advance();
-			return this.parseOneOfArray(field, "notOneOf");
+			return this.parseOneOfArray(field, true);
 		}
 
 		// Comparison with operator
@@ -306,13 +319,10 @@ class Parser {
 	}
 
 	/**
-	 * Parse oneOf/notOneOf array
+	 * Parse membership array
 	 * '[' Values ']'
 	 */
-	private parseOneOfArray(
-		field: string,
-		type: "oneOf" | "notOneOf",
-	): OneOfExpression | NotOneOfExpression {
+	private parseOneOfArray(field: string, negated: boolean): OneOfExpression {
 		this.expect("LBRACKET", "Expected '[' after operator");
 
 		const values: Value[] = [];
@@ -333,7 +343,7 @@ class Parser {
 			throw new FiltronParseError("Array cannot be empty", this.current.start);
 		}
 
-		return { type, field, values };
+		return { type: "oneOf", field, values, negated };
 	}
 
 	/**

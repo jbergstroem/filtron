@@ -11,7 +11,6 @@ import type {
 	NotExpression,
 	ComparisonExpression,
 	OneOfExpression,
-	NotOneOfExpression,
 	ExistsExpression,
 	BooleanFieldExpression,
 	RangeExpression,
@@ -161,8 +160,6 @@ function generateFilter(
 			return generateComparison(node, state);
 		case "oneOf":
 			return generateOneOf(node, state);
-		case "notOneOf":
-			return generateNotOneOf(node, state);
 		case "exists":
 			return generateExists(node, state);
 		case "booleanField":
@@ -532,29 +529,19 @@ function generateMembership(
 }
 
 /**
- * Generates predicate for one-of expression
+ * Generates predicate for membership expression (negated or not)
+ * An empty list matches nothing, so its negation matches everything
  */
 function generateOneOf(
 	node: OneOfExpression,
 	state: GeneratorState,
 ): FilterPredicate<Record<string, unknown>> {
 	const field = resolveField(node.field, state);
-	return generateMembership(field, node.values, state, false, false);
+	return generateMembership(field, node.values, state, node.negated, node.negated);
 }
 
 /**
- * Generates predicate for not-one-of expression
- */
-function generateNotOneOf(
-	node: NotOneOfExpression,
-	state: GeneratorState,
-): FilterPredicate<Record<string, unknown>> {
-	const field = resolveField(node.field, state);
-	return generateMembership(field, node.values, state, true, true);
-}
-
-/**
- * Generates predicate for exists expression
+ * Generates predicate for exists expression (negated or not)
  */
 function generateExists(
 	node: ExistsExpression,
@@ -562,6 +549,18 @@ function generateExists(
 ): FilterPredicate<Record<string, unknown>> {
 	const field = resolveField(node.field, state);
 	const accessor = state.fieldAccessor;
+	if (node.negated) {
+		if (accessor) {
+			return (item) => {
+				const fieldValue = accessor(item, field);
+				return fieldValue === null || fieldValue === undefined;
+			};
+		}
+		return (item) => {
+			const fieldValue = item[field];
+			return fieldValue === null || fieldValue === undefined;
+		};
+	}
 	if (accessor) {
 		return (item) => {
 			const fieldValue = accessor(item, field);

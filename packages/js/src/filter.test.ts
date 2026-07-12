@@ -5,7 +5,6 @@ import type {
 	OrExpression,
 	NotExpression,
 	OneOfExpression,
-	NotOneOfExpression,
 	ExistsExpression,
 	BooleanFieldExpression,
 	RangeExpression,
@@ -211,6 +210,7 @@ describe("toFilter", () => {
 		test("oneOf with values", () => {
 			const ast: OneOfExpression = {
 				type: "oneOf",
+				negated: false,
 				field: "status",
 				values: [
 					{ type: "string", value: "pending" },
@@ -225,6 +225,7 @@ describe("toFilter", () => {
 		test("oneOf with empty array", () => {
 			const ast: OneOfExpression = {
 				type: "oneOf",
+				negated: false,
 				field: "status",
 				values: [],
 			};
@@ -233,8 +234,9 @@ describe("toFilter", () => {
 		});
 
 		test("notOneOf with values", () => {
-			const ast: NotOneOfExpression = {
-				type: "notOneOf",
+			const ast: OneOfExpression = {
+				type: "oneOf",
+				negated: true,
 				field: "status",
 				values: [
 					{ type: "string", value: "deleted" },
@@ -247,8 +249,9 @@ describe("toFilter", () => {
 		});
 
 		test("notOneOf with empty array", () => {
-			const ast: NotOneOfExpression = {
-				type: "notOneOf",
+			const ast: OneOfExpression = {
+				type: "oneOf",
+				negated: true,
 				field: "status",
 				values: [],
 			};
@@ -261,6 +264,7 @@ describe("toFilter", () => {
 		test("exists with present/absent field", () => {
 			const ast: ExistsExpression = {
 				type: "exists",
+				negated: false,
 				field: "email",
 			};
 			const filter = toFilter(ast);
@@ -325,6 +329,7 @@ describe("toFilter", () => {
 		test("case insensitive oneOf", () => {
 			const ast: OneOfExpression = {
 				type: "oneOf",
+				negated: false,
 				field: "color",
 				values: [{ type: "string", value: "Red" }],
 			};
@@ -334,8 +339,9 @@ describe("toFilter", () => {
 		});
 
 		test("case insensitive notOneOf", () => {
-			const ast: NotOneOfExpression = {
-				type: "notOneOf",
+			const ast: OneOfExpression = {
+				type: "oneOf",
+				negated: true,
 				field: "status",
 				values: [{ type: "string", value: "Deleted" }],
 			};
@@ -370,16 +376,16 @@ describe("toFilter", () => {
 		});
 
 		test("validates all expression types", () => {
-			expect(() => toFilter({ type: "exists", field: "x" }, { allowedFields: [] })).toThrow(
-				'Field "x" is not allowed',
-			);
+			expect(() =>
+				toFilter({ type: "exists", negated: false, field: "x" }, { allowedFields: [] }),
+			).toThrow('Field "x" is not allowed');
 
 			expect(() => toFilter({ type: "booleanField", field: "x" }, { allowedFields: [] })).toThrow(
 				'Field "x" is not allowed',
 			);
 
 			expect(() =>
-				toFilter({ type: "oneOf", field: "x", values: [] }, { allowedFields: [] }),
+				toFilter({ type: "oneOf", negated: false, field: "x", values: [] }, { allowedFields: [] }),
 			).toThrow('Field "x" is not allowed');
 
 			expect(() =>
@@ -404,6 +410,7 @@ describe("toFilter", () => {
 		test("nestedAccessor handles missing paths", () => {
 			const ast: ExistsExpression = {
 				type: "exists",
+				negated: false,
 				field: "user.email",
 			};
 			const filter = toFilter(ast, { fieldAccessor: nestedAccessor() });
@@ -527,6 +534,7 @@ describe("toFilter", () => {
 		test("works with oneOf expression", () => {
 			const ast: OneOfExpression = {
 				type: "oneOf",
+				negated: false,
 				field: "user_status",
 				values: [
 					{ type: "string", value: "active" },
@@ -545,6 +553,7 @@ describe("toFilter", () => {
 		test("works with exists expression", () => {
 			const ast: ExistsExpression = {
 				type: "exists",
+				negated: false,
 				field: "user_email",
 			};
 			const filter = toFilter(ast, {
@@ -695,7 +704,7 @@ describe("toFilter", () => {
 		});
 
 		test("exists, booleanField and range with custom accessor", () => {
-			const exists: ExistsExpression = { type: "exists", field: "email" };
+			const exists: ExistsExpression = { type: "exists", negated: false, field: "email" };
 			const boolField: BooleanFieldExpression = { type: "booleanField", field: "verified" };
 			const range: RangeExpression = { type: "range", field: "age", min: 18, max: 65 };
 			const opts = { fieldAccessor: accessor };
@@ -712,13 +721,19 @@ describe("toFilter", () => {
 				{ type: "string" as const, value: "a" },
 				{ type: "string" as const, value: "b" },
 			];
-			const small: OneOfExpression = { type: "oneOf", field: "status", values: smallValues };
+			const small: OneOfExpression = {
+				type: "oneOf",
+				negated: false,
+				field: "status",
+				values: smallValues,
+			};
 			const opts = { fieldAccessor: accessor };
 			expect(toFilter(small, opts)({ status: "a" })).toBe(true);
 			expect(toFilter(small, opts)({ status: "c" })).toBe(false);
 
-			const smallNot: NotOneOfExpression = {
-				type: "notOneOf",
+			const smallNot: OneOfExpression = {
+				type: "oneOf",
+				negated: true,
 				field: "status",
 				values: smallValues,
 			};
@@ -729,12 +744,18 @@ describe("toFilter", () => {
 				type: "string" as const,
 				value: `item${i}`,
 			}));
-			const large: OneOfExpression = { type: "oneOf", field: "status", values: largeValues };
+			const large: OneOfExpression = {
+				type: "oneOf",
+				negated: false,
+				field: "status",
+				values: largeValues,
+			};
 			expect(toFilter(large, opts)({ status: "item3" })).toBe(true);
 			expect(toFilter(large, opts)({ status: "nope" })).toBe(false);
 
-			const largeNot: NotOneOfExpression = {
-				type: "notOneOf",
+			const largeNot: OneOfExpression = {
+				type: "oneOf",
+				negated: true,
 				field: "status",
 				values: largeValues,
 			};
@@ -747,8 +768,8 @@ describe("toFilter", () => {
 				{ type: "string" as const, value: "Alpha" },
 				{ type: "string" as const, value: "Beta" },
 			];
-			const oneOf: OneOfExpression = { type: "oneOf", field: "status", values };
-			const notOneOf: NotOneOfExpression = { type: "notOneOf", field: "status", values };
+			const oneOf: OneOfExpression = { type: "oneOf", negated: false, field: "status", values };
+			const notOneOf: OneOfExpression = { type: "oneOf", negated: true, field: "status", values };
 			const opts = { fieldAccessor: accessor, caseInsensitive: true };
 			expect(toFilter(oneOf, opts)({ status: "ALPHA" })).toBe(true);
 			expect(toFilter(oneOf, opts)({ status: "gamma" })).toBe(false);
@@ -759,9 +780,15 @@ describe("toFilter", () => {
 				type: "string" as const,
 				value: `Item${i}`,
 			}));
-			const largeOneOf: OneOfExpression = { type: "oneOf", field: "status", values: largeValues };
-			const largeNotOneOf: NotOneOfExpression = {
-				type: "notOneOf",
+			const largeOneOf: OneOfExpression = {
+				type: "oneOf",
+				negated: false,
+				field: "status",
+				values: largeValues,
+			};
+			const largeNotOneOf: OneOfExpression = {
+				type: "oneOf",
+				negated: true,
 				field: "status",
 				values: largeValues,
 			};
@@ -820,6 +847,7 @@ describe("toFilter", () => {
 	describe("Small Membership Specialization", () => {
 		const oneOfWith = (count: number): OneOfExpression => ({
 			type: "oneOf",
+			negated: false,
 			field: "status",
 			values: Array.from({ length: count }, (_, i) => ({
 				type: "string" as const,
@@ -836,8 +864,9 @@ describe("toFilter", () => {
 		});
 
 		test.each([1, 2, 3, 4])("notOneOf with %i values", (n) => {
-			const ast: NotOneOfExpression = {
-				type: "notOneOf",
+			const ast: OneOfExpression = {
+				type: "oneOf",
+				negated: true,
 				field: "status",
 				values: oneOfWith(n).values,
 			};
@@ -872,7 +901,7 @@ describe("toFilter", () => {
 				type: "string" as const,
 				value: `item${i}`,
 			}));
-			const ast: OneOfExpression = { type: "oneOf", field: "status", values };
+			const ast: OneOfExpression = { type: "oneOf", negated: false, field: "status", values };
 			const filter = toFilter(ast);
 			expect(filter({ status: "item0" })).toBe(true);
 			expect(filter({ status: "item14" })).toBe(true);
@@ -884,7 +913,7 @@ describe("toFilter", () => {
 				type: "string" as const,
 				value: `Item${i}`,
 			}));
-			const ast: OneOfExpression = { type: "oneOf", field: "status", values };
+			const ast: OneOfExpression = { type: "oneOf", negated: false, field: "status", values };
 			const filter = toFilter(ast, { caseInsensitive: true });
 			expect(filter({ status: "item0" })).toBe(true);
 			expect(filter({ status: "ITEM0" })).toBe(true);
@@ -896,7 +925,7 @@ describe("toFilter", () => {
 				type: "string" as const,
 				value: `item${i}`,
 			}));
-			const ast: NotOneOfExpression = { type: "notOneOf", field: "status", values };
+			const ast: OneOfExpression = { type: "oneOf", negated: true, field: "status", values };
 			const filter = toFilter(ast);
 			expect(filter({ status: "allowed" })).toBe(true);
 			expect(filter({ status: "item0" })).toBe(false);
@@ -907,7 +936,7 @@ describe("toFilter", () => {
 				type: "string" as const,
 				value: `Item${i}`,
 			}));
-			const ast: NotOneOfExpression = { type: "notOneOf", field: "status", values };
+			const ast: OneOfExpression = { type: "oneOf", negated: true, field: "status", values };
 			const filter = toFilter(ast, { caseInsensitive: true });
 			expect(filter({ status: "allowed" })).toBe(true);
 			expect(filter({ status: "ITEM0" })).toBe(false);

@@ -16,6 +16,7 @@
  *   RangeSuffix       = '..' NUMBER
  */
 
+import { FiltronParseError } from "./errors";
 import { Lexer, type Token, type TokenType, type StringToken, type NumberToken } from "./lexer";
 import type {
 	ASTNode,
@@ -28,19 +29,6 @@ import type {
 	BooleanFieldExpression,
 	RangeExpression,
 } from "./types";
-
-/**
- * Parser error with position information
- */
-export class ParseError extends Error {
-	constructor(
-		message: string,
-		public position: number,
-	) {
-		super(message);
-		this.name = "ParseError";
-	}
-}
 
 /**
  * Parser for Filtron queries
@@ -82,7 +70,7 @@ class Parser {
 	private expect(type: TokenType, message?: string): Token {
 		if (this.current.type !== type) {
 			const msg = message ?? `Expected ${type}, got ${this.current.type}`;
-			throw new ParseError(msg, this.current.start);
+			throw new FiltronParseError(msg, this.current.start);
 		}
 		return this.advance();
 	}
@@ -92,13 +80,13 @@ class Parser {
 	 */
 	parse(): ASTNode {
 		if (this.check("EOF")) {
-			throw new ParseError("Empty query", 0);
+			throw new FiltronParseError("Empty query", 0);
 		}
 
 		const result = this.parseOrExpression();
 
 		if (!this.check("EOF")) {
-			throw new ParseError(`Unexpected token: ${this.current.type}`, this.current.start);
+			throw new FiltronParseError(`Unexpected token: ${this.current.type}`, this.current.start);
 		}
 
 		return result;
@@ -273,7 +261,7 @@ class Parser {
 			case "COLON":
 				return ":";
 			default:
-				throw new ParseError(`Invalid operator: ${token.type}`, token.start);
+				throw new FiltronParseError(`Invalid operator: ${token.type}`, token.start);
 		}
 	}
 
@@ -319,7 +307,7 @@ class Parser {
 		this.expect("RBRACKET", "Expected ']' to close array");
 
 		if (values.length === 0) {
-			throw new ParseError("Array cannot be empty", this.current.start);
+			throw new FiltronParseError("Array cannot be empty", this.current.start);
 		}
 
 		return { type, field, values };
@@ -368,7 +356,7 @@ class Parser {
 			return { type: "identifier", value };
 		}
 
-		throw new ParseError(`Expected value, got ${t}`, this.current.start);
+		throw new FiltronParseError(`Expected value, got ${t}`, this.current.start);
 	}
 }
 
@@ -377,7 +365,7 @@ class Parser {
  *
  * @param input - The query string to parse
  * @returns The parsed AST
- * @throws ParseError if the query is invalid
+ * @throws FiltronParseError if the query is invalid
  */
 export function parseQuery(input: string): ASTNode {
 	const parser = new Parser(input);

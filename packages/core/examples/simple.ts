@@ -8,5 +8,5 @@ const result = parse('status = "active" AND age >= 18');
 if (result.success) {
 	console.log(result.ast);
 } else {
-	console.error(result.error);
+	console.error(result.message);
 }

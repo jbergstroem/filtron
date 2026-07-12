@@ -3,11 +3,11 @@
 
 import { parse, parseOrThrow, FiltronParseError } from "../src/index";
 
-// Using parse() - returns a result object with success/error
+// Using parse() - returns a result object with success/message
 const result = parse("invalid === query");
 
 if (!result.success) {
-	console.log("Parse failed:", result.error);
+	console.log("Parse failed:", result.message);
 	if (result.position !== undefined) {
 		console.log("Error position:", result.position);
 	}

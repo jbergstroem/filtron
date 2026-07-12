@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { Lexer, LexerError, type Token, type TokenType } from "./lexer";
+import { FiltronParseError } from "./errors";
+import { Lexer, type Token, type TokenType } from "./lexer";
 
 /**
  * Helper to tokenize a complete input string
@@ -211,12 +212,12 @@ describe("Lexer", () => {
 
 		test("unterminated string throws error", () => {
 			const lexer = new Lexer('"unterminated');
-			expect(() => lexer.next()).toThrow(LexerError);
+			expect(() => lexer.next()).toThrow(FiltronParseError);
 			try {
 				const lexer2 = new Lexer('"unterminated');
 				lexer2.next();
 			} catch (error) {
-				expect(error).toBeInstanceOf(LexerError);
+				expect(error).toBeInstanceOf(FiltronParseError);
 				expect((error as Error).message).toBe("Unterminated string literal");
 			}
 		});
@@ -297,7 +298,7 @@ describe("Lexer", () => {
 	describe("Error Handling", () => {
 		test("unexpected character", () => {
 			const lexer = new Lexer("@");
-			expect(() => lexer.next()).toThrow(LexerError);
+			expect(() => lexer.next()).toThrow(FiltronParseError);
 			expect(() => lexer.next()).toThrow("Unexpected character: '@'");
 		});
 
@@ -308,8 +309,8 @@ describe("Lexer", () => {
 				lexer.next();
 				expect(true).toBe(false); // should not reach here
 			} catch (error) {
-				expect(error).toBeInstanceOf(LexerError);
-				expect((error as LexerError).position).toBe(6);
+				expect(error).toBeInstanceOf(FiltronParseError);
+				expect((error as FiltronParseError).position).toBe(6);
 			}
 		});
 	});

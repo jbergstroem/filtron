@@ -2,23 +2,11 @@
  * The Filtron parser public API
  */
 
-import { LexerError } from "./lexer";
-import { parseQuery, ParseError as RDParseError } from "./rd-parser";
+import { FiltronParseError } from "./errors";
+import { parseQuery } from "./rd-parser";
 import type { ASTNode } from "./types";
 
-/**
- * Error thrown by parseOrThrow when parsing fails.
- * Includes the position in the query where the error occurred.
- */
-export class FiltronParseError extends Error {
-	constructor(
-		message: string,
-		public position?: number,
-	) {
-		super(message);
-		this.name = "FiltronParseError";
-	}
-}
+export { FiltronParseError } from "./errors";
 
 /**
  * Result of a successful parse operation
@@ -31,9 +19,8 @@ export interface ParseSuccess {
 /**
  * Result of a failed parse operation
  */
-export interface ParseError {
+export interface ParseFailure {
 	success: false;
-	error: string;
 	message: string;
 	position?: number;
 }
@@ -41,7 +28,7 @@ export interface ParseError {
 /**
  * The generic parse result
  */
-export type ParseResult = ParseSuccess | ParseError;
+export type ParseResult = ParseSuccess | ParseFailure;
 
 /**
  * Parses a Filtron query string into an Abstract Syntax Tree (AST).
@@ -55,7 +42,7 @@ export type ParseResult = ParseSuccess | ParseError;
  * if (result.success) {
  *   console.log(result.ast);
  * } else {
- *   console.error(result.error);
+ *   console.error(result.message);
  * }
  * ```
  */
@@ -67,23 +54,17 @@ export const parse = (query: string): ParseResult => {
 			ast,
 		};
 	} catch (error) {
-		let message: string;
-		let position: number | undefined;
-
-		if (error instanceof RDParseError || error instanceof LexerError) {
-			message = error.message;
-			position = error.position;
-		} else if (error instanceof Error) {
-			message = error.message;
-		} else {
-			message = String(error);
+		if (error instanceof FiltronParseError) {
+			return {
+				success: false,
+				message: error.message,
+				position: error.position,
+			};
 		}
 
 		return {
 			success: false,
-			error: message,
-			message,
-			position,
+			message: error instanceof Error ? error.message : String(error),
 		};
 	}
 };
@@ -109,11 +90,13 @@ export const parse = (query: string): ParseResult => {
  * ```
  */
 export const parseOrThrow = (query: string): ASTNode => {
-	const result = parse(query);
+	try {
+		return parseQuery(query);
+	} catch (error) {
+		if (error instanceof FiltronParseError) {
+			throw error;
+		}
 
-	if (result.success) {
-		return result.ast;
+		throw new FiltronParseError(error instanceof Error ? error.message : String(error));
 	}
-
-	throw new FiltronParseError(`Failed to parse Filtron query: ${result.error}`, result.position);
 };

@@ -137,7 +137,7 @@ ${examplesSection}
 
 \`parse()\` returns a result object:
 - On success: \`{ success: true, ast: ASTNode }\`
-- On failure: \`{ success: false, error: string, position: number }\`
+- On failure: \`{ success: false, message: string, position?: number }\`
 
 \`parseOrThrow()\` throws \`FiltronParseError\` with \`message\` and \`position\` properties.
 

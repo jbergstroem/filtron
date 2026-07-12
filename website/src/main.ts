@@ -163,7 +163,7 @@ function init(): void {
 		} else {
 			if (result.position !== undefined) {
 				filterHighlighted.innerHTML = toHtmlWithError(expression, result.position);
-				errorTooltip.textContent = result.error;
+				errorTooltip.textContent = result.message;
 				errorTooltip.hidden = false;
 			}
 			grid.applyFilter(null);

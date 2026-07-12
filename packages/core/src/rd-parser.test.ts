@@ -1,5 +1,6 @@
 import { describe, test, expect } from "bun:test";
-import { parseQuery, ParseError } from "./rd-parser";
+import { FiltronParseError } from "./errors";
+import { parseQuery } from "./rd-parser";
 import type {
 	ComparisonExpression,
 	OrExpression,
@@ -271,42 +272,42 @@ describe("RD Parser", () => {
 
 	describe("Error Handling", () => {
 		test("empty query throws error", () => {
-			expect(() => parseQuery("")).toThrow(ParseError);
+			expect(() => parseQuery("")).toThrow(FiltronParseError);
 			expect(() => parseQuery("")).toThrow("Empty query");
 		});
 
 		test("unexpected token throws error", () => {
-			expect(() => parseQuery("age > 18 AND")).toThrow(ParseError);
+			expect(() => parseQuery("age > 18 AND")).toThrow(FiltronParseError);
 		});
 
 		test("unmatched parentheses throws error", () => {
-			expect(() => parseQuery("(age > 18")).toThrow(ParseError);
+			expect(() => parseQuery("(age > 18")).toThrow(FiltronParseError);
 			expect(() => parseQuery("(age > 18")).toThrow("Expected closing parenthesis");
 		});
 
 		test("empty array throws error", () => {
-			expect(() => parseQuery("status : []")).toThrow(ParseError);
+			expect(() => parseQuery("status : []")).toThrow(FiltronParseError);
 			expect(() => parseQuery("status : []")).toThrow("Array cannot be empty");
 		});
 
 		test("unclosed array throws error", () => {
-			expect(() => parseQuery('status : ["active"')).toThrow(ParseError);
+			expect(() => parseQuery('status : ["active"')).toThrow(FiltronParseError);
 		});
 
 		test("missing value in comparison throws error", () => {
-			expect(() => parseQuery("age >")).toThrow(ParseError);
+			expect(() => parseQuery("age >")).toThrow(FiltronParseError);
 		});
 
 		test("invalid token sequence throws error", () => {
-			expect(() => parseQuery("= =")).toThrow(ParseError);
+			expect(() => parseQuery("= =")).toThrow(FiltronParseError);
 		});
 
 		test("error includes position", () => {
 			try {
 				parseQuery("age > ");
 			} catch (error) {
-				expect(error).toBeInstanceOf(ParseError);
-				expect((error as ParseError).position).toBeGreaterThanOrEqual(0);
+				expect(error).toBeInstanceOf(FiltronParseError);
+				expect((error as FiltronParseError).position).toBeGreaterThanOrEqual(0);
 			}
 		});
 	});

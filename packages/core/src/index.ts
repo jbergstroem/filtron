@@ -14,10 +14,10 @@
 
 // Parser functions
 export { parse, parseOrThrow, FiltronParseError } from "./parser";
-export type { ParseResult, ParseSuccess, ParseError } from "./parser";
+export type { ParseResult, ParseSuccess, ParseFailure } from "./parser";
 
 // Lexer for tokenization
-export { Lexer, LexerError } from "./lexer";
+export { Lexer } from "./lexer";
 export type {
 	Token,
 	TokenType,

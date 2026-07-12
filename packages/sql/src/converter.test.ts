@@ -139,18 +139,20 @@ describe("SQL", () => {
 		test("AND expression", () => {
 			const ast: ASTNode = {
 				type: "and",
-				left: {
-					type: "comparison",
-					field: "age",
-					operator: ">",
-					value: { type: "number", value: 18 },
-				},
-				right: {
-					type: "comparison",
-					field: "status",
-					operator: "=",
-					value: { type: "string", value: "active" },
-				},
+				children: [
+					{
+						type: "comparison",
+						field: "age",
+						operator: ">",
+						value: { type: "number", value: 18 },
+					},
+					{
+						type: "comparison",
+						field: "status",
+						operator: "=",
+						value: { type: "string", value: "active" },
+					},
+				],
 			};
 
 			const result = toSQL(ast);
@@ -158,21 +160,43 @@ describe("SQL", () => {
 			expect(result.params).toEqual([18, "active"]);
 		});
 
+		test("AND chain renders flat", () => {
+			const ast: ASTNode = {
+				type: "and",
+				children: [
+					{ type: "booleanField", field: "verified" },
+					{ type: "booleanField", field: "premium" },
+					{
+						type: "comparison",
+						field: "age",
+						operator: ">",
+						value: { type: "number", value: 21 },
+					},
+				],
+			};
+
+			const result = toSQL(ast);
+			expect(result.sql).toBe("(verified = $1 AND premium = $2 AND age > $3)");
+			expect(result.params).toEqual([true, true, 21]);
+		});
+
 		test("OR expression", () => {
 			const ast: ASTNode = {
 				type: "or",
-				left: {
-					type: "comparison",
-					field: "role",
-					operator: "=",
-					value: { type: "string", value: "admin" },
-				},
-				right: {
-					type: "comparison",
-					field: "role",
-					operator: "=",
-					value: { type: "string", value: "moderator" },
-				},
+				children: [
+					{
+						type: "comparison",
+						field: "role",
+						operator: "=",
+						value: { type: "string", value: "admin" },
+					},
+					{
+						type: "comparison",
+						field: "role",
+						operator: "=",
+						value: { type: "string", value: "moderator" },
+					},
+				],
 			};
 
 			const result = toSQL(ast);
@@ -199,27 +223,31 @@ describe("SQL", () => {
 		test("complex nested expression", () => {
 			const ast: ASTNode = {
 				type: "and",
-				left: {
-					type: "or",
-					left: {
-						type: "comparison",
-						field: "role",
-						operator: "=",
-						value: { type: "string", value: "admin" },
+				children: [
+					{
+						type: "or",
+						children: [
+							{
+								type: "comparison",
+								field: "role",
+								operator: "=",
+								value: { type: "string", value: "admin" },
+							},
+							{
+								type: "comparison",
+								field: "role",
+								operator: "=",
+								value: { type: "string", value: "moderator" },
+							},
+						],
 					},
-					right: {
+					{
 						type: "comparison",
-						field: "role",
+						field: "status",
 						operator: "=",
-						value: { type: "string", value: "moderator" },
+						value: { type: "string", value: "active" },
 					},
-				},
-				right: {
-					type: "comparison",
-					field: "status",
-					operator: "=",
-					value: { type: "string", value: "active" },
-				},
+				],
 			};
 
 			const result = toSQL(ast);
@@ -409,14 +437,16 @@ describe("SQL", () => {
 		test("boolean field with AND", () => {
 			const ast: ASTNode = {
 				type: "and",
-				left: {
-					type: "booleanField",
-					field: "verified",
-				},
-				right: {
-					type: "booleanField",
-					field: "premium",
-				},
+				children: [
+					{
+						type: "booleanField",
+						field: "verified",
+					},
+					{
+						type: "booleanField",
+						field: "premium",
+					},
+				],
 			};
 
 			const result = toSQL(ast);
@@ -429,18 +459,20 @@ describe("SQL", () => {
 		test("numbered parameters (PostgreSQL style)", () => {
 			const ast: ASTNode = {
 				type: "and",
-				left: {
-					type: "comparison",
-					field: "age",
-					operator: ">",
-					value: { type: "number", value: 18 },
-				},
-				right: {
-					type: "comparison",
-					field: "status",
-					operator: "=",
-					value: { type: "string", value: "active" },
-				},
+				children: [
+					{
+						type: "comparison",
+						field: "age",
+						operator: ">",
+						value: { type: "number", value: 18 },
+					},
+					{
+						type: "comparison",
+						field: "status",
+						operator: "=",
+						value: { type: "string", value: "active" },
+					},
+				],
 			};
 
 			const result = toSQL(ast, { parameterStyle: "numbered" });
@@ -451,18 +483,20 @@ describe("SQL", () => {
 		test("question mark parameters (MySQL/SQLite style)", () => {
 			const ast: ASTNode = {
 				type: "and",
-				left: {
-					type: "comparison",
-					field: "age",
-					operator: ">",
-					value: { type: "number", value: 18 },
-				},
-				right: {
-					type: "comparison",
-					field: "status",
-					operator: "=",
-					value: { type: "string", value: "active" },
-				},
+				children: [
+					{
+						type: "comparison",
+						field: "age",
+						operator: ">",
+						value: { type: "number", value: 18 },
+					},
+					{
+						type: "comparison",
+						field: "status",
+						operator: "=",
+						value: { type: "string", value: "active" },
+					},
+				],
 			};
 
 			const result = toSQL(ast, { parameterStyle: "question" });
@@ -536,20 +570,22 @@ describe("SQL", () => {
 		test("field mapper with complex nested expression", () => {
 			const ast: ASTNode = {
 				type: "and",
-				left: {
-					type: "comparison",
-					field: "age",
-					operator: ">",
-					value: { type: "number", value: 18 },
-				},
-				right: {
-					type: "oneOf",
-					field: "status",
-					values: [
-						{ type: "string", value: "active" },
-						{ type: "string", value: "pending" },
-					],
-				},
+				children: [
+					{
+						type: "comparison",
+						field: "age",
+						operator: ">",
+						value: { type: "number", value: 18 },
+					},
+					{
+						type: "oneOf",
+						field: "status",
+						values: [
+							{ type: "string", value: "active" },
+							{ type: "string", value: "pending" },
+						],
+					},
+				],
 			};
 
 			const result = toSQL(ast, {
@@ -727,18 +763,20 @@ describe("SQL", () => {
 		test("valueMapper with multiple LIKE conditions", () => {
 			const ast: ASTNode = {
 				type: "and",
-				left: {
-					type: "comparison",
-					field: "firstName",
-					operator: "~",
-					value: { type: "string", value: "john" },
-				},
-				right: {
-					type: "comparison",
-					field: "lastName",
-					operator: "~",
-					value: { type: "string", value: "doe" },
-				},
+				children: [
+					{
+						type: "comparison",
+						field: "firstName",
+						operator: "~",
+						value: { type: "string", value: "john" },
+					},
+					{
+						type: "comparison",
+						field: "lastName",
+						operator: "~",
+						value: { type: "string", value: "doe" },
+					},
+				],
 			};
 
 			const result = toSQL(ast, {
@@ -752,99 +790,104 @@ describe("SQL", () => {
 
 	describe("Complex Real-world Queries", () => {
 		test("user filtering query", () => {
+			// age >= 18 AND verified AND (role = "admin" OR role = "moderator")
 			const ast: ASTNode = {
 				type: "and",
-				left: {
-					type: "and",
-					left: {
+				children: [
+					{
 						type: "comparison",
 						field: "age",
 						operator: ">=",
 						value: { type: "number", value: 18 },
 					},
-					right: {
+					{
 						type: "booleanField",
 						field: "verified",
 					},
-				},
-				right: {
-					type: "or",
-					left: {
-						type: "comparison",
-						field: "role",
-						operator: "=",
-						value: { type: "string", value: "admin" },
+					{
+						type: "or",
+						children: [
+							{
+								type: "comparison",
+								field: "role",
+								operator: "=",
+								value: { type: "string", value: "admin" },
+							},
+							{
+								type: "comparison",
+								field: "role",
+								operator: "=",
+								value: { type: "string", value: "moderator" },
+							},
+						],
 					},
-					right: {
-						type: "comparison",
-						field: "role",
-						operator: "=",
-						value: { type: "string", value: "moderator" },
-					},
-				},
+				],
 			};
 
 			const result = toSQL(ast);
-			expect(result.sql).toBe("((age >= $1 AND verified = $2) AND (role = $3 OR role = $4))");
+			expect(result.sql).toBe("(age >= $1 AND verified = $2 AND (role = $3 OR role = $4))");
 			expect(result.params).toEqual([18, true, "admin", "moderator"]);
 		});
 
 		test("product search query", () => {
 			const ast: ASTNode = {
 				type: "and",
-				left: {
-					type: "and",
-					left: {
+				children: [
+					{
 						type: "comparison",
 						field: "price",
 						operator: "<=",
 						value: { type: "number", value: 100 },
 					},
-					right: {
+					{
 						type: "comparison",
 						field: "name",
 						operator: "~",
 						value: { type: "string", value: "laptop" },
 					},
-				},
-				right: {
-					type: "oneOf",
-					field: "category",
-					values: [
-						{ type: "string", value: "electronics" },
-						{ type: "string", value: "computers" },
-					],
-				},
+					{
+						type: "oneOf",
+						field: "category",
+						values: [
+							{ type: "string", value: "electronics" },
+							{ type: "string", value: "computers" },
+						],
+					},
+				],
 			};
 
 			const result = toSQL(ast, { parameterStyle: "question" });
-			expect(result.sql).toBe("((price <= ? AND name LIKE ?) AND category IN (?, ?))");
+			expect(result.sql).toBe("(price <= ? AND name LIKE ? AND category IN (?, ?))");
 			expect(result.params).toEqual([100, "%laptop%", "electronics", "computers"]);
 		});
 
 		test("nested NOT with complex conditions", () => {
 			const ast: ASTNode = {
 				type: "and",
-				left: {
-					type: "comparison",
-					field: "status",
-					operator: "=",
-					value: { type: "string", value: "active" },
-				},
-				right: {
-					type: "not",
-					expression: {
-						type: "or",
-						left: {
-							type: "booleanField",
-							field: "suspended",
-						},
-						right: {
-							type: "booleanField",
-							field: "deleted",
+				children: [
+					{
+						type: "comparison",
+						field: "status",
+						operator: "=",
+						value: { type: "string", value: "active" },
+					},
+					{
+						type: "not",
+						expression: {
+							type: "or",
+							children: [
+								{
+									type: "booleanField",
+									field: "suspended",
+								},
+								{
+									type: "booleanField",
+									field: "deleted",
+								},
+							],
 						},
 					},
-				},
+				],
 			};
 
 			const result = toSQL(ast);

@@ -7,7 +7,7 @@ function collectFields(node: ASTNode): string[] {
 	switch (node.type) {
 		case "or":
 		case "and":
-			return [...collectFields(node.left), ...collectFields(node.right)];
+			return node.children.flatMap(collectFields);
 		case "not":
 			return collectFields(node.expression);
 		case "comparison":

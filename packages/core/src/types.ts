@@ -27,21 +27,27 @@ export type Value = StringValue | NumberValue | BooleanValue | IdentifierValue;
 export type ComparisonOperator = "=" | "!=" | "~" | ">" | ">=" | "<" | "<=" | ":";
 
 /**
- * Logical OR expression - combines two expressions with OR
+ * Logical OR expression - combines two or more expressions with OR
+ *
+ * Chains are flat: children always has at least two entries and never
+ * contains another OrExpression. The parser splices nested OR chains
+ * (including parenthesized ones) into a single node.
  */
 export interface OrExpression {
 	type: "or";
-	left: ASTNode;
-	right: ASTNode;
+	children: ASTNode[];
 }
 
 /**
- * Logical AND expression - combines two expressions with AND
+ * Logical AND expression - combines two or more expressions with AND
+ *
+ * Chains are flat: children always has at least two entries and never
+ * contains another AndExpression. The parser splices nested AND chains
+ * (including parenthesized ones) into a single node.
  */
 export interface AndExpression {
 	type: "and";
-	left: ASTNode;
-	right: ASTNode;
+	children: ASTNode[];
 }
 
 /**

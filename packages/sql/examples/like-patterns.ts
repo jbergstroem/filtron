@@ -1,32 +1,37 @@
-// Using LIKE patterns with automatic wildcard helpers.
+// LIKE pattern behavior for the contains operator (~).
 // Run with: bun run examples/like-patterns.ts
 
 import { parseOrThrow } from "@filtron/core";
-import { toSQL, contains, prefix, suffix, escapeLike } from "../src/converter";
+import { toSQL, prefix, suffix, escapeLike } from "../src/converter";
 
 const ast = parseOrThrow('name ~ "john"');
 
-// Manual wildcards in the query string
-const manual = toSQL(parseOrThrow('name ~ "%john%"'));
-console.log("Manual:", manual.sql, manual.params);
+// Default: ~ means contains. The value is wrapped in % wildcards
+// with LIKE metacharacters escaped, matching @filtron/js semantics.
+const contains = toSQL(ast);
+console.log("Contains (default):", contains.sql, contains.params);
 // Output: name LIKE $1 ["%john%"]
 
-// Using contains() helper - wraps with % on both sides
-const containsResult = toSQL(ast, { valueMapper: contains });
-console.log("Contains:", containsResult.sql, containsResult.params);
-// Output: name LIKE $1 ["%john%"]
+// Metacharacters in the value are escaped so they match literally
+const escaped = toSQL(parseOrThrow('name ~ "100%"'));
+console.log("Escaped:", escaped.sql, escaped.params);
+// Output: name LIKE $1 ["%100\\%%"]
 
-// Using prefix() helper - for "starts with" queries
+// likeMode "raw" passes the value through untouched;
+// wildcards and escaping are up to the caller
+const raw = toSQL(parseOrThrow('name ~ "john%"'), { likeMode: "raw" });
+console.log("Raw:", raw.sql, raw.params);
+// Output: name LIKE $1 ["john%"]
+
+// valueMapper gives full control and takes precedence over likeMode
 const prefixResult = toSQL(ast, { valueMapper: prefix });
 console.log("Prefix:", prefixResult.sql, prefixResult.params);
 // Output: name LIKE $1 ["john%"]
 
-// Using suffix() helper - for "ends with" queries
 const suffixResult = toSQL(ast, { valueMapper: suffix });
 console.log("Suffix:", suffixResult.sql, suffixResult.params);
 // Output: name LIKE $1 ["%john"]
 
-// escapeLike() prevents LIKE injection when user input contains % or _
-const userInput = "100%_match";
-console.log("Escaped:", escapeLike(userInput));
+// escapeLike() escapes %, _ and \ for custom patterns
+console.log("escapeLike:", escapeLike("100%_match"));
 // Output: 100\%\_match

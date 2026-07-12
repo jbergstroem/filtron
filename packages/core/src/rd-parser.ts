@@ -107,33 +107,56 @@ class Parser {
 	/**
 	 * Parse OR expression
 	 * OrExpression = AndExpression (OR AndExpression)*
+	 *
+	 * Chains build a single flat node. An operand that is itself an OR
+	 * (only possible through parentheses) is spliced in, so children never
+	 * contain a direct OR child.
 	 */
 	private parseOrExpression(): ASTNode {
-		let left = this.parseAndExpression();
-
-		while (this.check("OR")) {
-			this.advance();
-			const right = this.parseAndExpression();
-			left = { type: "or", left, right };
+		const first = this.parseAndExpression();
+		if (!this.check("OR")) {
+			return first;
 		}
 
-		return left;
+		const children: ASTNode[] = first.type === "or" ? [...first.children] : [first];
+		while (this.check("OR")) {
+			this.advance();
+			const operand = this.parseAndExpression();
+			if (operand.type === "or") {
+				children.push(...operand.children);
+			} else {
+				children.push(operand);
+			}
+		}
+
+		return { type: "or", children };
 	}
 
 	/**
 	 * Parse AND expression
 	 * AndExpression = NotExpression (AND NotExpression)*
+	 *
+	 * Chains build a single flat node, splicing parenthesized AND operands
+	 * like parseOrExpression does.
 	 */
 	private parseAndExpression(): ASTNode {
-		let left = this.parseNotExpression();
-
-		while (this.check("AND")) {
-			this.advance();
-			const right = this.parseNotExpression();
-			left = { type: "and", left, right };
+		const first = this.parseNotExpression();
+		if (!this.check("AND")) {
+			return first;
 		}
 
-		return left;
+		const children: ASTNode[] = first.type === "and" ? [...first.children] : [first];
+		while (this.check("AND")) {
+			this.advance();
+			const operand = this.parseNotExpression();
+			if (operand.type === "and") {
+				children.push(...operand.children);
+			} else {
+				children.push(operand);
+			}
+		}
+
+		return { type: "and", children };
 	}
 
 	/**

@@ -181,15 +181,15 @@ describe("RD Parser", () => {
 		test("AND expression", () => {
 			const ast = parseQuery("a AND b") as AndExpression;
 			expect(ast.type).toBe("and");
-			expect((ast.left as BooleanFieldExpression).field).toBe("a");
-			expect((ast.right as BooleanFieldExpression).field).toBe("b");
+			expect((ast.children[0] as BooleanFieldExpression).field).toBe("a");
+			expect((ast.children[1] as BooleanFieldExpression).field).toBe("b");
 		});
 
 		test("OR expression", () => {
 			const ast = parseQuery("a OR b") as OrExpression;
 			expect(ast.type).toBe("or");
-			expect((ast.left as BooleanFieldExpression).field).toBe("a");
-			expect((ast.right as BooleanFieldExpression).field).toBe("b");
+			expect((ast.children[0] as BooleanFieldExpression).field).toBe("a");
+			expect((ast.children[1] as BooleanFieldExpression).field).toBe("b");
 		});
 
 		test("NOT expression", () => {
@@ -198,17 +198,27 @@ describe("RD Parser", () => {
 			expect((ast.expression as BooleanFieldExpression).field).toBe("suspended");
 		});
 
-		test("multiple AND operators (left-associative)", () => {
+		test("multiple AND operators (flat chain)", () => {
 			const ast = parseQuery("a AND b AND c") as AndExpression;
 			expect(ast.type).toBe("and");
-			expect((ast.left as AndExpression).type).toBe("and");
-			expect((ast.right as BooleanFieldExpression).field).toBe("c");
+			expect(ast.children).toHaveLength(3);
+			expect(ast.children.map((c) => (c as BooleanFieldExpression).field)).toEqual(["a", "b", "c"]);
 		});
 
-		test("multiple OR operators (left-associative)", () => {
+		test("multiple OR operators (flat chain)", () => {
 			const ast = parseQuery("a OR b OR c") as OrExpression;
 			expect(ast.type).toBe("or");
-			expect((ast.left as OrExpression).type).toBe("or");
+			expect(ast.children).toHaveLength(3);
+		});
+
+		test("parenthesized same-type chains are spliced flat", () => {
+			const left = parseQuery("(a AND b) AND c AND (d AND e)") as AndExpression;
+			expect(left.children).toHaveLength(5);
+			expect(left.children.every((c) => c.type === "booleanField")).toBe(true);
+
+			const right = parseQuery("a OR (b OR c)") as OrExpression;
+			expect(right.children).toHaveLength(3);
+			expect(right.children.every((c) => c.type === "booleanField")).toBe(true);
 		});
 	});
 
@@ -216,15 +226,15 @@ describe("RD Parser", () => {
 		test("AND has higher precedence than OR", () => {
 			const ast = parseQuery("a OR b AND c") as OrExpression;
 			expect(ast.type).toBe("or");
-			expect((ast.left as BooleanFieldExpression).field).toBe("a");
-			expect((ast.right as AndExpression).type).toBe("and");
+			expect((ast.children[0] as BooleanFieldExpression).field).toBe("a");
+			expect((ast.children[1] as AndExpression).type).toBe("and");
 		});
 
 		test("parentheses override precedence", () => {
 			const ast = parseQuery("(a OR b) AND c") as AndExpression;
 			expect(ast.type).toBe("and");
-			expect((ast.left as OrExpression).type).toBe("or");
-			expect((ast.right as BooleanFieldExpression).field).toBe("c");
+			expect((ast.children[0] as OrExpression).type).toBe("or");
+			expect((ast.children[1] as BooleanFieldExpression).field).toBe("c");
 		});
 
 		test("nested parentheses", () => {
@@ -235,7 +245,7 @@ describe("RD Parser", () => {
 		test("NOT has highest precedence", () => {
 			const ast = parseQuery("NOT a AND b") as AndExpression;
 			expect(ast.type).toBe("and");
-			expect((ast.left as NotExpression).type).toBe("not");
+			expect((ast.children[0] as NotExpression).type).toBe("not");
 		});
 	});
 
@@ -248,14 +258,14 @@ describe("RD Parser", () => {
 		test("nested conditions with parentheses", () => {
 			const ast = parseQuery("(a AND b) OR (c AND d)") as OrExpression;
 			expect(ast.type).toBe("or");
-			expect((ast.left as AndExpression).type).toBe("and");
-			expect((ast.right as AndExpression).type).toBe("and");
+			expect((ast.children[0] as AndExpression).type).toBe("and");
+			expect((ast.children[1] as AndExpression).type).toBe("and");
 		});
 
 		test("field existence with other conditions", () => {
 			const ast = parseQuery("email? AND verified = true") as AndExpression;
-			expect((ast.left as ExistsExpression).type).toBe("exists");
-			expect((ast.right as ComparisonExpression).type).toBe("comparison");
+			expect((ast.children[0] as ExistsExpression).type).toBe("exists");
+			expect((ast.children[1] as ComparisonExpression).type).toBe("comparison");
 		});
 
 		test("range with other conditions", () => {

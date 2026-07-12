@@ -172,20 +172,26 @@ function generateSQL(node: ASTNode, state: GeneratorState): string {
 
 /**
  * Generates SQL for OR expression
+ * The parser guarantees flat chains of two or more children
  */
 function generateOr(node: OrExpression, state: GeneratorState): string {
-	const left = generateSQL(node.left, state);
-	const right = generateSQL(node.right, state);
-	return `(${left} OR ${right})`;
+	let sql = generateSQL(node.children[0], state);
+	for (let i = 1; i < node.children.length; i++) {
+		sql += " OR " + generateSQL(node.children[i], state);
+	}
+	return `(${sql})`;
 }
 
 /**
  * Generates SQL for AND expression
+ * The parser guarantees flat chains of two or more children
  */
 function generateAnd(node: AndExpression, state: GeneratorState): string {
-	const left = generateSQL(node.left, state);
-	const right = generateSQL(node.right, state);
-	return `(${left} AND ${right})`;
+	let sql = generateSQL(node.children[0], state);
+	for (let i = 1; i < node.children.length; i++) {
+		sql += " AND " + generateSQL(node.children[i], state);
+	}
+	return `(${sql})`;
 }
 
 /**

@@ -160,8 +160,8 @@ import type { Token, TokenType, StringToken, NumberToken, BooleanToken } from "@
 
 | Node Type      | Fields                       | Example input          |
 | -------------- | ---------------------------- | ---------------------- |
-| `and`          | `left`, `right`              | `a AND b`              |
-| `or`           | `left`, `right`              | `a OR b`               |
+| `and`          | `children`                   | `a AND b`              |
+| `or`           | `children`                   | `a OR b`               |
 | `not`          | `expression`                 | `NOT a`                |
 | `comparison`   | `field`, `operator`, `value` | `age > 18`             |
 | `exists`       | `field`                      | `email?`               |
@@ -169,6 +169,8 @@ import type { Token, TokenType, StringToken, NumberToken, BooleanToken } from "@
 | `oneOf`        | `field`, `values`            | `status : ["a", "b"]`  |
 | `notOneOf`     | `field`, `values`            | `status !: ["a", "b"]` |
 | `range`        | `field`, `min`, `max`        | `age = 18..65`         |
+
+Chains of the same operator are flat: `a AND b AND c` produces a single `and` node with three children, never nested pairs.
 
 **Example output:**
 
@@ -180,18 +182,20 @@ parse('age > 18 AND status = "active"')
   success: true,
   ast: {
     type: "and",
-    left: {
-      type: "comparison",
-      field: "age",
-      operator: ">",
-      value: { type: "number", value: 18 }
-    },
-    right: {
-      type: "comparison",
-      field: "status",
-      operator: "=",
-      value: { type: "string", value: "active" }
-    }
+    children: [
+      {
+        type: "comparison",
+        field: "age",
+        operator: ">",
+        value: { type: "number", value: 18 }
+      },
+      {
+        type: "comparison",
+        field: "status",
+        operator: "=",
+        value: { type: "string", value: "active" }
+      }
+    ]
   }
 }
 ```

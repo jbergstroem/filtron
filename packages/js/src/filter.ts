@@ -177,66 +177,37 @@ function generateFilter(
 }
 
 /**
- * Collects predicates from a chain of OR nodes (left-to-right order)
- * Flattening avoids one closure call per binary node when evaluating chains
- */
-function collectOr(
-	node: ASTNode,
-	predicates: FilterPredicate<Record<string, unknown>>[],
-	state: GeneratorState,
-): void {
-	if (node.type === "or") {
-		collectOr(node.left, predicates, state);
-		collectOr(node.right, predicates, state);
-	} else {
-		predicates.push(generateFilter(node, state));
-	}
-}
-
-/**
- * Collects predicates from a chain of AND nodes (left-to-right order)
- */
-function collectAnd(
-	node: ASTNode,
-	predicates: FilterPredicate<Record<string, unknown>>[],
-	state: GeneratorState,
-): void {
-	if (node.type === "and") {
-		collectAnd(node.left, predicates, state);
-		collectAnd(node.right, predicates, state);
-	} else {
-		predicates.push(generateFilter(node, state));
-	}
-}
-
-/**
  * Generates predicate for OR expression
- * Flattens OR chains and specializes common arities
+ * The parser guarantees flat chains of two or more children; common
+ * arities compile to direct short-circuit chains
  */
 function generateOr(
 	node: OrExpression,
 	state: GeneratorState,
 ): FilterPredicate<Record<string, unknown>> {
-	// Fast path: plain binary OR needs no chain collection
-	if (node.left.type !== "or" && node.right.type !== "or") {
-		const a = generateFilter(node.left, state);
-		const b = generateFilter(node.right, state);
+	const children = node.children;
+	const len = children.length;
+
+	if (len === 2) {
+		const a = generateFilter(children[0], state);
+		const b = generateFilter(children[1], state);
 		return (item) => a(item) || b(item);
 	}
-
-	// A chain reaching here always flattens to three or more predicates
-	const predicates: FilterPredicate<Record<string, unknown>>[] = [];
-	collectOr(node, predicates, state);
-	const len = predicates.length;
-
 	if (len === 3) {
-		const [a, b, c] = predicates;
+		const a = generateFilter(children[0], state);
+		const b = generateFilter(children[1], state);
+		const c = generateFilter(children[2], state);
 		return (item) => a(item) || b(item) || c(item);
 	}
 	if (len === 4) {
-		const [a, b, c, d] = predicates;
+		const a = generateFilter(children[0], state);
+		const b = generateFilter(children[1], state);
+		const c = generateFilter(children[2], state);
+		const d = generateFilter(children[3], state);
 		return (item) => a(item) || b(item) || c(item) || d(item);
 	}
+
+	const predicates = children.map((child) => generateFilter(child, state));
 	return (item) => {
 		for (let i = 0; i < len; i++) {
 			if (predicates[i](item)) return true;
@@ -247,32 +218,36 @@ function generateOr(
 
 /**
  * Generates predicate for AND expression
- * Flattens AND chains and specializes common arities
+ * The parser guarantees flat chains of two or more children; common
+ * arities compile to direct short-circuit chains
  */
 function generateAnd(
 	node: AndExpression,
 	state: GeneratorState,
 ): FilterPredicate<Record<string, unknown>> {
-	// Fast path: plain binary AND needs no chain collection
-	if (node.left.type !== "and" && node.right.type !== "and") {
-		const a = generateFilter(node.left, state);
-		const b = generateFilter(node.right, state);
+	const children = node.children;
+	const len = children.length;
+
+	if (len === 2) {
+		const a = generateFilter(children[0], state);
+		const b = generateFilter(children[1], state);
 		return (item) => a(item) && b(item);
 	}
-
-	// A chain reaching here always flattens to three or more predicates
-	const predicates: FilterPredicate<Record<string, unknown>>[] = [];
-	collectAnd(node, predicates, state);
-	const len = predicates.length;
-
 	if (len === 3) {
-		const [a, b, c] = predicates;
+		const a = generateFilter(children[0], state);
+		const b = generateFilter(children[1], state);
+		const c = generateFilter(children[2], state);
 		return (item) => a(item) && b(item) && c(item);
 	}
 	if (len === 4) {
-		const [a, b, c, d] = predicates;
+		const a = generateFilter(children[0], state);
+		const b = generateFilter(children[1], state);
+		const c = generateFilter(children[2], state);
+		const d = generateFilter(children[3], state);
 		return (item) => a(item) && b(item) && c(item) && d(item);
 	}
+
+	const predicates = children.map((child) => generateFilter(child, state));
 	return (item) => {
 		for (let i = 0; i < len; i++) {
 			if (!predicates[i](item)) return false;

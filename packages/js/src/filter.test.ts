@@ -129,18 +129,20 @@ describe("toFilter", () => {
 		test("AND expression", () => {
 			const ast: AndExpression = {
 				type: "and",
-				left: {
-					type: "comparison",
-					field: "age",
-					operator: ">",
-					value: { type: "number", value: 18 },
-				},
-				right: {
-					type: "comparison",
-					field: "status",
-					operator: "=",
-					value: { type: "string", value: "active" },
-				},
+				children: [
+					{
+						type: "comparison",
+						field: "age",
+						operator: ">",
+						value: { type: "number", value: 18 },
+					},
+					{
+						type: "comparison",
+						field: "status",
+						operator: "=",
+						value: { type: "string", value: "active" },
+					},
+				],
 			};
 			const filter = toFilter(ast);
 			expect(filter({ age: 25, status: "active" })).toBe(true);
@@ -151,18 +153,20 @@ describe("toFilter", () => {
 		test("OR expression", () => {
 			const ast: OrExpression = {
 				type: "or",
-				left: {
-					type: "comparison",
-					field: "role",
-					operator: "=",
-					value: { type: "string", value: "admin" },
-				},
-				right: {
-					type: "comparison",
-					field: "role",
-					operator: "=",
-					value: { type: "string", value: "moderator" },
-				},
+				children: [
+					{
+						type: "comparison",
+						field: "role",
+						operator: "=",
+						value: { type: "string", value: "admin" },
+					},
+					{
+						type: "comparison",
+						field: "role",
+						operator: "=",
+						value: { type: "string", value: "moderator" },
+					},
+				],
 			};
 			const filter = toFilter(ast);
 			expect(filter({ role: "admin" })).toBe(true);
@@ -495,18 +499,20 @@ describe("toFilter", () => {
 		test("maps multiple fields", () => {
 			const ast: AndExpression = {
 				type: "and",
-				left: {
-					type: "comparison",
-					field: "first_name",
-					operator: "=",
-					value: { type: "string", value: "John" },
-				},
-				right: {
-					type: "comparison",
-					field: "last_name",
-					operator: "=",
-					value: { type: "string", value: "Doe" },
-				},
+				children: [
+					{
+						type: "comparison",
+						field: "first_name",
+						operator: "=",
+						value: { type: "string", value: "John" },
+					},
+					{
+						type: "comparison",
+						field: "last_name",
+						operator: "=",
+						value: { type: "string", value: "Doe" },
+					},
+				],
 			};
 			const filter = toFilter(ast, {
 				fieldMapping: {
@@ -776,15 +782,7 @@ describe("toFilter", () => {
 			type: "and" | "or",
 			leaves: ComparisonExpression[],
 		): AndExpression | OrExpression => {
-			let node: AndExpression | OrExpression = {
-				type,
-				left: leaves[0],
-				right: leaves[1],
-			} as AndExpression;
-			for (let i = 2; i < leaves.length; i++) {
-				node = { type, left: node, right: leaves[i] } as AndExpression;
-			}
-			return node;
+			return { type, children: leaves } as AndExpression;
 		};
 
 		const leaves = (n: number) => Array.from({ length: n }, (_, i) => comparison(`f${i}`, i));
@@ -806,14 +804,14 @@ describe("toFilter", () => {
 			expect(filter(Object.assign(none(), { [`f${n - 1}`]: n - 1 }))).toBe(true);
 		});
 
-		test("right-nested chains flatten and preserve semantics", () => {
+		test("hand-built nested same-type nodes still evaluate correctly", () => {
+			// The parser never produces this shape, but adapters accept it
 			const [a, b, c] = leaves(3);
-			const rightNested: AndExpression = {
+			const nested: AndExpression = {
 				type: "and",
-				left: a,
-				right: { type: "and", left: b, right: c },
+				children: [a, { type: "and", children: [b, c] }],
 			};
-			const filter = toFilter(rightNested);
+			const filter = toFilter(nested);
 			expect(filter(match(3))).toBe(true);
 			expect(filter(Object.assign(match(3), { f1: -1 }))).toBe(false);
 		});

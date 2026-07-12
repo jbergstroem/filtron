@@ -281,8 +281,9 @@ export const cases: ConformanceCase[] = [
 		name: "and-chain",
 		query: "verified AND premium AND age > 21",
 		matches: [1, 6, 7],
-		sql: "((verified = $1 AND premium = $2) AND age > $3)",
+		sql: "(verified = $1 AND premium = $2 AND age > $3)",
 		params: [true, true, 21],
+		notes: "Chains are n-ary AST nodes (#283), so a chain renders flat instead of nested pairs.",
 	},
 	{
 		name: "parens-grouping",

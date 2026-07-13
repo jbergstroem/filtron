@@ -11,7 +11,6 @@ export type ASTNode =
 	| NotExpression
 	| ComparisonExpression
 	| OneOfExpression
-	| NotOneOfExpression
 	| ExistsExpression
 	| BooleanFieldExpression
 	| RangeExpression;
@@ -70,32 +69,24 @@ export interface ComparisonExpression {
 }
 
 /**
- * One-of expression - checks if field matches any value in a list
- * Example: status : ["pending", "approved"]
+ * Membership expression - checks whether a field matches any value in a list
+ * Example: status : ["pending", "approved"], status !: ["deleted"] (negated)
  */
 export interface OneOfExpression {
 	type: "oneOf";
 	field: string;
 	values: Value[];
+	negated: boolean;
 }
 
 /**
- * Not-one-of expression - checks if field doesn't match any value in a list
- * Example: status !: ["inactive", "deleted"]
- */
-export interface NotOneOfExpression {
-	type: "notOneOf";
-	field: string;
-	values: Value[];
-}
-
-/**
- * Exists expression - checks if a field exists and is not its zero value
- * Example: email?, name EXISTS
+ * Exists expression - checks whether a field exists (is not null/undefined)
+ * Example: email?, email EXISTS, -email (negated)
  */
 export interface ExistsExpression {
 	type: "exists";
 	field: string;
+	negated: boolean;
 }
 
 /**

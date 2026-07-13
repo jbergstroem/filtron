@@ -32,6 +32,7 @@ function tokenTypeToClass(type: TokenType): HighlightClass | null {
 		case "NOT_COLON":
 		case "QUESTION":
 		case "DOTDOT":
+		case "MINUS":
 			return "operator";
 		case "STRING":
 			return "string";

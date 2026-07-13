@@ -9,7 +9,6 @@ import type {
 	ExistsExpression,
 	BooleanFieldExpression,
 	OneOfExpression,
-	NotOneOfExpression,
 	RangeExpression,
 } from "./types";
 
@@ -135,10 +134,45 @@ describe("RD Parser", () => {
 			]);
 		});
 
-		test("notOneOf expression", () => {
-			const ast = parseQuery('status !: ["deleted", "banned"]') as NotOneOfExpression;
-			expect(ast.type).toBe("notOneOf");
+		test("negated membership expression", () => {
+			const ast = parseQuery('status !: ["deleted", "banned"]') as OneOfExpression;
+			expect(ast.type).toBe("oneOf");
+			expect(ast.negated).toBe(true);
 			expect(ast.field).toBe("status");
+		});
+
+		test("membership is not negated by default", () => {
+			const ast = parseQuery('status : ["active"]') as OneOfExpression;
+			expect(ast.negated).toBe(false);
+		});
+
+		test("negated exists with minus prefix", () => {
+			const ast = parseQuery("-email") as ExistsExpression;
+			expect(ast.type).toBe("exists");
+			expect(ast.field).toBe("email");
+			expect(ast.negated).toBe(true);
+		});
+
+		test("negated exists with dotted field", () => {
+			const ast = parseQuery("-user.email") as ExistsExpression;
+			expect(ast.field).toBe("user.email");
+			expect(ast.negated).toBe(true);
+		});
+
+		test("negated exists composes with other conditions", () => {
+			const ast = parseQuery("-email AND verified") as AndExpression;
+			expect(ast.type).toBe("and");
+			expect((ast.children[0] as ExistsExpression).negated).toBe(true);
+		});
+
+		test("exists via question mark is not negated", () => {
+			const ast = parseQuery("email?") as ExistsExpression;
+			expect(ast.negated).toBe(false);
+		});
+
+		test("minus without a following field is an error", () => {
+			expect(() => parseQuery("age > -")).toThrow(FiltronParseError);
+			expect(() => parseQuery("- email")).toThrow(FiltronParseError);
 		});
 
 		test("oneOf with single value", () => {

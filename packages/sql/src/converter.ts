@@ -154,9 +154,7 @@ function generateSQL(node: ASTNode, state: GeneratorState): string {
 		case "comparison":
 			return generateComparison(node, state);
 		case "oneOf":
-			return generateInClause(state.fieldMapper(node.field), node.values, state, false);
-		case "notOneOf":
-			return generateInClause(state.fieldMapper(node.field), node.values, state, true);
+			return generateInClause(state.fieldMapper(node.field), node.values, state, node.negated);
 		case "exists":
 			return generateExists(node, state);
 		case "booleanField":
@@ -246,11 +244,11 @@ function generateInClause(
 }
 
 /**
- * Generates SQL for exists expression
+ * Generates SQL for exists expression (negated or not)
  */
 function generateExists(node: ExistsExpression, state: GeneratorState): string {
 	const field = state.fieldMapper(node.field);
-	return `${field} IS NOT NULL`;
+	return node.negated ? `${field} IS NULL` : `${field} IS NOT NULL`;
 }
 
 /**

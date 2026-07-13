@@ -37,7 +37,6 @@ export type {
 	NotExpression,
 	ComparisonExpression,
 	OneOfExpression,
-	NotOneOfExpression,
 	ExistsExpression,
 	BooleanFieldExpression,
 	RangeExpression,

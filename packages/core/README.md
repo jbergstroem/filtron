@@ -84,6 +84,7 @@ parse("user.profile.age >= 18");
 | `>`, `>=`, `<`, `<=` | Comparison    | `age >= 18`           |
 | `~`                  | Contains      | `name ~ "john"`       |
 | `?`, `EXISTS`        | Field exists  | `email?`              |
+| `-`                  | Field missing | `-email`              |
 | `..`                 | Range         | `age = 18..65`        |
 | `: [...]`            | One of        | `status : ["a", "b"]` |
 | `AND`, `OR`, `NOT`   | Boolean logic | `a AND (b OR c)`      |
@@ -138,7 +139,6 @@ import {
 	type ExistsExpression,
 	type BooleanFieldExpression,
 	type OneOfExpression,
-	type NotOneOfExpression,
 	type RangeExpression,
 	type Value,
 	type ComparisonOperator,
@@ -158,17 +158,16 @@ import type { Token, TokenType, StringToken, NumberToken, BooleanToken } from "@
 
 ### AST structure
 
-| Node Type      | Fields                       | Example input          |
-| -------------- | ---------------------------- | ---------------------- |
-| `and`          | `children`                   | `a AND b`              |
-| `or`           | `children`                   | `a OR b`               |
-| `not`          | `expression`                 | `NOT a`                |
-| `comparison`   | `field`, `operator`, `value` | `age > 18`             |
-| `exists`       | `field`                      | `email?`               |
-| `booleanField` | `field`                      | `verified`             |
-| `oneOf`        | `field`, `values`            | `status : ["a", "b"]`  |
-| `notOneOf`     | `field`, `values`            | `status !: ["a", "b"]` |
-| `range`        | `field`, `min`, `max`        | `age = 18..65`         |
+| Node Type      | Fields                       | Example input         |
+| -------------- | ---------------------------- | --------------------- |
+| `and`          | `children`                   | `a AND b`             |
+| `or`           | `children`                   | `a OR b`              |
+| `not`          | `expression`                 | `NOT a`               |
+| `comparison`   | `field`, `operator`, `value` | `age > 18`            |
+| `exists`       | `field`, `negated`           | `email?`, `-email`    |
+| `booleanField` | `field`                      | `verified`            |
+| `oneOf`        | `field`, `values`, `negated` | `status : ["a", "b"]` |
+| `range`        | `field`, `min`, `max`        | `age = 18..65`        |
 
 Chains of the same operator are flat: `a AND b AND c` produces a single `and` node with three children, never nested pairs.
 

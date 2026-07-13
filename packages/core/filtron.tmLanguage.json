@@ -27,7 +27,7 @@
 			"name": "keyword.control.filtron"
 		},
 		"operators": {
-			"match": "(>=|<=|!=|!:|:|=|>|<|~|\\?|\\.\\.)",
+			"match": "(>=|<=|!=|!:|:|=|>|<|~|\\?|\\.\\.|-(?=[A-Za-z_]))",
 			"name": "keyword.operator.filtron"
 		},
 		"strings": {

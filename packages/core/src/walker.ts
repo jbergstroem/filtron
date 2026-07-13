@@ -50,9 +50,10 @@ export function walk(node: ASTNode, visitor: (node: ASTNode) => boolean | undefi
 		case "booleanField":
 		case "range":
 			return;
-		default:
+		default: {
 			// TypeScript exhaustiveness check
 			const _exhaustive: never = node;
 			throw new Error(`Unknown node type: ${(node as ASTNode).type}`);
+		}
 	}
 }

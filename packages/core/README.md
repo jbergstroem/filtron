@@ -123,6 +123,23 @@ try {
 }
 ```
 
+### `walk(node: ASTNode, visitor: (node: ASTNode) => boolean | undefined): void`
+
+Walks an AST in pre-order depth-first order, calling the visitor on each node before its children. Return `false` from the visitor to skip a node's children.
+
+```typescript
+import { parseOrThrow, walk } from "@filtron/core";
+
+const ast = parseOrThrow('age > 18 AND status = "active"');
+const fields: string[] = [];
+walk(ast, (node) => {
+	if ("field" in node) {
+		fields.push(node.field);
+	}
+});
+// fields: ["age", "status"]
+```
+
 ## Types
 
 All AST types are exported for building custom consumers:

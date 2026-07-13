@@ -140,6 +140,18 @@ walk(ast, (node) => {
 // fields: ["age", "status"]
 ```
 
+### `validateFields(node: ASTNode, allowedFields: readonly string[]): void`
+
+Validates that every field referenced in an AST is in the allowlist. Throws an `Error` on the first disallowed field. Consumers like @filtron/js and @filtron/sql use this for their `allowedFields` option.
+
+```typescript
+import { parseOrThrow, validateFields } from "@filtron/core";
+
+const ast = parseOrThrow('password = "secret"');
+validateFields(ast, ["name", "age"]);
+// Error: Field "password" is not allowed. Allowed fields: name, age
+```
+
 ## Types
 
 All AST types are exported for building custom consumers:

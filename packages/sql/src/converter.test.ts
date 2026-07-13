@@ -607,6 +607,45 @@ describe("SQL", () => {
 		});
 	});
 
+	describe("Allowed Fields", () => {
+		test("allows listed fields", () => {
+			const ast: ASTNode = {
+				type: "and",
+				children: [
+					{
+						type: "comparison",
+						field: "age",
+						operator: ">",
+						value: { type: "number", value: 18 },
+					},
+					{
+						type: "comparison",
+						field: "status",
+						operator: "=",
+						value: { type: "string", value: "active" },
+					},
+				],
+			};
+
+			const result = toSQL(ast, { allowedFields: ["age", "status"] });
+			expect(result.sql).toBe("(age > $1 AND status = $2)");
+			expect(result.params).toEqual([18, "active"]);
+		});
+
+		test("throws for unlisted field in a hand-built AST", () => {
+			const ast: ASTNode = {
+				type: "comparison",
+				field: 'password" = "" OR "1',
+				operator: "=",
+				value: { type: "string", value: "secret" },
+			};
+
+			expect(() => toSQL(ast, { allowedFields: ["age", "status"] })).toThrow(
+				'Field "password" = "" OR "1" is not allowed. Allowed fields: age, status',
+			);
+		});
+	});
+
 	describe("LIKE Value Mapping", () => {
 		test("default likeMode wraps LIKE values for contains matching", () => {
 			const ast: ASTNode = {

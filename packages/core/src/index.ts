@@ -14,7 +14,7 @@
 
 // Parser functions
 export { parse, parseOrThrow, FiltronParseError } from "./parser";
-export type { ParseResult, ParseSuccess, ParseFailure } from "./parser";
+export type { ParseOptions, ParseResult, ParseSuccess, ParseFailure } from "./parser";
 
 // AST walker
 export { walk } from "./walker";

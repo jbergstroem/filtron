@@ -206,6 +206,14 @@ export const cases: ConformanceCase[] = [
 		params: [18, 30],
 	},
 	{
+		name: "range-negated",
+		query: "age != 18..30",
+		matches: [2, 4, 6, 7, 8],
+		sql: "age NOT BETWEEN $1 AND $2",
+		params: [18, 30],
+		notes: "Ranges are values (#287); != means outside the interval and maps to NOT BETWEEN.",
+	},
+	{
 		name: "one-of-small",
 		query: 'status : ["active", "pending"]',
 		matches: [1, 2, 4, 8],

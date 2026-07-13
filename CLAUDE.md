@@ -84,11 +84,11 @@ OrExpression    = AndExpression (OR AndExpression)*
 AndExpression   = NotExpression (AND NotExpression)*
 NotExpression   = NOT NotExpression | PrimaryExpression
 PrimaryExpression = '(' OrExpression ')' | '-' FieldName | FieldExpression
-FieldExpression = FieldName ('?' | EXISTS | ComparisonOp Value RangeSuffix? | OneOfOp '[' Values ']')?
-RangeSuffix     = '..' NUMBER
+FieldExpression = FieldName ('?' | EXISTS | ComparisonOp Value | OneOfOp '[' Values ']')?
 FieldName       = IDENT ('.' IDENT)*
 Values          = Value (',' Value)*
-Value           = STRING | NUMBER | BOOLEAN | DottedIdent
+Value           = STRING | NUMBER | BOOLEAN | DottedIdent | Range
+Range           = NUMBER '..' NUMBER
 ```
 
 ## Checklist: modifying parser

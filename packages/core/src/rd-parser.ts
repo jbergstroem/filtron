@@ -9,11 +9,11 @@
  *   AndExpression     = NotExpression (AND NotExpression)*
  *   NotExpression     = NOT NotExpression | PrimaryExpression
  *   PrimaryExpression = '(' OrExpression ')' | '-' FieldName | FieldExpression
- *   FieldExpression   = FieldName ('?' | EXISTS | ComparisonOp Value RangeSuffix? | OneOfOp '[' Values ']')?
+ *   FieldExpression   = FieldName ('?' | EXISTS | ComparisonOp Value | OneOfOp '[' Values ']')?
  *   FieldName         = IDENT ('.' IDENT)*
- *   Value             = STRING | NUMBER | BOOLEAN | DottedIdent
- *   Values            = Value (',' Value)*
- *   RangeSuffix       = '..' NUMBER
+ *   Value             = STRING | NUMBER | BOOLEAN | DottedIdent | Range
+ *   Values            = Value (',' Value)*        (ranges are rejected)
+ *   Range             = NUMBER '..' NUMBER        (only with =, : or !=)
  */
 
 import { FiltronParseError } from "./errors";
@@ -26,7 +26,6 @@ import type {
 	OneOfExpression,
 	ExistsExpression,
 	BooleanFieldExpression,
-	RangeExpression,
 } from "./types";
 
 /**
@@ -192,7 +191,7 @@ class Parser {
 
 	/**
 	 * Parse field expression
-	 * FieldExpression = FieldName ('?' | EXISTS | ComparisonOp Value RangeSuffix? | OneOfOp '[' Values ']')?
+	 * FieldExpression = FieldName ('?' | EXISTS | ComparisonOp Value | OneOfOp '[' Values ']')?
 	 */
 	private parseFieldExpression(): ASTNode {
 		const field = this.parseFieldName();
@@ -230,28 +229,14 @@ class Parser {
 			const opToken = this.advance();
 			const operator = this.tokenToOperator(opToken);
 
-			// Check for range expression: field = min..max
-			if (operator === "=" && this.check("NUMBER")) {
-				const minToken = this.advance() as NumberToken;
-				const min = minToken.value;
-
-				if (this.check("DOTDOT")) {
-					this.advance();
-					const maxToken = this.expect("NUMBER", "Expected number after '..'") as NumberToken;
-					const max = maxToken.value;
-					return { type: "range", field, min, max } as RangeExpression;
-				}
-
-				// Not a range, just a regular comparison with a number
-				return {
-					type: "comparison",
-					field,
-					operator,
-					value: { type: "number", value: min },
-				} as ComparisonExpression;
+			const value = this.parseValue();
+			if (value.type === "range" && operator !== "=" && operator !== ":" && operator !== "!=") {
+				throw new FiltronParseError(
+					`Range values require the =, : or != operator, got ${operator}`,
+					opToken.start,
+				);
 			}
 
-			const value = this.parseValue();
 			return {
 				type: "comparison",
 				field,
@@ -329,11 +314,11 @@ class Parser {
 
 		// Handle non-empty array
 		if (!this.check("RBRACKET")) {
-			values.push(this.parseValue());
+			values.push(this.parseArrayValue());
 
 			while (this.check("COMMA")) {
 				this.advance(); // consume ,
-				values.push(this.parseValue());
+				values.push(this.parseArrayValue());
 			}
 		}
 
@@ -350,6 +335,18 @@ class Parser {
 	 * Parse a value
 	 * Value = STRING | NUMBER | BOOLEAN | DottedIdent
 	 */
+	/**
+	 * Parse a value inside a membership array, where ranges are not allowed
+	 */
+	private parseArrayValue(): Value {
+		const start = this.current.start;
+		const value = this.parseValue();
+		if (value.type === "range") {
+			throw new FiltronParseError("Range values are not allowed in arrays", start);
+		}
+		return value;
+	}
+
 	private parseValue(): Value {
 		const t = this.current.type;
 
@@ -359,9 +356,14 @@ class Parser {
 			return { type: "string", value: token.value };
 		}
 
-		// Number literal
+		// Number literal, or a range when followed by '..'
 		if (t === "NUMBER") {
 			const token = this.advance() as NumberToken;
+			if (this.check("DOTDOT")) {
+				this.advance();
+				const maxToken = this.expect("NUMBER", "Expected number after '..'") as NumberToken;
+				return { type: "range", min: token.value, max: maxToken.value };
+			}
 			return { type: "number", value: token.value };
 		}
 

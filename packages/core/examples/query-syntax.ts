@@ -24,8 +24,9 @@ parseOrThrow('role : ["admin", "moderator", "user"]');
 // Not-one-of operator (!:)
 parseOrThrow('status !: ["deleted", "banned"]');
 
-// Range syntax for numeric ranges (inclusive)
+// Range values for numeric intervals (inclusive)
 parseOrThrow("age = 18..65");
+parseOrThrow("age != 18..65"); // outside the interval
 
 // Logical operators: AND, OR, NOT
 parseOrThrow('active AND role = "admin"');

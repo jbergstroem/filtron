@@ -21,7 +21,7 @@ describe("walk()", () => {
 			"oneOf:c",
 			"exists:d",
 			"booleanField:e",
-			"range:f",
+			"comparison:f",
 		]);
 	});
 

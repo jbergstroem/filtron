@@ -48,7 +48,6 @@ export function walk(node: ASTNode, visitor: (node: ASTNode) => boolean | undefi
 		case "oneOf":
 		case "exists":
 		case "booleanField":
-		case "range":
 			return;
 		default: {
 			// TypeScript exhaustiveness check

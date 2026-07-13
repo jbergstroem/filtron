@@ -139,7 +139,6 @@ import {
 	type ExistsExpression,
 	type BooleanFieldExpression,
 	type OneOfExpression,
-	type NotOneOfExpression,
 	type RangeExpression,
 	type Value,
 	type ComparisonOperator,

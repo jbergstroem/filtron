@@ -66,13 +66,13 @@ jobs:
       matrix:
         include:
           - setup: node
-            version: "20"
-            test_cmd: node -e
-          - setup: node
             version: "22"
             test_cmd: node -e
           - setup: node
             version: "24"
+            test_cmd: node -e
+          - setup: node
+            version: "26"
             test_cmd: node -e
           - setup: bun
             version: "1.1"

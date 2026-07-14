@@ -362,6 +362,12 @@ class Parser {
 			if (this.check("DOTDOT")) {
 				this.advance();
 				const maxToken = this.expect("NUMBER", "Expected number after '..'") as NumberToken;
+				if (token.value > maxToken.value) {
+					throw new FiltronParseError(
+						`Range min (${token.value}) must not exceed max (${maxToken.value})`,
+						token.start,
+					);
+				}
 				return { type: "range", min: token.value, max: maxToken.value };
 			}
 			return { type: "number", value: token.value };

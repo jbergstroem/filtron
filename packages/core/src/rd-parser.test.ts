@@ -232,6 +232,11 @@ describe("RD Parser", () => {
 			expect(() => parseQuery("age : [1, 18..65]")).toThrow(FiltronParseError);
 		});
 
+		test("inverted range is an error", () => {
+			expect(() => parseQuery("age = 65..18")).toThrow("Range min (65) must not exceed max (18)");
+			expect(() => parseQuery("age = 18..18")).not.toThrow();
+		});
+
 		test("incomplete range is an error", () => {
 			expect(() => parseQuery("age = 18..")).toThrow("Expected number after '..'");
 		});

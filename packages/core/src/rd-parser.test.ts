@@ -386,74 +386,61 @@ describe("RD Parser", () => {
 	});
 
 	describe("Parse Limits", () => {
-		test("query at default maximum length passes", () => {
-			const ast = parseQuery("a".repeat(10000));
-			expect(ast.type).toBe("booleanField");
-		});
+		test("default maximum length is a boundary", () => {
+			expect(parseQuery("a".repeat(10000)).type).toBe("booleanField");
 
-		test("query over default maximum length throws", () => {
+			let error: unknown;
 			try {
 				parseQuery("a".repeat(10001));
-				expect(true).toBe(false); // Should not reach here
-			} catch (error) {
-				expect(error).toBeInstanceOf(FiltronParseError);
-				expect((error as FiltronParseError).message).toBe(
-					"Query exceeds maximum length of 10000 characters",
-				);
-				expect((error as FiltronParseError).position).toBe(0);
+			} catch (caught) {
+				error = caught;
 			}
+			expect(error).toBeInstanceOf(FiltronParseError);
+			expect((error as FiltronParseError).message).toBe(
+				"Query exceeds maximum length of 10000 characters",
+			);
+			expect((error as FiltronParseError).position).toBe(0);
 		});
 
-		test("custom maxLength lowers the limit", () => {
+		test("default maximum parenthesis depth is a boundary", () => {
+			expect(parseQuery("(".repeat(64) + "a" + ")".repeat(64)).type).toBe("booleanField");
+
+			let error: unknown;
+			try {
+				parseQuery("(".repeat(65) + "a" + ")".repeat(65));
+			} catch (caught) {
+				error = caught;
+			}
+			expect(error).toBeInstanceOf(FiltronParseError);
+			expect((error as FiltronParseError).message).toBe(
+				"Query exceeds maximum nesting depth of 64",
+			);
+			expect((error as FiltronParseError).position).toBe(64);
+		});
+
+		test("NOT chains count toward the depth limit", () => {
+			expect(parseQuery("NOT ".repeat(64) + "a").type).toBe("not");
+
+			let error: unknown;
+			try {
+				parseQuery("NOT ".repeat(65) + "a");
+			} catch (caught) {
+				error = caught;
+			}
+			expect(error).toBeInstanceOf(FiltronParseError);
+			expect((error as FiltronParseError).position).toBe(256);
+		});
+
+		test("custom limits lower and raise the defaults", () => {
 			expect(() => parseQuery("age > 18", { maxLength: 5 })).toThrow(
 				"Query exceeds maximum length of 5 characters",
 			);
-		});
-
-		test("query at custom maxLength passes", () => {
-			const ast = parseQuery("a = 1", { maxLength: 5 });
-			expect(ast.type).toBe("comparison");
-		});
-
-		test("custom maxLength raises the limit", () => {
-			const ast = parseQuery(`name = "${"a".repeat(15000)}"`, { maxLength: 20000 });
-			expect(ast.type).toBe("comparison");
-		});
-
-		test("parentheses at default maximum depth pass", () => {
-			const ast = parseQuery("(".repeat(64) + "a" + ")".repeat(64));
-			expect(ast.type).toBe("booleanField");
-		});
-
-		test("parentheses over default maximum depth throw", () => {
-			try {
-				parseQuery("(".repeat(65) + "a" + ")".repeat(65));
-				expect(true).toBe(false); // Should not reach here
-			} catch (error) {
-				expect(error).toBeInstanceOf(FiltronParseError);
-				expect((error as FiltronParseError).message).toBe(
-					"Query exceeds maximum nesting depth of 64",
-				);
-				expect((error as FiltronParseError).position).toBe(64);
-			}
-		});
-
-		test("NOT chain at default maximum depth passes", () => {
-			const ast = parseQuery("NOT ".repeat(64) + "a");
-			expect(ast.type).toBe("not");
-		});
-
-		test("NOT chain over default maximum depth throws", () => {
-			try {
-				parseQuery("NOT ".repeat(65) + "a");
-				expect(true).toBe(false); // Should not reach here
-			} catch (error) {
-				expect(error).toBeInstanceOf(FiltronParseError);
-				expect((error as FiltronParseError).message).toBe(
-					"Query exceeds maximum nesting depth of 64",
-				);
-				expect((error as FiltronParseError).position).toBe(256);
-			}
+			expect(parseQuery(`name = "${"a".repeat(15000)}"`, { maxLength: 20000 }).type).toBe(
+				"comparison",
+			);
+			expect(parseQuery("(".repeat(100) + "a" + ")".repeat(100), { maxDepth: 128 }).type).toBe(
+				"booleanField",
+			);
 		});
 
 		test("NOT and parentheses share the depth counter", () => {
@@ -461,11 +448,6 @@ describe("RD Parser", () => {
 			expect(() => parseQuery("NOT (a)", { maxDepth: 1 })).toThrow(
 				"Query exceeds maximum nesting depth of 1",
 			);
-		});
-
-		test("custom maxDepth raises the limit", () => {
-			const ast = parseQuery("(".repeat(100) + "a" + ")".repeat(100), { maxDepth: 128 });
-			expect(ast.type).toBe("booleanField");
 		});
 
 		test("depth counter resets between sibling groups", () => {

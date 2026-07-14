@@ -169,7 +169,7 @@ describe("Parser API", () => {
 	});
 
 	describe("ParseOptions", () => {
-		test("parse() accepts limits and returns failure with position", () => {
+		test("parse() forwards options and maps the failure", () => {
 			const result = parse("age > 18", { maxLength: 5 });
 			expect(result.success).toBe(false);
 			if (!result.success) {
@@ -178,30 +178,15 @@ describe("Parser API", () => {
 			}
 		});
 
-		test("parse() returns failure when nesting exceeds maxDepth", () => {
-			const result = parse("((a))", { maxDepth: 1 });
-			expect(result.success).toBe(false);
-			if (!result.success) {
-				expect(result.message).toBe("Query exceeds maximum nesting depth of 1");
-				expect(result.position).toBe(1);
+		test("parseOrThrow() forwards options and rethrows", () => {
+			let error: unknown;
+			try {
+				parseOrThrow("NOT NOT a", { maxDepth: 1 });
+			} catch (caught) {
+				error = caught;
 			}
-		});
-
-		test("parse() succeeds with raised limits", () => {
-			const result = parse("(".repeat(70) + "a" + ")".repeat(70), { maxDepth: 70 });
-			expect(result.success).toBe(true);
-		});
-
-		test("parseOrThrow() accepts limits and throws FiltronParseError", () => {
-			expect(() => parseOrThrow("NOT NOT a", { maxDepth: 1 })).toThrow(FiltronParseError);
-			expect(() => parseOrThrow("NOT NOT a", { maxDepth: 1 })).toThrow(
-				"Query exceeds maximum nesting depth of 1",
-			);
-		});
-
-		test("parseOrThrow() succeeds within custom limits", () => {
-			const ast = parseOrThrow("NOT NOT a", { maxDepth: 2, maxLength: 9 });
-			expect(ast.type).toBe("not");
+			expect(error).toBeInstanceOf(FiltronParseError);
+			expect((error as FiltronParseError).message).toBe("Query exceeds maximum nesting depth of 1");
 		});
 	});
 

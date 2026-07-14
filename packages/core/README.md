@@ -85,7 +85,7 @@ parse("user.profile.age >= 18");
 | `~`                  | Contains      | `name ~ "john"`       |
 | `?`, `EXISTS`        | Field exists  | `email?`              |
 | `-`                  | Field missing | `-email`              |
-| `..`                 | Range         | `age = 18..65`        |
+| `..`                 | Range value   | `age = 18..65`        |
 | `: [...]`            | One of        | `status : ["a", "b"]` |
 | `AND`, `OR`, `NOT`   | Boolean logic | `a AND (b OR c)`      |
 
@@ -225,7 +225,8 @@ import type { Token, TokenType, StringToken, NumberToken, BooleanToken } from "@
 | `exists`       | `field`, `negated`           | `email?`, `-email`    |
 | `booleanField` | `field`                      | `verified`            |
 | `oneOf`        | `field`, `values`, `negated` | `status : ["a", "b"]` |
-| `range`        | `field`, `min`, `max`        | `age = 18..65`        |
+
+Ranges are values, not nodes: `age = 18..65` produces a comparison whose value is `{ type: "range", min: 18, max: 65 }`. Ranges work with `=`, `:` and `!=` (outside the interval) and are rejected inside arrays.
 
 Chains of the same operator are flat: `a AND b AND c` produces a single `and` node with three children, never nested pairs.
 

@@ -259,10 +259,10 @@ describe("SQL", () => {
 	describe("Range Expressions", () => {
 		test("basic integer range", () => {
 			const ast: ASTNode = {
-				type: "range",
+				type: "comparison",
 				field: "age",
-				min: 18,
-				max: 65,
+				operator: "=",
+				value: { type: "range", min: 18, max: 65 },
 			};
 
 			const result = toSQL(ast);
@@ -272,10 +272,10 @@ describe("SQL", () => {
 
 		test("float range", () => {
 			const ast: ASTNode = {
-				type: "range",
+				type: "comparison",
 				field: "price",
-				min: 9.99,
-				max: 99.99,
+				operator: "=",
+				value: { type: "range", min: 9.99, max: 99.99 },
 			};
 
 			const result = toSQL(ast);
@@ -285,10 +285,10 @@ describe("SQL", () => {
 
 		test("negative number range", () => {
 			const ast: ASTNode = {
-				type: "range",
+				type: "comparison",
 				field: "temperature",
-				min: -20,
-				max: 40,
+				operator: "=",
+				value: { type: "range", min: -20, max: 40 },
 			};
 
 			const result = toSQL(ast);
@@ -296,12 +296,59 @@ describe("SQL", () => {
 			expect(result.params).toEqual([-20, 40]);
 		});
 
+		test("negated range uses NOT BETWEEN", () => {
+			const ast: ASTNode = {
+				type: "comparison",
+				field: "age",
+				operator: "!=",
+				value: { type: "range", min: 18, max: 65 },
+			};
+
+			const result = toSQL(ast);
+			expect(result.sql).toBe("age NOT BETWEEN $1 AND $2");
+			expect(result.params).toEqual([18, 65]);
+		});
+
+		test("range with colon operator uses BETWEEN", () => {
+			const ast: ASTNode = {
+				type: "comparison",
+				field: "age",
+				operator: ":",
+				value: { type: "range", min: 18, max: 65 },
+			};
+
+			const result = toSQL(ast);
+			expect(result.sql).toBe("age BETWEEN $1 AND $2");
+		});
+
+		test("range with an ordering operator throws", () => {
+			const ast: ASTNode = {
+				type: "comparison",
+				field: "age",
+				operator: ">",
+				value: { type: "range", min: 18, max: 65 },
+			};
+
+			expect(() => toSQL(ast)).toThrow("Range values require the =, : or != operator");
+		});
+
+		test("range value outside a comparison throws", () => {
+			const ast: ASTNode = {
+				type: "oneOf",
+				field: "age",
+				negated: false,
+				values: [{ type: "range", min: 1, max: 2 }],
+			};
+
+			expect(() => toSQL(ast)).toThrow("Range values cannot be used here");
+		});
+
 		test("range with field mapper", () => {
 			const ast: ASTNode = {
-				type: "range",
+				type: "comparison",
 				field: "user.age",
-				min: 18,
-				max: 65,
+				operator: "=",
+				value: { type: "range", min: 18, max: 65 },
 			};
 
 			const result = toSQL(ast, {

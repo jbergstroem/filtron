@@ -9,7 +9,6 @@ import type {
 	ExistsExpression,
 	BooleanFieldExpression,
 	OneOfExpression,
-	RangeExpression,
 } from "./types";
 
 describe("RD Parser", () => {
@@ -190,25 +189,56 @@ describe("RD Parser", () => {
 		});
 	});
 
-	describe("Range Expressions", () => {
+	describe("Range Values", () => {
 		test("basic integer range", () => {
-			const ast = parseQuery("age = 18..65") as RangeExpression;
-			expect(ast.type).toBe("range");
+			const ast = parseQuery("age = 18..65") as ComparisonExpression;
+			expect(ast.type).toBe("comparison");
 			expect(ast.field).toBe("age");
-			expect(ast.min).toBe(18);
-			expect(ast.max).toBe(65);
+			expect(ast.operator).toBe("=");
+			expect(ast.value).toEqual({ type: "range", min: 18, max: 65 });
 		});
 
 		test("float range", () => {
-			const ast = parseQuery("score = 0.0..100.0") as RangeExpression;
-			expect(ast.min).toBe(0.0);
-			expect(ast.max).toBe(100.0);
+			const ast = parseQuery("score = 0.0..100.0") as ComparisonExpression;
+			expect(ast.value).toEqual({ type: "range", min: 0, max: 100 });
 		});
 
 		test("negative number range", () => {
-			const ast = parseQuery("temperature = -10..30") as RangeExpression;
-			expect(ast.min).toBe(-10);
-			expect(ast.max).toBe(30);
+			const ast = parseQuery("temperature = -10..30") as ComparisonExpression;
+			expect(ast.value).toEqual({ type: "range", min: -10, max: 30 });
+		});
+
+		test("range with colon operator", () => {
+			const ast = parseQuery("age : 18..65") as ComparisonExpression;
+			expect(ast.operator).toBe(":");
+			expect(ast.value).toEqual({ type: "range", min: 18, max: 65 });
+		});
+
+		test("range with not-equals operator", () => {
+			const ast = parseQuery("age != 18..65") as ComparisonExpression;
+			expect(ast.operator).toBe("!=");
+			expect(ast.value).toEqual({ type: "range", min: 18, max: 65 });
+		});
+
+		test("range with an ordering operator is an error", () => {
+			expect(() => parseQuery("age > 18..65")).toThrow(
+				"Range values require the =, : or != operator",
+			);
+			expect(() => parseQuery("age <= 18..65")).toThrow(FiltronParseError);
+		});
+
+		test("range inside an array is an error", () => {
+			expect(() => parseQuery("age : [18..65]")).toThrow("Range values are not allowed in arrays");
+			expect(() => parseQuery("age : [1, 18..65]")).toThrow(FiltronParseError);
+		});
+
+		test("inverted range is an error", () => {
+			expect(() => parseQuery("age = 65..18")).toThrow("Range min (65) must not exceed max (18)");
+			expect(() => parseQuery("age = 18..18")).not.toThrow();
+		});
+
+		test("incomplete range is an error", () => {
+			expect(() => parseQuery("age = 18..")).toThrow("Expected number after '..'");
 		});
 	});
 

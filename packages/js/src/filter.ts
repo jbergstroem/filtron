@@ -14,7 +14,6 @@ import type {
 	OneOfExpression,
 	ExistsExpression,
 	BooleanFieldExpression,
-	RangeExpression,
 } from "@filtron/core";
 
 /**
@@ -162,8 +161,6 @@ function generateFilter(
 			return generateExists(node, state);
 		case "booleanField":
 			return generateBooleanField(node, state);
-		case "range":
-			return generateRange(node, state);
 		default:
 			// TypeScript exhaustiveness check
 			const _exhaustive: never = node;
@@ -272,6 +269,18 @@ function generateComparison(
 	state: GeneratorState,
 ): FilterPredicate<Record<string, unknown>> {
 	const field = resolveField(node.field, state);
+
+	if (node.value.type === "range") {
+		const { min, max } = node.value;
+		if (node.operator === "=" || node.operator === ":") {
+			return generateRangeComparison(field, "=", min, max, state);
+		}
+		if (node.operator === "!=") {
+			return generateRangeComparison(field, "!=", min, max, state);
+		}
+		throw new Error(`Range values require the =, : or != operator, got ${node.operator}`);
+	}
+
 	const targetValue = extractValue(node.value);
 	const accessor = state.fieldAccessor;
 
@@ -587,15 +596,30 @@ function generateBooleanField(
 }
 
 /**
- * Generates predicate for range expression (BETWEEN)
+ * Generates predicate for a comparison against a range value
+ * = and : match numbers inside the inclusive interval; != matches
+ * everything else, including non-numbers
  */
-function generateRange(
-	node: RangeExpression,
+function generateRangeComparison(
+	field: string,
+	operator: "=" | ":" | "!=",
+	min: number,
+	max: number,
 	state: GeneratorState,
 ): FilterPredicate<Record<string, unknown>> {
-	const field = resolveField(node.field, state);
 	const accessor = state.fieldAccessor;
-	const { min, max } = node;
+	if (operator === "!=") {
+		if (accessor) {
+			return (item) => {
+				const fieldValue = accessor(item, field);
+				return typeof fieldValue !== "number" || fieldValue < min || fieldValue > max;
+			};
+		}
+		return (item) => {
+			const fieldValue = item[field];
+			return typeof fieldValue !== "number" || fieldValue < min || fieldValue > max;
+		};
+	}
 	if (accessor) {
 		return (item) => {
 			const fieldValue = accessor(item, field);
@@ -613,6 +637,9 @@ function generateRange(
  */
 function extractValue(value: Value): string | number | boolean {
 	switch (value.type) {
+		case "range":
+			// The parser only produces ranges where callers handle them first
+			throw new Error("Range values cannot be used here");
 		case "string":
 			return value.value;
 		case "number":

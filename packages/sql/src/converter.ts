@@ -14,7 +14,6 @@ import type {
 	ComparisonExpression,
 	ExistsExpression,
 	BooleanFieldExpression,
-	RangeExpression,
 } from "@filtron/core";
 
 /**
@@ -175,8 +174,6 @@ function generateSQL(node: ASTNode, state: GeneratorState): string {
 			return generateExists(node, state);
 		case "booleanField":
 			return generateBooleanField(node, state);
-		case "range":
-			return generateRange(node, state);
 		default:
 			// TypeScript exhaustiveness check
 			const _exhaustive: never = node;
@@ -221,6 +218,19 @@ function generateNot(node: NotExpression, state: GeneratorState): string {
  */
 function generateComparison(node: ComparisonExpression, state: GeneratorState): string {
 	const field = state.fieldMapper(node.field);
+
+	if (node.value.type === "range") {
+		const minParam = addParameter(node.value.min, state);
+		const maxParam = addParameter(node.value.max, state);
+		if (node.operator === "=" || node.operator === ":") {
+			return `${field} BETWEEN ${minParam} AND ${maxParam}`;
+		}
+		if (node.operator === "!=") {
+			return `${field} NOT BETWEEN ${minParam} AND ${maxParam}`;
+		}
+		throw new Error(`Range values require the =, : or != operator, got ${node.operator}`);
+	}
+
 	const operator = mapComparisonOperator(node.operator);
 
 	// Apply the resolved LIKE value transform for the ~ operator
@@ -277,16 +287,6 @@ function generateBooleanField(node: BooleanFieldExpression, state: GeneratorStat
 }
 
 /**
- * Generates SQL for range expression (BETWEEN)
- */
-function generateRange(node: RangeExpression, state: GeneratorState): string {
-	const field = state.fieldMapper(node.field);
-	const minParam = addParameter(node.min, state);
-	const maxParam = addParameter(node.max, state);
-	return `${field} BETWEEN ${minParam} AND ${maxParam}`;
-}
-
-/**
  * Maps Filtron comparison operators to SQL operators
  */
 function mapComparisonOperator(operator: ComparisonOperator): string {
@@ -317,6 +317,9 @@ function mapComparisonOperator(operator: ComparisonOperator): string {
  */
 function extractValue(value: Value): string | number | boolean {
 	switch (value.type) {
+		case "range":
+			// The parser only produces ranges where callers handle them first
+			throw new Error("Range values cannot be used here");
 		case "string":
 			return value.value;
 		case "number":

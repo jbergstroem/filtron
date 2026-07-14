@@ -12,13 +12,12 @@ export type ASTNode =
 	| ComparisonExpression
 	| OneOfExpression
 	| ExistsExpression
-	| BooleanFieldExpression
-	| RangeExpression;
+	| BooleanFieldExpression;
 
 /**
  * Value type - represents literal values in expressions
  */
-export type Value = StringValue | NumberValue | BooleanValue | IdentifierValue;
+export type Value = StringValue | NumberValue | BooleanValue | IdentifierValue | RangeValue;
 
 /**
  * Comparison operators supported
@@ -99,17 +98,6 @@ export interface BooleanFieldExpression {
 }
 
 /**
- * Range expression - checks if a field value is between two numbers (inclusive)
- * Example: age = 18..65, price = 0..100
- */
-export interface RangeExpression {
-	type: "range";
-	field: string;
-	min: number;
-	max: number;
-}
-
-/**
  * String value - a quoted string literal
  */
 export interface StringValue {
@@ -139,4 +127,15 @@ export interface BooleanValue {
 export interface IdentifierValue {
 	type: "identifier";
 	value: string;
+}
+
+/**
+ * Range value - an inclusive numeric interval
+ * Valid with the =, : and != operators only
+ * Example: age = 18..65, price != 0..100
+ */
+export interface RangeValue {
+	type: "range";
+	min: number;
+	max: number;
 }

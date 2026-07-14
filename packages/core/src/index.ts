@@ -45,7 +45,6 @@ export type {
 	OneOfExpression,
 	ExistsExpression,
 	BooleanFieldExpression,
-	RangeExpression,
 	StringValue,
 	NumberValue,
 	BooleanValue,

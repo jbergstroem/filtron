@@ -7,7 +7,6 @@ import type {
 	OneOfExpression,
 	ExistsExpression,
 	BooleanFieldExpression,
-	RangeExpression,
 } from "@filtron/core";
 import { toFilter, nestedAccessor } from "./filter.js";
 
@@ -191,11 +190,11 @@ describe("toFilter", () => {
 
 	describe("Range Expression", () => {
 		test("basic range", () => {
-			const ast: RangeExpression = {
-				type: "range",
+			const ast: ComparisonExpression = {
+				type: "comparison",
 				field: "age",
-				min: 18,
-				max: 65,
+				operator: "=",
+				value: { type: "range", min: 18, max: 65 },
 			};
 			const filter = toFilter(ast);
 			expect(filter({ age: 18 })).toBe(true);
@@ -203,6 +202,67 @@ describe("toFilter", () => {
 			expect(filter({ age: 30 })).toBe(true);
 			expect(filter({ age: 17 })).toBe(false);
 			expect(filter({ age: "30" })).toBe(false); // non-number returns false
+		});
+	});
+
+	describe("Range Values", () => {
+		test("negated range matches outside the interval", () => {
+			const ast: ComparisonExpression = {
+				type: "comparison",
+				field: "age",
+				operator: "!=",
+				value: { type: "range", min: 18, max: 65 },
+			};
+			const filter = toFilter(ast);
+			expect(filter({ age: 17 })).toBe(true);
+			expect(filter({ age: 66 })).toBe(true);
+			expect(filter({ age: 18 })).toBe(false);
+			expect(filter({ age: 65 })).toBe(false);
+			expect(filter({ age: "30" })).toBe(true); // non-numbers are outside any range
+		});
+
+		test("negated range with custom accessor", () => {
+			const ast: ComparisonExpression = {
+				type: "comparison",
+				field: "age",
+				operator: "!=",
+				value: { type: "range", min: 18, max: 65 },
+			};
+			const filter = toFilter(ast, { fieldAccessor: (obj, field) => obj[field] });
+			expect(filter({ age: 17 })).toBe(true);
+			expect(filter({ age: 30 })).toBe(false);
+		});
+
+		test("range with colon operator matches the interval", () => {
+			const ast: ComparisonExpression = {
+				type: "comparison",
+				field: "age",
+				operator: ":",
+				value: { type: "range", min: 18, max: 65 },
+			};
+			const filter = toFilter(ast);
+			expect(filter({ age: 30 })).toBe(true);
+			expect(filter({ age: 17 })).toBe(false);
+		});
+
+		test("range with an ordering operator throws", () => {
+			const ast: ComparisonExpression = {
+				type: "comparison",
+				field: "age",
+				operator: ">",
+				value: { type: "range", min: 18, max: 65 },
+			};
+			expect(() => toFilter(ast)).toThrow("Range values require the =, : or != operator");
+		});
+
+		test("range value outside a comparison throws", () => {
+			const ast: OneOfExpression = {
+				type: "oneOf",
+				field: "age",
+				negated: false,
+				values: [{ type: "range", min: 1, max: 2 }],
+			};
+			expect(() => toFilter(ast)).toThrow("Range values cannot be used here");
 		});
 	});
 
@@ -389,7 +449,15 @@ describe("toFilter", () => {
 			).toThrow('Field "x" is not allowed');
 
 			expect(() =>
-				toFilter({ type: "range", field: "x", min: 0, max: 1 }, { allowedFields: [] }),
+				toFilter(
+					{
+						type: "comparison",
+						field: "x",
+						operator: "=",
+						value: { type: "range", min: 0, max: 1 },
+					},
+					{ allowedFields: [] },
+				),
 			).toThrow('Field "x" is not allowed');
 		});
 	});
@@ -565,12 +633,12 @@ describe("toFilter", () => {
 			expect(filter({ email: null })).toBe(false);
 		});
 
-		test("works with range expression", () => {
-			const ast: RangeExpression = {
-				type: "range",
+		test("works with range values", () => {
+			const ast: ComparisonExpression = {
+				type: "comparison",
 				field: "user_age",
-				min: 18,
-				max: 65,
+				operator: "=",
+				value: { type: "range", min: 18, max: 65 },
 			};
 			const filter = toFilter(ast, {
 				fieldMapping: {
@@ -706,7 +774,12 @@ describe("toFilter", () => {
 		test("exists, booleanField and range with custom accessor", () => {
 			const exists: ExistsExpression = { type: "exists", negated: false, field: "email" };
 			const boolField: BooleanFieldExpression = { type: "booleanField", field: "verified" };
-			const range: RangeExpression = { type: "range", field: "age", min: 18, max: 65 };
+			const range: ComparisonExpression = {
+				type: "comparison",
+				field: "age",
+				operator: "=",
+				value: { type: "range", min: 18, max: 65 },
+			};
 			const opts = { fieldAccessor: accessor };
 			expect(toFilter(exists, opts)({ email: "a@b.c" })).toBe(true);
 			expect(toFilter(exists, opts)({ email: null })).toBe(false);

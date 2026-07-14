@@ -174,10 +174,11 @@ function generateSQL(node: ASTNode, state: GeneratorState): string {
 			return generateExists(node, state);
 		case "booleanField":
 			return generateBooleanField(node, state);
-		default:
+		default: {
 			// TypeScript exhaustiveness check
 			const _exhaustive: never = node;
 			throw new Error(`Unknown node type: ${(node as ASTNode).type}`);
+		}
 	}
 }
 
@@ -306,9 +307,10 @@ function mapComparisonOperator(operator: ComparisonOperator): string {
 			return "<";
 		case "<=":
 			return "<=";
-		default:
+		default: {
 			const _exhaustive: never = operator;
 			throw new Error(`Unknown operator: ${operator as string}`);
+		}
 	}
 }
 
@@ -329,9 +331,10 @@ function extractValue(value: Value): string | number | boolean {
 		case "identifier":
 			// Identifiers are treated as strings in SQL context
 			return value.value;
-		default:
+		default: {
 			const _exhaustive: never = value;
 			throw new Error(`Unknown value type: ${(value as Value).type}`);
+		}
 	}
 }
 

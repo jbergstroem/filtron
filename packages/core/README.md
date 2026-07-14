@@ -91,7 +91,7 @@ parse("user.profile.age >= 18");
 
 ## API
 
-### `parse(input: string): ParseResult`
+### `parse(input: string, options?: ParseOptions): ParseResult`
 
 Parses a filter expression and returns a result object.
 
@@ -106,7 +106,30 @@ if (result.success) {
 }
 ```
 
-### `parseOrThrow(input: string): ASTNode`
+Both `parse` and `parseOrThrow` accept an optional `ParseOptions` object to
+bound how large a query can be:
+
+| Option      | Default | Meaning                                                  |
+| ----------- | ------- | -------------------------------------------------------- |
+| `maxLength` | 10000   | Maximum query length in characters                       |
+| `maxDepth`  | 64      | Maximum combined nesting of parenthesized groups and NOT |
+
+Queries exceeding a limit fail with a `FiltronParseError`:
+
+```typescript
+const userInput = '(role = "admin" OR role = "moderator") AND verified';
+
+// Safe: tighten the limits for untrusted input
+const safeResult = parse(userInput, { maxLength: 500, maxDepth: 8 });
+
+// Unsafe: raising the limits removes the guard against pathological queries
+const unsafeResult = parse(userInput, {
+	maxLength: Number.MAX_SAFE_INTEGER,
+	maxDepth: Number.MAX_SAFE_INTEGER,
+});
+```
+
+### `parseOrThrow(input: string, options?: ParseOptions): ASTNode`
 
 Parses a filter expression, throwing `FiltronParseError` on invalid input. The same error class is used for all parse failures, whether they originate in the lexer or the parser.
 
@@ -147,6 +170,7 @@ All AST types are exported for building custom consumers:
 ```typescript
 import {
 	FiltronParseError, // Error class for all parse failures
+	type ParseOptions,
 	type ParseResult,
 	type ASTNode,
 	type AndExpression,

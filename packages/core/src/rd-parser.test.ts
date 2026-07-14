@@ -384,4 +384,75 @@ describe("RD Parser", () => {
 			expect(ast.type).toBe("and");
 		});
 	});
+
+	describe("Parse Limits", () => {
+		test("default maximum length is a boundary", () => {
+			expect(parseQuery("a".repeat(10000)).type).toBe("booleanField");
+
+			let error: unknown;
+			try {
+				parseQuery("a".repeat(10001));
+			} catch (caught) {
+				error = caught;
+			}
+			expect(error).toBeInstanceOf(FiltronParseError);
+			expect((error as FiltronParseError).message).toBe(
+				"Query exceeds maximum length of 10000 characters",
+			);
+			expect((error as FiltronParseError).position).toBe(0);
+		});
+
+		test("default maximum parenthesis depth is a boundary", () => {
+			expect(parseQuery("(".repeat(64) + "a" + ")".repeat(64)).type).toBe("booleanField");
+
+			let error: unknown;
+			try {
+				parseQuery("(".repeat(65) + "a" + ")".repeat(65));
+			} catch (caught) {
+				error = caught;
+			}
+			expect(error).toBeInstanceOf(FiltronParseError);
+			expect((error as FiltronParseError).message).toBe(
+				"Query exceeds maximum nesting depth of 64",
+			);
+			expect((error as FiltronParseError).position).toBe(64);
+		});
+
+		test("NOT chains count toward the depth limit", () => {
+			expect(parseQuery("NOT ".repeat(64) + "a").type).toBe("not");
+
+			let error: unknown;
+			try {
+				parseQuery("NOT ".repeat(65) + "a");
+			} catch (caught) {
+				error = caught;
+			}
+			expect(error).toBeInstanceOf(FiltronParseError);
+			expect((error as FiltronParseError).position).toBe(256);
+		});
+
+		test("custom limits lower and raise the defaults", () => {
+			expect(() => parseQuery("age > 18", { maxLength: 5 })).toThrow(
+				"Query exceeds maximum length of 5 characters",
+			);
+			expect(parseQuery(`name = "${"a".repeat(15000)}"`, { maxLength: 20000 }).type).toBe(
+				"comparison",
+			);
+			expect(parseQuery("(".repeat(100) + "a" + ")".repeat(100), { maxDepth: 128 }).type).toBe(
+				"booleanField",
+			);
+		});
+
+		test("NOT and parentheses share the depth counter", () => {
+			expect(parseQuery("NOT (a)", { maxDepth: 2 }).type).toBe("not");
+			expect(() => parseQuery("NOT (a)", { maxDepth: 1 })).toThrow(
+				"Query exceeds maximum nesting depth of 1",
+			);
+		});
+
+		test("depth counter resets between sibling groups", () => {
+			const ast = parseQuery("NOT a AND (b) AND (c OR (d))", { maxDepth: 2 });
+			expect(ast.type).toBe("and");
+		});
+	});
 });

@@ -168,6 +168,28 @@ describe("Parser API", () => {
 		});
 	});
 
+	describe("ParseOptions", () => {
+		test("parse() forwards options and maps the failure", () => {
+			const result = parse("age > 18", { maxLength: 5 });
+			expect(result.success).toBe(false);
+			if (!result.success) {
+				expect(result.message).toBe("Query exceeds maximum length of 5 characters");
+				expect(result.position).toBe(0);
+			}
+		});
+
+		test("parseOrThrow() forwards options and rethrows", () => {
+			let error: unknown;
+			try {
+				parseOrThrow("NOT NOT a", { maxDepth: 1 });
+			} catch (caught) {
+				error = caught;
+			}
+			expect(error).toBeInstanceOf(FiltronParseError);
+			expect((error as FiltronParseError).message).toBe("Query exceeds maximum nesting depth of 1");
+		});
+	});
+
 	describe("Integration Tests", () => {
 		test("parse and parseOrThrow produce same AST for valid input", () => {
 			const query = "age > 18 AND verified = true";

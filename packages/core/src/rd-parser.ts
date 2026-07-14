@@ -18,6 +18,7 @@
 
 import { FiltronParseError } from "./errors";
 import { Lexer, type Token, type TokenType, type StringToken, type NumberToken } from "./lexer";
+import type { ParseOptions } from "./parser";
 import type {
 	ASTNode,
 	Value,
@@ -30,14 +31,30 @@ import type {
 } from "./types";
 
 /**
+ * Default maximum query length in characters
+ */
+const DEFAULT_MAX_LENGTH = 10000;
+
+/**
+ * Default maximum combined nesting depth of parenthesized groups and NOT
+ */
+const DEFAULT_MAX_DEPTH = 64;
+
+/**
  * Parser for Filtron queries
  */
 class Parser {
 	private lexer: Lexer;
 	private current: Token;
 	private nextToken: Token | null = null;
+	private depth = 0;
+	private readonly maxDepth: number;
 
-	constructor(input: string) {
+	constructor(input: string, maxLength: number, maxDepth: number) {
+		if (input.length > maxLength) {
+			throw new FiltronParseError(`Query exceeds maximum length of ${maxLength} characters`, 0);
+		}
+		this.maxDepth = maxDepth;
 		this.lexer = new Lexer(input);
 		this.current = this.lexer.next();
 	}
@@ -152,8 +169,15 @@ class Parser {
 	 */
 	private parseNotExpression(): ASTNode {
 		if (this.check("NOT")) {
+			if (++this.depth > this.maxDepth) {
+				throw new FiltronParseError(
+					`Query exceeds maximum nesting depth of ${this.maxDepth}`,
+					this.current.start,
+				);
+			}
 			this.advance();
 			const expression = this.parseNotExpression();
+			this.depth--;
 			return { type: "not", expression };
 		}
 
@@ -173,9 +197,16 @@ class Parser {
 
 		// Parenthesized expression
 		if (this.check("LPAREN")) {
+			if (++this.depth > this.maxDepth) {
+				throw new FiltronParseError(
+					`Query exceeds maximum nesting depth of ${this.maxDepth}`,
+					this.current.start,
+				);
+			}
 			this.advance();
 			const expr = this.parseOrExpression();
 			this.expect("RPAREN", "Expected closing parenthesis");
+			this.depth--;
 			return expr;
 		}
 
@@ -397,10 +428,15 @@ class Parser {
  * Parse a Filtron query string into an AST
  *
  * @param input - The query string to parse
+ * @param options - Optional parse limits
  * @returns The parsed AST
- * @throws FiltronParseError if the query is invalid
+ * @throws FiltronParseError if the query is invalid or exceeds a limit
  */
-export function parseQuery(input: string): ASTNode {
-	const parser = new Parser(input);
+export function parseQuery(input: string, options?: ParseOptions): ASTNode {
+	const parser = new Parser(
+		input,
+		options?.maxLength ?? DEFAULT_MAX_LENGTH,
+		options?.maxDepth ?? DEFAULT_MAX_DEPTH,
+	);
 	return parser.parse();
 }

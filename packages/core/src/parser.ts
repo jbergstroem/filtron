@@ -9,6 +9,22 @@ import type { ASTNode } from "./types";
 export { FiltronParseError } from "./errors";
 
 /**
+ * Limits applied while parsing a query. Both values are upper bounds;
+ * pass larger numbers to raise them.
+ */
+export interface ParseOptions {
+	/**
+	 * Maximum query length in characters. Defaults to 10000.
+	 */
+	maxLength?: number;
+	/**
+	 * Maximum combined nesting depth of parenthesized groups and NOT
+	 * expressions. Defaults to 64.
+	 */
+	maxDepth?: number;
+}
+
+/**
  * Result of a successful parse operation
  */
 export interface ParseSuccess {
@@ -34,6 +50,7 @@ export type ParseResult = ParseSuccess | ParseFailure;
  * Parses a Filtron query string into an Abstract Syntax Tree (AST).
  *
  * @param query - The Filtron query string to parse
+ * @param options - Optional parse limits, see {@link ParseOptions}
  * @returns A ParseResult containing either the AST or an error
  *
  * @example
@@ -46,9 +63,9 @@ export type ParseResult = ParseSuccess | ParseFailure;
  * }
  * ```
  */
-export const parse = (query: string): ParseResult => {
+export const parse = (query: string, options?: ParseOptions): ParseResult => {
 	try {
-		const ast = parseQuery(query);
+		const ast = parseQuery(query, options);
 		return {
 			success: true,
 			ast,
@@ -74,6 +91,7 @@ export const parse = (query: string): ParseResult => {
  * Use this when you want to handle errors with try/catch instead of checking the result.
  *
  * @param query - The Filtron query string to parse
+ * @param options - Optional parse limits, see {@link ParseOptions}
  * @returns The parsed AST
  * @throws FiltronParseError if parsing fails, with position information
  *
@@ -89,9 +107,9 @@ export const parse = (query: string): ParseResult => {
  * }
  * ```
  */
-export const parseOrThrow = (query: string): ASTNode => {
+export const parseOrThrow = (query: string, options?: ParseOptions): ASTNode => {
 	try {
-		return parseQuery(query);
+		return parseQuery(query, options);
 	} catch (error) {
 		if (error instanceof FiltronParseError) {
 			throw error;

@@ -114,11 +114,19 @@ bound how large a query can be:
 | `maxLength` | 10000   | Maximum query length in characters                       |
 | `maxDepth`  | 64      | Maximum combined nesting of parenthesized groups and NOT |
 
-Queries exceeding a limit fail with a `FiltronParseError`. Pass larger numbers
-to raise the limits:
+Queries exceeding a limit fail with a `FiltronParseError`:
 
 ```typescript
-const result = parse(userInput, { maxLength: 500, maxDepth: 8 });
+const userInput = '(role = "admin" OR role = "moderator") AND verified';
+
+// Safe: tighten the limits for untrusted input
+const safeResult = parse(userInput, { maxLength: 500, maxDepth: 8 });
+
+// Unsafe: raising the limits removes the guard against pathological queries
+const unsafeResult = parse(userInput, {
+	maxLength: Number.MAX_SAFE_INTEGER,
+	maxDepth: Number.MAX_SAFE_INTEGER,
+});
 ```
 
 ### `parseOrThrow(input: string, options?: ParseOptions): ASTNode`

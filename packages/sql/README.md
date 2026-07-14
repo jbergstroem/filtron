@@ -53,6 +53,7 @@ interface SQLResult {
 | `valueMapper`    | `(value: unknown) => unknown` | `undefined`  | Custom transform for `~` values (see below)   |
 | `likeMode`       | `"contains"` \| `"raw"`       | `"contains"` | How `~` builds its LIKE parameter (see below) |
 | `startIndex`     | `number`                      | `1`          | Starting index for numbered placeholders      |
+| `allowedFields`  | `string[]`                    | `undefined`  | Allowlist of field names (throws otherwise)   |
 
 #### Parameter styles
 
@@ -193,6 +194,21 @@ const { sql, params } = toSQL(result.ast);
 ```
 
 Never interpolate user input directly into SQL. Always use the `params` array with your database driver's parameterized query support.
+
+Field names are interpolated into the generated SQL. Queries that go through the parser restrict the field charset, but hand-built ASTs are unvalidated. Use `allowedFields` to guard those and add defense in depth:
+
+```typescript
+// Safe: only listed fields can reach the SQL string
+toSQL(ast, { allowedFields: ["name", "age", "status"] });
+
+// Unsafe: a hand-built AST can put anything in a field name
+toSQL({
+	type: "comparison",
+	field: 'password" = "" OR "1', // interpolated as-is
+	operator: "=",
+	value: { type: "string", value: "x" },
+});
+```
 
 LIKE patterns deserve the same care. The default `likeMode: "contains"` escapes `%`, `_` and `\` so user input cannot smuggle wildcards into the pattern:
 

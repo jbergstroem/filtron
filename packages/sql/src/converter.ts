@@ -3,6 +3,7 @@
  * Converts Filtron AST nodes to parameterized SQL WHERE clauses
  */
 
+import { validateFields } from "@filtron/core";
 import type {
 	ASTNode,
 	Value,
@@ -82,6 +83,17 @@ export interface SQLOptions {
 	 * @default 1
 	 */
 	startIndex?: number;
+
+	/**
+	 * Allowed field names for SQL generation
+	 * If provided, the whole AST is validated up front and toSQL throws
+	 * if any field is not in this list. Field names are interpolated into
+	 * the generated SQL; the parser's lexer restricts the field charset
+	 * for parsed queries, but hand-built ASTs are unvalidated, so an
+	 * allowlist guards those and adds defense in depth
+	 * @default undefined (all fields allowed)
+	 */
+	allowedFields?: string[];
 }
 
 /**
@@ -124,6 +136,10 @@ const NUMBERED_PLACEHOLDERS: string[] = Array.from({ length: 65 }, (_, i) => `$$
  * ```
  */
 export function toSQL(ast: ASTNode, options: SQLOptions = {}): SQLResult {
+	if (options.allowedFields) {
+		validateFields(ast, options.allowedFields);
+	}
+
 	const state: GeneratorState = {
 		params: [],
 		numbered: options.parameterStyle !== "question",

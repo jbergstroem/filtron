@@ -19,6 +19,9 @@ export type { ParseOptions, ParseResult, ParseSuccess, ParseFailure } from "./pa
 // AST walker
 export { walk } from "./walker";
 
+// AST field validation
+export { validateFields } from "./validate";
+
 // Lexer for tokenization
 export { Lexer } from "./lexer";
 export type {

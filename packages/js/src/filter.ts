@@ -3,6 +3,7 @@
  * Converts Filtron AST nodes to predicate functions for filtering arrays
  */
 
+import { validateFields } from "@filtron/core";
 import type {
 	ASTNode,
 	Value,
@@ -28,7 +29,8 @@ export interface FilterOptions {
 	/**
 	 * Allowed field names for filtering
 	 * If provided, only these fields can be used in queries
-	 * Throws an error if a query references a field not in this list
+	 * The whole AST is validated up front; throws an error if any field
+	 * is not in this list
 	 * @default undefined (all fields allowed)
 	 */
 	allowedFields?: string[];
@@ -82,7 +84,6 @@ export interface FilterOptions {
  * which lets generators emit specialized predicates without the indirect call
  */
 interface GeneratorState {
-	allowedFields?: Set<string>;
 	fieldAccessor?: (obj: Record<string, unknown>, field: string) => unknown;
 	caseInsensitive: boolean;
 	fieldMapping?: Record<string, string>;
@@ -119,8 +120,11 @@ export function toFilter<T extends Record<string, unknown> = Record<string, unkn
 	ast: ASTNode,
 	options: FilterOptions = {},
 ): FilterPredicate<T> {
+	if (options.allowedFields) {
+		validateFields(ast, options.allowedFields);
+	}
+
 	const state: GeneratorState = {
-		allowedFields: options.allowedFields ? new Set(options.allowedFields) : undefined,
 		fieldAccessor: options.fieldAccessor,
 		caseInsensitive: options.caseInsensitive ?? false,
 		fieldMapping: options.fieldMapping,
@@ -130,15 +134,9 @@ export function toFilter<T extends Record<string, unknown> = Record<string, unkn
 }
 
 /**
- * Validates that a field is allowed (if allowedFields is set) and
- * resolves it through fieldMapping if provided
+ * Resolves a field through fieldMapping if provided
  */
 function resolveField(field: string, state: GeneratorState): string {
-	if (state.allowedFields && !state.allowedFields.has(field)) {
-		throw new Error(
-			`Field "${field}" is not allowed. Allowed fields: ${[...state.allowedFields].join(", ")}`,
-		);
-	}
 	return state.fieldMapping ? (state.fieldMapping[field] ?? field) : field;
 }
 

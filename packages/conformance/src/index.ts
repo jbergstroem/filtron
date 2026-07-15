@@ -37,6 +37,7 @@ export interface ConformanceCase {
 export const dataset: ConformanceRecord[] = [
 	{
 		id: 1,
+		created: "2024-01-15",
 		name: "Alice Johnson",
 		age: 25,
 		score: 4.5,
@@ -49,6 +50,7 @@ export const dataset: ConformanceRecord[] = [
 	},
 	{
 		id: 2,
+		created: "2024-02-20",
 		name: "Bob Smith",
 		age: 17,
 		score: 2,
@@ -61,6 +63,7 @@ export const dataset: ConformanceRecord[] = [
 	},
 	{
 		id: 3,
+		created: "2024-03-25",
 		name: "Charlie Brown",
 		age: 30,
 		score: 3.25,
@@ -72,6 +75,7 @@ export const dataset: ConformanceRecord[] = [
 	},
 	{
 		id: 4,
+		created: "2024-04-30",
 		name: "Dana White",
 		age: 42,
 		score: -1.5,
@@ -84,6 +88,7 @@ export const dataset: ConformanceRecord[] = [
 	},
 	{
 		id: 5,
+		created: "2024-05-05",
 		name: "Eve Adams",
 		age: 18,
 		score: 0,
@@ -96,6 +101,7 @@ export const dataset: ConformanceRecord[] = [
 	},
 	{
 		id: 6,
+		created: "2024-06-10",
 		name: "frank o'neil",
 		age: 65,
 		score: 5,
@@ -108,6 +114,7 @@ export const dataset: ConformanceRecord[] = [
 	},
 	{
 		id: 7,
+		created: "2024-07-15",
 		name: "Grace_Hopper",
 		age: 85,
 		score: 10.75,
@@ -121,6 +128,7 @@ export const dataset: ConformanceRecord[] = [
 	},
 	{
 		id: 8,
+		created: "2024-08-20",
 		name: "Hank 100%",
 		age: 33,
 		score: 3,
@@ -212,6 +220,21 @@ export const cases: ConformanceCase[] = [
 		sql: "age NOT BETWEEN $1 AND $2",
 		params: [18, 30],
 		notes: "Ranges are values (#287); != means outside the interval and maps to NOT BETWEEN.",
+	},
+	{
+		name: "temporal-point",
+		query: "created > @2024-06-01",
+		matches: [6, 7, 8],
+		sql: "created > $1",
+		params: ["2024-06-01"],
+		notes: "Dates compare as epoch milliseconds in js; sql passes the ISO string as a parameter.",
+	},
+	{
+		name: "temporal-range",
+		query: "created = @2024-03-01..2024-06-30",
+		matches: [3, 4, 5, 6],
+		sql: "created BETWEEN $1 AND $2",
+		params: ["2024-03-01", "2024-06-30"],
 	},
 	{
 		name: "one-of-small",

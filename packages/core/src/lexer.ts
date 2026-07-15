@@ -3,6 +3,7 @@
  */
 
 import { FiltronParseError } from "./errors";
+import type { DateValue, DurationUnit, NowValue, TemporalPoint, TemporalRangeValue } from "./types";
 
 /**
  * Token types produced by the lexer
@@ -35,6 +36,7 @@ export type TokenType =
 	| "STRING"
 	| "NUMBER"
 	| "IDENT"
+	| "TEMPORAL"
 	| "EOF";
 
 /** Base token properties */
@@ -89,10 +91,16 @@ export interface BooleanToken extends TokenBase {
 	value: boolean;
 }
 
+/** Temporal literal tokens: the scanner builds the finished value */
+export interface TemporalToken extends TokenBase {
+	type: "TEMPORAL";
+	value: DateValue | NowValue | TemporalRangeValue;
+}
+
 /**
  * Discriminated union of all token types for proper type narrowing
  */
-export type Token = StringToken | NumberToken | BooleanToken | SymbolToken;
+export type Token = StringToken | NumberToken | BooleanToken | TemporalToken | SymbolToken;
 
 // Character codes
 const C = {
@@ -115,7 +123,9 @@ const C = {
 	Equals: 61,
 	GreaterThan: 62,
 	Question: 63,
+	At: 64,
 	UpperA: 65,
+	Plus: 43,
 	UpperZ: 90,
 	LBracket: 91,
 	Backslash: 92,
@@ -151,6 +161,7 @@ const CLS_QUESTION = 14;
 const CLS_EQ = 15;
 const CLS_TILDE = 16;
 const CLS_COLON = 17;
+const CLS_AT = 18;
 
 const CHAR_CLASS: Uint8Array = (() => {
 	const table = new Uint8Array(128);
@@ -173,6 +184,7 @@ const CHAR_CLASS: Uint8Array = (() => {
 	table[C.Equals] = CLS_EQ;
 	table[C.Tilde] = CLS_TILDE;
 	table[C.Colon] = CLS_COLON;
+	table[C.At] = CLS_AT;
 	return table;
 })();
 
@@ -430,6 +442,217 @@ export class Lexer {
 	}
 
 	/**
+	 * Scan exactly n digits starting at pos, returning the position after them
+	 */
+	private scanDigits(pos: number, n: number): number {
+		for (let i = 0; i < n; i++) {
+			const code = pos < this.length ? this.input.charCodeAt(pos) : 0;
+			if (code < C.Zero || code > C.Nine) {
+				throw new FiltronParseError("Invalid date in temporal value", pos);
+			}
+			pos++;
+		}
+		return pos;
+	}
+
+	/**
+	 * Read n already-validated digits as a number
+	 */
+	private digitsValue(pos: number, n: number): number {
+		let value = 0;
+		for (let i = 0; i < n; i++) {
+			value = value * 10 + (this.input.charCodeAt(pos + i) - C.Zero);
+		}
+		return value;
+	}
+
+	/**
+	 * Scan a single expected character, returning the position after it
+	 */
+	private scanChar(pos: number, expected: number): number {
+		if (pos >= this.length || this.input.charCodeAt(pos) !== expected) {
+			throw new FiltronParseError("Invalid date in temporal value", pos);
+		}
+		return pos + 1;
+	}
+
+	/**
+	 * A temporal literal must end at a token boundary
+	 */
+	private assertTemporalBoundary(): void {
+		if (this.pos < this.length) {
+			const code = this.input.charCodeAt(this.pos);
+			if (code < 128) {
+				const cls = CHAR_CLASS[code];
+				if (cls === CLS_IDENT || cls === CLS_DIGIT) {
+					throw new FiltronParseError("Unexpected character in temporal value", this.pos);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Read one temporal point: an ISO 8601 date, or now with an
+	 * optional signed offset
+	 */
+	private readTemporalPoint(context: string): TemporalPoint {
+		const input = this.input;
+		const length = this.length;
+		const start = this.pos;
+		const code = start < length ? input.charCodeAt(start) : 0;
+
+		// now, optionally followed by +N<unit> or -N<unit>
+		if (code === 110) {
+			if (
+				start + 2 >= length ||
+				input.charCodeAt(start + 1) !== 111 ||
+				input.charCodeAt(start + 2) !== 119
+			) {
+				throw new FiltronParseError(`Expected a date or now ${context}`, start);
+			}
+			this.pos = start + 3;
+
+			let offset: NowValue["offset"] = null;
+			const signCode = this.pos < length ? input.charCodeAt(this.pos) : 0;
+			if (signCode === C.Minus || signCode === C.Plus) {
+				this.pos++;
+				let amount = 0;
+				let digits = 0;
+				while (this.pos < length) {
+					const digit = input.charCodeAt(this.pos);
+					if (digit < C.Zero || digit > C.Nine) break;
+					amount = amount * 10 + (digit - C.Zero);
+					digits++;
+					this.pos++;
+				}
+				if (digits === 0) {
+					throw new FiltronParseError("Expected a number after the offset sign", this.pos);
+				}
+				const unit = this.pos < length ? input[this.pos] : "";
+				if (
+					unit !== "s" &&
+					unit !== "m" &&
+					unit !== "h" &&
+					unit !== "d" &&
+					unit !== "w" &&
+					unit !== "M" &&
+					unit !== "y"
+				) {
+					throw new FiltronParseError("Expected a duration unit (s, m, h, d, w, M, y)", this.pos);
+				}
+				this.pos++;
+				offset = { amount: signCode === C.Minus ? -amount : amount, unit };
+			}
+
+			this.assertTemporalBoundary();
+			return { type: "now", offset };
+		}
+
+		// ISO 8601 date: YYYY-MM-DD, optional THH:MM:SS(.mmm)?(Z|+HH:MM|-HH:MM)?
+		if (code >= C.Zero && code <= C.Nine) {
+			let pos = this.scanDigits(start, 4);
+			pos = this.scanChar(pos, C.Minus);
+			pos = this.scanDigits(pos, 2);
+			pos = this.scanChar(pos, C.Minus);
+			pos = this.scanDigits(pos, 2);
+
+			if (pos < length && input.charCodeAt(pos) === 84) {
+				pos = this.scanDigits(pos + 1, 2);
+				pos = this.scanChar(pos, C.Colon);
+				pos = this.scanDigits(pos, 2);
+				pos = this.scanChar(pos, C.Colon);
+				pos = this.scanDigits(pos, 2);
+
+				if (pos < length && input.charCodeAt(pos) === C.Dot) {
+					pos = this.scanDigits(pos + 1, 1);
+					for (let i = 0; i < 2 && pos < length; i++) {
+						const digit = input.charCodeAt(pos);
+						if (digit < C.Zero || digit > C.Nine) break;
+						pos++;
+					}
+				}
+
+				const zone = pos < length ? input.charCodeAt(pos) : 0;
+				if (zone === 90) {
+					pos++;
+				} else if (zone === C.Plus || zone === C.Minus) {
+					pos = this.scanDigits(pos + 1, 2);
+					pos = this.scanChar(pos, C.Colon);
+					pos = this.scanDigits(pos, 2);
+				}
+			}
+
+			const value = input.slice(start, pos);
+			const year = this.digitsValue(start, 4);
+			const month = this.digitsValue(start + 5, 2);
+			const day = this.digitsValue(start + 8, 2);
+			const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+			const daysInMonth = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+			let valid = month >= 1 && month <= 12 && day >= 1 && day <= daysInMonth[month - 1];
+			if (valid && pos > start + 10 && input.charCodeAt(start + 10) === 84) {
+				const hour = this.digitsValue(start + 11, 2);
+				const minute = this.digitsValue(start + 14, 2);
+				const second = this.digitsValue(start + 17, 2);
+				valid = hour <= 23 && minute <= 59 && second <= 59;
+			}
+			if (!valid) {
+				throw new FiltronParseError(`Invalid date: ${value}`, start);
+			}
+			this.pos = pos;
+			this.assertTemporalBoundary();
+			return { type: "date", value };
+		}
+
+		throw new FiltronParseError(`Expected a date or now ${context}`, start);
+	}
+
+	/**
+	 * Read a temporal literal: '@' followed by a point, optionally
+	 * '..' and a second point (no second '@')
+	 */
+	private readTemporal(): Token {
+		const start = this.pos;
+		this.pos = start + 1; // consume '@'
+
+		const min = this.readTemporalPoint("after '@'");
+
+		const input = this.input;
+		if (
+			this.pos + 1 < this.length &&
+			input.charCodeAt(this.pos) === C.Dot &&
+			input.charCodeAt(this.pos + 1) === C.Dot
+		) {
+			this.pos += 2;
+			const max = this.readTemporalPoint("after '..'");
+
+			// Ordering is only checked where it is timezone-independent:
+			// date-only bounds compare lexicographically. Bounds with times
+			// or now offsets are left to resolution
+			if (
+				min.type === "date" &&
+				max.type === "date" &&
+				min.value.length === 10 &&
+				max.value.length === 10 &&
+				min.value > max.value
+			) {
+				throw new FiltronParseError(
+					`Range min (${min.value}) must not exceed max (${max.value})`,
+					start,
+				);
+			}
+
+			return {
+				type: "TEMPORAL",
+				value: { type: "range", kind: "temporal", min, max },
+				start,
+				end: this.pos,
+			};
+		}
+
+		return { type: "TEMPORAL", value: min, start, end: this.pos };
+	}
+
+	/**
 	 * Get the next token
 	 */
 	next(): Token {
@@ -494,6 +717,8 @@ export class Lexer {
 			case CLS_COLON:
 				this.pos = pos + 1;
 				return { type: "COLON", start: pos, end: pos + 1 };
+			case CLS_AT:
+				return this.readTemporal();
 			case CLS_BANG: {
 				const nextCode = pos + 1 < length ? input.charCodeAt(pos + 1) : 0;
 				if (nextCode === C.Equals) {

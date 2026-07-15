@@ -11,13 +11,22 @@
  *   PrimaryExpression = '(' OrExpression ')' | '-' FieldName | FieldExpression
  *   FieldExpression   = FieldName ('?' | EXISTS | ComparisonOp Value | OneOfOp '[' Values ']')?
  *   FieldName         = IDENT ('.' IDENT)*
- *   Value             = STRING | NUMBER | BOOLEAN | DottedIdent | Range
- *   Values            = Value (',' Value)*        (ranges are rejected)
+ *   Value             = STRING | NUMBER | BOOLEAN | DottedIdent | Range | Temporal
+ *   Values            = Value (',' Value)*        (ranges and temporals are rejected)
  *   Range             = NUMBER '..' NUMBER        (only with =, : or !=)
+ *   Temporal          = '@' Point ('..' Point)?   (ranges only with =, : or !=)
+ *   Point             = Date | 'now' (('+' | '-') NUMBER Unit)?
  */
 
 import { FiltronParseError } from "./errors";
-import { Lexer, type Token, type TokenType, type StringToken, type NumberToken } from "./lexer";
+import {
+	Lexer,
+	type Token,
+	type TokenType,
+	type StringToken,
+	type NumberToken,
+	type TemporalToken,
+} from "./lexer";
 import type { ParseOptions } from "./parser";
 import type { ASTNode, Value, ComparisonOperator, OneOfExpression } from "./types";
 
@@ -259,6 +268,12 @@ class Parser {
 					opToken.start,
 				);
 			}
+			if ((value.type === "date" || value.type === "now") && operator === "~") {
+				throw new FiltronParseError(
+					"Temporal values cannot be used with the ~ operator",
+					opToken.start,
+				);
+			}
 
 			return {
 				type: "comparison",
@@ -367,6 +382,9 @@ class Parser {
 		if (value.type === "range") {
 			throw new FiltronParseError("Range values are not allowed in arrays", start);
 		}
+		if (value.type === "date" || value.type === "now") {
+			throw new FiltronParseError("Temporal values are not allowed in arrays", start);
+		}
 		return value;
 	}
 
@@ -391,7 +409,7 @@ class Parser {
 						token.start,
 					);
 				}
-				return { type: "range", min: token.value, max: maxToken.value };
+				return { type: "range", kind: "number", min: token.value, max: maxToken.value };
 			}
 			return { type: "number", value: token.value };
 		}
@@ -404,6 +422,12 @@ class Parser {
 		if (t === "FALSE") {
 			this.advance();
 			return { type: "boolean", value: false };
+		}
+
+		// Temporal literal: the lexer builds the finished value
+		if (t === "TEMPORAL") {
+			const token = this.advance() as TemporalToken;
+			return token.value;
 		}
 
 		// Identifier (possibly dotted)

@@ -37,6 +37,7 @@ function tokenTypeToClass(type: TokenType): HighlightClass | null {
 		case "STRING":
 			return "string";
 		case "NUMBER":
+		case "TEMPORAL":
 			return "number";
 		case "LPAREN":
 		case "RPAREN":

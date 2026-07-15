@@ -262,7 +262,7 @@ describe("SQL", () => {
 				type: "comparison",
 				field: "age",
 				operator: "=",
-				value: { type: "range", min: 18, max: 65 },
+				value: { type: "range", kind: "number", min: 18, max: 65 },
 			};
 
 			const result = toSQL(ast);
@@ -275,7 +275,7 @@ describe("SQL", () => {
 				type: "comparison",
 				field: "price",
 				operator: "=",
-				value: { type: "range", min: 9.99, max: 99.99 },
+				value: { type: "range", kind: "number", min: 9.99, max: 99.99 },
 			};
 
 			const result = toSQL(ast);
@@ -288,7 +288,7 @@ describe("SQL", () => {
 				type: "comparison",
 				field: "temperature",
 				operator: "=",
-				value: { type: "range", min: -20, max: 40 },
+				value: { type: "range", kind: "number", min: -20, max: 40 },
 			};
 
 			const result = toSQL(ast);
@@ -301,7 +301,7 @@ describe("SQL", () => {
 				type: "comparison",
 				field: "age",
 				operator: "!=",
-				value: { type: "range", min: 18, max: 65 },
+				value: { type: "range", kind: "number", min: 18, max: 65 },
 			};
 
 			const result = toSQL(ast);
@@ -314,7 +314,7 @@ describe("SQL", () => {
 				type: "comparison",
 				field: "age",
 				operator: ":",
-				value: { type: "range", min: 18, max: 65 },
+				value: { type: "range", kind: "number", min: 18, max: 65 },
 			};
 
 			const result = toSQL(ast);
@@ -326,7 +326,7 @@ describe("SQL", () => {
 				type: "comparison",
 				field: "age",
 				operator: ">",
-				value: { type: "range", min: 18, max: 65 },
+				value: { type: "range", kind: "number", min: 18, max: 65 },
 			};
 
 			expect(() => toSQL(ast)).toThrow("Range values require the =, : or != operator");
@@ -337,7 +337,7 @@ describe("SQL", () => {
 				type: "oneOf",
 				field: "age",
 				negated: false,
-				values: [{ type: "range", min: 1, max: 2 }],
+				values: [{ type: "range", kind: "number", min: 1, max: 2 }],
 			};
 
 			expect(() => toSQL(ast)).toThrow("Range values cannot be used here");
@@ -348,7 +348,7 @@ describe("SQL", () => {
 				type: "comparison",
 				field: "user.age",
 				operator: "=",
-				value: { type: "range", min: 18, max: 65 },
+				value: { type: "range", kind: "number", min: 18, max: 65 },
 			};
 
 			const result = toSQL(ast, {
@@ -357,6 +357,103 @@ describe("SQL", () => {
 
 			expect(result.sql).toBe("t.user.age BETWEEN $1 AND $2");
 			expect(result.params).toEqual([18, 65]);
+		});
+	});
+
+	describe("Temporal Values", () => {
+		test("date comparison parameterizes the ISO string", () => {
+			const ast: ASTNode = {
+				type: "comparison",
+				field: "created",
+				operator: ">",
+				value: { type: "date", value: "2024-06-01" },
+			};
+
+			const result = toSQL(ast);
+			expect(result.sql).toBe("created > $1");
+			expect(result.params).toEqual(["2024-06-01"]);
+		});
+
+		test("date equality and datetime values", () => {
+			const ast: ASTNode = {
+				type: "comparison",
+				field: "created",
+				operator: "=",
+				value: { type: "date", value: "2024-06-01T14:30:00Z" },
+			};
+
+			const result = toSQL(ast);
+			expect(result.sql).toBe("created = $1");
+			expect(result.params).toEqual(["2024-06-01T14:30:00Z"]);
+		});
+
+		test("temporal range uses BETWEEN with ISO parameters", () => {
+			const ast: ASTNode = {
+				type: "comparison",
+				field: "created",
+				operator: "=",
+				value: {
+					type: "range",
+					kind: "temporal",
+					min: { type: "date", value: "2024-06-01" },
+					max: { type: "date", value: "2024-06-30" },
+				},
+			};
+
+			const result = toSQL(ast);
+			expect(result.sql).toBe("created BETWEEN $1 AND $2");
+			expect(result.params).toEqual(["2024-06-01", "2024-06-30"]);
+		});
+
+		test("negated temporal range uses NOT BETWEEN", () => {
+			const ast: ASTNode = {
+				type: "comparison",
+				field: "created",
+				operator: "!=",
+				value: {
+					type: "range",
+					kind: "temporal",
+					min: { type: "date", value: "2024-06-01" },
+					max: { type: "date", value: "2024-06-30" },
+				},
+			};
+
+			const result = toSQL(ast);
+			expect(result.sql).toBe("created NOT BETWEEN $1 AND $2");
+			expect(result.params).toEqual(["2024-06-01", "2024-06-30"]);
+		});
+
+		test("unresolved now values throw", () => {
+			const point: ASTNode = {
+				type: "comparison",
+				field: "created",
+				operator: ">",
+				value: { type: "now", offset: { amount: -7, unit: "d" } },
+			};
+			expect(() => toSQL(point)).toThrow("Unresolved relative time value");
+
+			const range: ASTNode = {
+				type: "comparison",
+				field: "created",
+				operator: "=",
+				value: {
+					type: "range",
+					kind: "temporal",
+					min: { type: "now", offset: null },
+					max: { type: "date", value: "2024-06-30" },
+				},
+			};
+			expect(() => toSQL(range)).toThrow("Unresolved relative time value");
+		});
+
+		test("temporal values in membership arrays throw", () => {
+			const ast: ASTNode = {
+				type: "oneOf",
+				field: "created",
+				negated: false,
+				values: [{ type: "now", offset: null }],
+			};
+			expect(() => toSQL(ast)).toThrow("Temporal values cannot be used here");
 		});
 	});
 

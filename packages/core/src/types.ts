@@ -17,7 +17,14 @@ export type ASTNode =
 /**
  * Value type - represents literal values in expressions
  */
-export type Value = StringValue | NumberValue | BooleanValue | IdentifierValue | RangeValue;
+export type Value =
+	| StringValue
+	| NumberValue
+	| BooleanValue
+	| IdentifierValue
+	| RangeValue
+	| DateValue
+	| NowValue;
 
 /**
  * Comparison operators supported
@@ -130,12 +137,61 @@ export interface IdentifierValue {
 }
 
 /**
- * Range value - an inclusive numeric interval
+ * Units for now-relative offsets
+ * Case-sensitive: m is minutes, M is months
+ */
+export type DurationUnit = "s" | "m" | "h" | "d" | "w" | "M" | "y";
+
+/**
+ * Date value - an absolute point in time, written as @<ISO 8601>
+ * Example: @2024-06-01, @2024-06-30T14:00:00Z
+ */
+export interface DateValue {
+	type: "date";
+	value: string;
+}
+
+/**
+ * Now value - a point in time relative to evaluation, written as
+ * @now with an optional offset. Inert at parse time: adapters reject
+ * it until it is resolved to a DateValue
+ * Example: @now, @now-7d, @now+2h
+ */
+export interface NowValue {
+	type: "now";
+	offset: { amount: number; unit: DurationUnit } | null;
+}
+
+/**
+ * A temporal range bound: an absolute date or a now-relative point
+ */
+export type TemporalPoint = DateValue | NowValue;
+
+/**
+ * Range value over numbers - an inclusive interval
  * Valid with the =, : and != operators only
  * Example: age = 18..65, price != 0..100
  */
-export interface RangeValue {
+export interface NumberRangeValue {
 	type: "range";
+	kind: "number";
 	min: number;
 	max: number;
 }
+
+/**
+ * Range value over points in time - an inclusive interval
+ * Valid with the =, : and != operators only
+ * Example: deployed = @2024-06-01..2024-06-30, created = @now-7d..now
+ */
+export interface TemporalRangeValue {
+	type: "range";
+	kind: "temporal";
+	min: TemporalPoint;
+	max: TemporalPoint;
+}
+
+/**
+ * Range value - an inclusive interval over numbers or points in time
+ */
+export type RangeValue = NumberRangeValue | TemporalRangeValue;

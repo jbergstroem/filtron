@@ -58,7 +58,7 @@ describe("Parser API", () => {
 		});
 
 		test("returns error result for unexpected characters", () => {
-			const result = parse("age @ 18");
+			const result = parse("age % 18");
 			expect(result.success).toBe(false);
 			if (!result.success) {
 				expect(result.message).toContain("Unexpected character");

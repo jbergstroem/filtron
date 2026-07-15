@@ -49,4 +49,11 @@ export type {
 	NumberValue,
 	BooleanValue,
 	IdentifierValue,
+	RangeValue,
+	NumberRangeValue,
+	TemporalRangeValue,
+	DateValue,
+	NowValue,
+	TemporalPoint,
+	DurationUnit,
 } from "./types";

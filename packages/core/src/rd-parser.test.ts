@@ -195,29 +195,29 @@ describe("RD Parser", () => {
 			expect(ast.type).toBe("comparison");
 			expect(ast.field).toBe("age");
 			expect(ast.operator).toBe("=");
-			expect(ast.value).toEqual({ type: "range", min: 18, max: 65 });
+			expect(ast.value).toEqual({ type: "range", kind: "number", min: 18, max: 65 });
 		});
 
 		test("float range", () => {
 			const ast = parseQuery("score = 0.0..100.0") as ComparisonExpression;
-			expect(ast.value).toEqual({ type: "range", min: 0, max: 100 });
+			expect(ast.value).toEqual({ type: "range", kind: "number", min: 0, max: 100 });
 		});
 
 		test("negative number range", () => {
 			const ast = parseQuery("temperature = -10..30") as ComparisonExpression;
-			expect(ast.value).toEqual({ type: "range", min: -10, max: 30 });
+			expect(ast.value).toEqual({ type: "range", kind: "number", min: -10, max: 30 });
 		});
 
 		test("range with colon operator", () => {
 			const ast = parseQuery("age : 18..65") as ComparisonExpression;
 			expect(ast.operator).toBe(":");
-			expect(ast.value).toEqual({ type: "range", min: 18, max: 65 });
+			expect(ast.value).toEqual({ type: "range", kind: "number", min: 18, max: 65 });
 		});
 
 		test("range with not-equals operator", () => {
 			const ast = parseQuery("age != 18..65") as ComparisonExpression;
 			expect(ast.operator).toBe("!=");
-			expect(ast.value).toEqual({ type: "range", min: 18, max: 65 });
+			expect(ast.value).toEqual({ type: "range", kind: "number", min: 18, max: 65 });
 		});
 
 		test("range with an ordering operator is an error", () => {
@@ -239,6 +239,58 @@ describe("RD Parser", () => {
 
 		test("incomplete range is an error", () => {
 			expect(() => parseQuery("age = 18..")).toThrow("Expected number after '..'");
+		});
+	});
+
+	describe("Temporal Values", () => {
+		test("date point with comparison operators", () => {
+			const ast = parseQuery("created > @2024-06-01") as ComparisonExpression;
+			expect(ast.operator).toBe(">");
+			expect(ast.value).toEqual({ type: "date", value: "2024-06-01" });
+		});
+
+		test("now point with offset", () => {
+			const ast = parseQuery("updated >= @now-7d") as ComparisonExpression;
+			expect(ast.value).toEqual({ type: "now", offset: { amount: -7, unit: "d" } });
+		});
+
+		test("temporal range", () => {
+			const ast = parseQuery("created = @2024-06-01..2024-06-30") as ComparisonExpression;
+			expect(ast.value).toEqual({
+				type: "range",
+				kind: "temporal",
+				min: { type: "date", value: "2024-06-01" },
+				max: { type: "date", value: "2024-06-30" },
+			});
+		});
+
+		test("temporal range with an ordering operator is an error", () => {
+			expect(() => parseQuery("created > @2024-06-01..2024-06-30")).toThrow(
+				"Range values require the =, : or != operator",
+			);
+		});
+
+		test("temporal point with the contains operator is an error", () => {
+			expect(() => parseQuery("created ~ @2024-06-01")).toThrow(
+				"Temporal values cannot be used with the ~ operator",
+			);
+			expect(() => parseQuery("created ~ @now")).toThrow(FiltronParseError);
+		});
+
+		test("temporal values inside arrays are an error", () => {
+			expect(() => parseQuery("created : [@2024-06-01]")).toThrow(
+				"Temporal values are not allowed in arrays",
+			);
+			expect(() => parseQuery("created : [1, @now]")).toThrow(FiltronParseError);
+		});
+
+		test("temporal points compose with boolean logic", () => {
+			const ast = parseQuery('status = "active" AND created > @now-1w') as AndExpression;
+			expect(ast.type).toBe("and");
+			expect((ast.children[1] as ComparisonExpression).value).toEqual({
+				type: "now",
+				offset: { amount: -1, unit: "w" },
+			});
 		});
 	});
 

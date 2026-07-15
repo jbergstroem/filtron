@@ -11,9 +11,11 @@ import type {
 	AndExpression,
 	NotExpression,
 	ComparisonExpression,
+	ComparisonOperator,
 	OneOfExpression,
 	ExistsExpression,
 	BooleanFieldExpression,
+	TemporalPoint,
 } from "@filtron/core";
 
 /**
@@ -257,6 +259,17 @@ function generateComparison(node: ComparisonExpression, state: GeneratorState): 
 	const field = resolveField(node.field, state);
 
 	if (node.value.type === "range") {
+		if (node.value.kind === "temporal") {
+			const min = temporalBoundEpoch(node.value.min);
+			const max = temporalBoundEpoch(node.value.max);
+			if (node.operator === "=" || node.operator === ":") {
+				return generateDateRange(field, false, min, max, state);
+			}
+			if (node.operator === "!=") {
+				return generateDateRange(field, true, min, max, state);
+			}
+			throw new Error(`Range values require the =, : or != operator, got ${node.operator}`);
+		}
 		const { min, max } = node.value;
 		if (node.operator === "=" || node.operator === ":") {
 			return generateRangeComparison(field, "=", min, max, state);
@@ -265,6 +278,14 @@ function generateComparison(node: ComparisonExpression, state: GeneratorState): 
 			return generateRangeComparison(field, "!=", min, max, state);
 		}
 		throw new Error(`Range values require the =, : or != operator, got ${node.operator}`);
+	}
+
+	if (node.value.type === "date") {
+		return generateDateComparison(field, node.operator, Date.parse(node.value.value), state);
+	}
+
+	if (node.value.type === "now") {
+		throw new Error(UNRESOLVED_NOW);
 	}
 
 	const targetValue = extractValue(node.value);
@@ -613,6 +634,101 @@ function generateRangeComparison(
 	};
 }
 
+const UNRESOLVED_NOW =
+	"Unresolved relative time value: resolve now-relative values before filtering";
+
+/**
+ * Converts a temporal range bound to an epoch; now-relative bounds
+ * must be resolved before filtering
+ */
+function temporalBoundEpoch(point: TemporalPoint): number {
+	if (point.type === "now") {
+		throw new Error(UNRESOLVED_NOW);
+	}
+	return Date.parse(point.value);
+}
+
+/**
+ * Coerces a field value to an epoch for date comparisons: Date
+ * instances, ISO strings and epoch numbers are accepted; everything
+ * else yields NaN and never matches (except through !=)
+ */
+function toEpoch(value: unknown): number {
+	if (typeof value === "number") {
+		return value;
+	}
+	if (typeof value === "string") {
+		return Date.parse(value);
+	}
+	if (value instanceof Date) {
+		return value.getTime();
+	}
+	return NaN;
+}
+
+/**
+ * Generates predicate for a comparison against a date value,
+ * compared as epoch milliseconds
+ */
+function generateDateComparison(
+	field: string,
+	operator: ComparisonOperator,
+	target: number,
+	state: GeneratorState,
+): FilterPredicate<Record<string, unknown>> {
+	const accessor = state.fieldAccessor;
+	const get = accessor
+		? (item: Record<string, unknown>) => toEpoch(accessor(item, field))
+		: (item: Record<string, unknown>) => toEpoch(item[field]);
+
+	switch (operator) {
+		case "=":
+		case ":":
+			return (item) => get(item) === target;
+		case "!=":
+			return (item) => get(item) !== target;
+		case ">":
+			return (item) => get(item) > target;
+		case ">=":
+			return (item) => get(item) >= target;
+		case "<":
+			return (item) => get(item) < target;
+		case "<=":
+			return (item) => get(item) <= target;
+		default:
+			// The parser rejects ~ against temporal values
+			throw new Error(`Temporal values cannot be used with the ${operator} operator`);
+	}
+}
+
+/**
+ * Generates predicate for a temporal range, compared as epoch
+ * milliseconds; NaN field values fall outside every interval
+ */
+function generateDateRange(
+	field: string,
+	negated: boolean,
+	min: number,
+	max: number,
+	state: GeneratorState,
+): FilterPredicate<Record<string, unknown>> {
+	const accessor = state.fieldAccessor;
+	const get = accessor
+		? (item: Record<string, unknown>) => toEpoch(accessor(item, field))
+		: (item: Record<string, unknown>) => toEpoch(item[field]);
+
+	if (negated) {
+		return (item) => {
+			const epoch = get(item);
+			return !(epoch >= min && epoch <= max);
+		};
+	}
+	return (item) => {
+		const epoch = get(item);
+		return epoch >= min && epoch <= max;
+	};
+}
+
 /**
  * Extracts the primitive value from a Filtron Value node
  */
@@ -621,6 +737,10 @@ function extractValue(value: Value): string | number | boolean {
 		case "range":
 			// The parser only produces ranges where callers handle them first
 			throw new Error("Range values cannot be used here");
+		case "date":
+		case "now":
+			// The parser rejects temporal values in arrays
+			throw new Error("Temporal values cannot be used here");
 		case "string":
 			return value.value;
 		case "number":

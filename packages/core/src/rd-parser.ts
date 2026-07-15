@@ -19,15 +19,7 @@
 import { FiltronParseError } from "./errors";
 import { Lexer, type Token, type TokenType, type StringToken, type NumberToken } from "./lexer";
 import type { ParseOptions } from "./parser";
-import type {
-	ASTNode,
-	Value,
-	ComparisonOperator,
-	ComparisonExpression,
-	OneOfExpression,
-	ExistsExpression,
-	BooleanFieldExpression,
-} from "./types";
+import type { ASTNode, Value, ComparisonOperator, OneOfExpression } from "./types";
 
 /**
  * Default maximum query length in characters
@@ -213,7 +205,7 @@ class Parser {
 		if (this.check("MINUS")) {
 			this.advance();
 			const field = this.parseFieldName();
-			return { type: "exists", field, negated: true } as ExistsExpression;
+			return { type: "exists", field, negated: true };
 		}
 
 		// Not a valid primary; parseFieldExpression reports the error
@@ -231,7 +223,7 @@ class Parser {
 		// Exists check with ? or EXISTS
 		if (t === "QUESTION" || t === "EXISTS") {
 			this.advance();
-			return { type: "exists", field, negated: false } as ExistsExpression;
+			return { type: "exists", field, negated: false };
 		}
 
 		// Membership: field : [values]
@@ -273,11 +265,11 @@ class Parser {
 				field,
 				operator,
 				value,
-			} as ComparisonExpression;
+			};
 		}
 
 		// Boolean field shorthand (just the field name)
-		return { type: "booleanField", field } as BooleanFieldExpression;
+		return { type: "booleanField", field };
 	}
 
 	/**

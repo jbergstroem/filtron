@@ -342,16 +342,16 @@ export async function findDocs(): Promise<{ required: DocFile[]; optional: DocFi
 
 	const packages = await readdir(`${ROOT}/packages`);
 	const pkgDocs = await Promise.all(
-		packages.sort().map(async (pkg) => {
-			const readmeFile = file(`${ROOT}/packages/${pkg}/README.md`);
+		packages.sort().map(async (pkgName) => {
+			const readmeFile = file(`${ROOT}/packages/${pkgName}/README.md`);
 			if (await readmeFile.exists()) {
 				const content = await readmeFile.text();
 				return {
-					name: `@filtron/${pkg}`,
-					path: `packages/${pkg}/README.txt`,
-					url: `${BASE_URL}/llms/packages/${pkg}/README.txt`,
+					name: `@filtron/${pkgName}`,
+					path: `packages/${pkgName}/README.txt`,
+					url: `${BASE_URL}/llms/packages/${pkgName}/README.txt`,
 					description: extractDescription(content),
-					isOptional: pkg === "benchmark",
+					isOptional: pkgName === "benchmark",
 				};
 			}
 			return null;

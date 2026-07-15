@@ -3,7 +3,7 @@
  * Uses Bun's built-in SQLite driver
  */
 
-import { Database } from "bun:sqlite";
+import { Database, type SQLQueryBindings } from "bun:sqlite";
 import { faker } from "@faker-js/faker";
 import type { SQLResult } from "@filtron/sql";
 
@@ -39,8 +39,8 @@ export function getAllUsers(): User[] {
  */
 export function getFilteredUsers(sqlResult: SQLResult): User[] {
 	const sql = `SELECT * FROM users WHERE ${sqlResult.sql} ORDER BY id`;
-	const query = db.query<User, any[]>(sql);
-	return query.all(...sqlResult.params);
+	const query = db.query<User, SQLQueryBindings[]>(sql);
+	return query.all(...(sqlResult.params as SQLQueryBindings[]));
 }
 
 /**
@@ -86,8 +86,8 @@ function generateUsers(count: number) {
 /**
  * Initialize database and seed with data
  */
-export function seedDatabase(db: Database, count: number = 500): void {
-	db.exec(`
+export function seedDatabase(database: Database, count: number = 500): void {
+	database.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
@@ -100,20 +100,20 @@ export function seedDatabase(db: Database, count: number = 500): void {
     )
   `);
 
-	db.exec("CREATE INDEX IF NOT EXISTS idx_users_status ON users(status)");
-	db.exec("CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)");
-	db.exec("CREATE INDEX IF NOT EXISTS idx_users_age ON users(age)");
-	db.exec("CREATE INDEX IF NOT EXISTS idx_users_verified ON users(verified)");
+	database.exec("CREATE INDEX IF NOT EXISTS idx_users_status ON users(status)");
+	database.exec("CREATE INDEX IF NOT EXISTS idx_users_role ON users(role)");
+	database.exec("CREATE INDEX IF NOT EXISTS idx_users_age ON users(age)");
+	database.exec("CREATE INDEX IF NOT EXISTS idx_users_verified ON users(verified)");
 
 	// Check if already seeded
-	const result = db.query<{ count: number }, []>("SELECT COUNT(*) as count FROM users").get();
+	const result = database.query<{ count: number }, []>("SELECT COUNT(*) as count FROM users").get();
 	if (result && result.count > 0) {
 		return;
 	}
 
 	// Generate and insert users
 	const users = generateUsers(count);
-	const insertStmt = db.prepare(
+	const insertStmt = database.prepare(
 		"INSERT INTO users (name, email, age, status, role, verified) VALUES (?, ?, ?, ?, ?, ?)",
 	);
 
@@ -124,8 +124,8 @@ export function seedDatabase(db: Database, count: number = 500): void {
 
 // Run seed if called directly (useful for testing seed logic)
 if (import.meta.main) {
-	const db = new Database(":memory:");
-	seedDatabase(db);
+	const memoryDb = new Database(":memory:");
+	seedDatabase(memoryDb);
 	console.log("✓ In-memory database seeded successfully");
-	db.close();
+	memoryDb.close();
 }

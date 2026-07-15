@@ -17,6 +17,25 @@
 		"bad-bitwise-operator": "error",
 		"no-barrel-file": "error",
 		"no-const-enum": "error",
-		"no-rest-spread-properties": "error"
+		"no-rest-spread-properties": "error",
+		"no-unused-vars": [
+			"error",
+			{
+				"varsIgnorePattern": "^_",
+				"argsIgnorePattern": "^_",
+				"ignoreRestSiblings": true
+			}
+		],
+		"typescript/no-explicit-any": "error",
+		"typescript/consistent-type-imports": "error",
+		"import/no-duplicates": "error",
+		"eqeqeq": "error",
+		"typescript/no-unnecessary-type-assertion": "error",
+		"typescript/no-unnecessary-type-arguments": "error",
+		"no-shadow": "error",
+		"typescript/consistent-return": "error"
+	},
+	"categories": {
+		"correctness": "error"
 	}
 }

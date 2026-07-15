@@ -175,13 +175,13 @@ export async function copyLlmsDocs(): Promise<void> {
 
 	const packages = await readdir("../packages");
 	await Promise.all(
-		packages.map(async (pkg) => {
-			const readmeFile = file(`../packages/${pkg}/README.md`);
+		packages.map(async (pkgName) => {
+			const readmeFile = file(`../packages/${pkgName}/README.md`);
 			if (await readmeFile.exists()) {
-				await mkdir(`dist/llms/packages/${pkg}`, { recursive: true });
+				await mkdir(`dist/llms/packages/${pkgName}`, { recursive: true });
 				const content = await readmeFile.text();
 				const formatted = await format("README.md", content);
-				await write(`dist/llms/packages/${pkg}/README.txt`, formatted.code);
+				await write(`dist/llms/packages/${pkgName}/README.txt`, formatted.code);
 			}
 		}),
 	);

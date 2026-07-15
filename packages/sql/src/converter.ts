@@ -156,14 +156,22 @@ export function toSQL(ast: ASTNode, options: SQLOptions = {}): SQLResult {
 }
 
 /**
+ * SQL operator precedence (lowest to highest): OR < AND < NOT < leaf.
+ * A child wraps in parentheses only when it binds looser than its parent.
+ */
+const PREC_OR = 1;
+const PREC_AND = 2;
+const PREC_NOT = 3;
+
+/**
  * Recursively generates SQL from AST nodes
  */
-function generateSQL(node: ASTNode, state: GeneratorState): string {
+function generateSQL(node: ASTNode, state: GeneratorState, parentPrec = 0): string {
 	switch (node.type) {
 		case "or":
-			return generateOr(node, state);
+			return generateOr(node, state, parentPrec);
 		case "and":
-			return generateAnd(node, state);
+			return generateAnd(node, state, parentPrec);
 		case "not":
 			return generateNot(node, state);
 		case "comparison":
@@ -186,32 +194,31 @@ function generateSQL(node: ASTNode, state: GeneratorState): string {
  * Generates SQL for OR expression
  * The parser guarantees flat chains of two or more children
  */
-function generateOr(node: OrExpression, state: GeneratorState): string {
-	let sql = generateSQL(node.children[0], state);
+function generateOr(node: OrExpression, state: GeneratorState, parentPrec: number): string {
+	let sql = generateSQL(node.children[0], state, PREC_OR);
 	for (let i = 1; i < node.children.length; i++) {
-		sql += " OR " + generateSQL(node.children[i], state);
+		sql += " OR " + generateSQL(node.children[i], state, PREC_OR);
 	}
-	return `(${sql})`;
+	return parentPrec > PREC_OR ? `(${sql})` : sql;
 }
 
 /**
  * Generates SQL for AND expression
  * The parser guarantees flat chains of two or more children
  */
-function generateAnd(node: AndExpression, state: GeneratorState): string {
-	let sql = generateSQL(node.children[0], state);
+function generateAnd(node: AndExpression, state: GeneratorState, parentPrec: number): string {
+	let sql = generateSQL(node.children[0], state, PREC_AND);
 	for (let i = 1; i < node.children.length; i++) {
-		sql += " AND " + generateSQL(node.children[i], state);
+		sql += " AND " + generateSQL(node.children[i], state, PREC_AND);
 	}
-	return `(${sql})`;
+	return parentPrec > PREC_AND ? `(${sql})` : sql;
 }
 
 /**
  * Generates SQL for NOT expression
  */
 function generateNot(node: NotExpression, state: GeneratorState): string {
-	const expr = generateSQL(node.expression, state);
-	return `NOT (${expr})`;
+	return `NOT ${generateSQL(node.expression, state, PREC_NOT)}`;
 }
 
 /**

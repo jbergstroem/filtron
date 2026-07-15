@@ -3,7 +3,7 @@
  */
 
 import { FiltronParseError } from "./errors";
-import type { DateValue, DurationUnit, NowValue, TemporalPoint, TemporalRangeValue } from "./types";
+import type { DateValue, NowValue, TemporalPoint, TemporalRangeValue } from "./types";
 
 /**
  * Token types produced by the lexer

@@ -156,7 +156,7 @@ describe("SQL", () => {
 			};
 
 			const result = toSQL(ast);
-			expect(result.sql).toBe("(age > $1 AND status = $2)");
+			expect(result.sql).toBe("age > $1 AND status = $2");
 			expect(result.params).toEqual([18, "active"]);
 		});
 
@@ -176,7 +176,7 @@ describe("SQL", () => {
 			};
 
 			const result = toSQL(ast);
-			expect(result.sql).toBe("(verified = $1 AND premium = $2 AND age > $3)");
+			expect(result.sql).toBe("verified = $1 AND premium = $2 AND age > $3");
 			expect(result.params).toEqual([true, true, 21]);
 		});
 
@@ -200,7 +200,7 @@ describe("SQL", () => {
 			};
 
 			const result = toSQL(ast);
-			expect(result.sql).toBe("(role = $1 OR role = $2)");
+			expect(result.sql).toBe("role = $1 OR role = $2");
 			expect(result.params).toEqual(["admin", "moderator"]);
 		});
 
@@ -216,7 +216,7 @@ describe("SQL", () => {
 			};
 
 			const result = toSQL(ast);
-			expect(result.sql).toBe("NOT (suspended = $1)");
+			expect(result.sql).toBe("NOT suspended = $1");
 			expect(result.params).toEqual([true]);
 		});
 
@@ -251,7 +251,7 @@ describe("SQL", () => {
 			};
 
 			const result = toSQL(ast);
-			expect(result.sql).toBe("((role = $1 OR role = $2) AND status = $3)");
+			expect(result.sql).toBe("(role = $1 OR role = $2) AND status = $3");
 			expect(result.params).toEqual(["admin", "moderator", "active"]);
 		});
 	});
@@ -505,7 +505,7 @@ describe("SQL", () => {
 			};
 
 			const result = toSQL(ast);
-			expect(result.sql).toBe("(verified = $1 AND premium = $2)");
+			expect(result.sql).toBe("verified = $1 AND premium = $2");
 			expect(result.params).toEqual([true, true]);
 		});
 	});
@@ -531,7 +531,7 @@ describe("SQL", () => {
 			};
 
 			const result = toSQL(ast, { parameterStyle: "numbered" });
-			expect(result.sql).toBe("(age > $1 AND status = $2)");
+			expect(result.sql).toBe("age > $1 AND status = $2");
 			expect(result.params).toEqual([18, "active"]);
 		});
 
@@ -555,7 +555,7 @@ describe("SQL", () => {
 			};
 
 			const result = toSQL(ast, { parameterStyle: "question" });
-			expect(result.sql).toBe("(age > ? AND status = ?)");
+			expect(result.sql).toBe("age > ? AND status = ?");
 			expect(result.params).toEqual([18, "active"]);
 		});
 
@@ -649,7 +649,7 @@ describe("SQL", () => {
 				fieldMapper: (field) => `t.${field}`,
 			});
 
-			expect(result.sql).toBe("(t.age > $1 AND t.status IN ($2, $3))");
+			expect(result.sql).toBe("t.age > $1 AND t.status IN ($2, $3)");
 			expect(result.params).toEqual([18, "active", "pending"]);
 		});
 	});
@@ -675,7 +675,7 @@ describe("SQL", () => {
 			};
 
 			const result = toSQL(ast, { allowedFields: ["age", "status"] });
-			expect(result.sql).toBe("(age > $1 AND status = $2)");
+			expect(result.sql).toBe("age > $1 AND status = $2");
 			expect(result.params).toEqual([18, "active"]);
 		});
 
@@ -879,7 +879,7 @@ describe("SQL", () => {
 				valueMapper: contains,
 			});
 
-			expect(result.sql).toBe("(firstName LIKE $1 AND lastName LIKE $2)");
+			expect(result.sql).toBe("firstName LIKE $1 AND lastName LIKE $2");
 			expect(result.params).toEqual(["%john%", "%doe%"]);
 		});
 	});
@@ -921,7 +921,7 @@ describe("SQL", () => {
 			};
 
 			const result = toSQL(ast);
-			expect(result.sql).toBe("(age >= $1 AND verified = $2 AND (role = $3 OR role = $4))");
+			expect(result.sql).toBe("age >= $1 AND verified = $2 AND (role = $3 OR role = $4)");
 			expect(result.params).toEqual([18, true, "admin", "moderator"]);
 		});
 
@@ -954,7 +954,7 @@ describe("SQL", () => {
 			};
 
 			const result = toSQL(ast, { parameterStyle: "question" });
-			expect(result.sql).toBe("(price <= ? AND name LIKE ? AND category IN (?, ?))");
+			expect(result.sql).toBe("price <= ? AND name LIKE ? AND category IN (?, ?)");
 			expect(result.params).toEqual([100, "%laptop%", "electronics", "computers"]);
 		});
 
@@ -988,7 +988,7 @@ describe("SQL", () => {
 			};
 
 			const result = toSQL(ast);
-			expect(result.sql).toBe("(status = $1 AND NOT ((suspended = $2 OR deleted = $3)))");
+			expect(result.sql).toBe("status = $1 AND NOT (suspended = $2 OR deleted = $3)");
 			expect(result.params).toEqual(["active", true, true]);
 		});
 	});

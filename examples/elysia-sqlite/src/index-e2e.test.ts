@@ -4,17 +4,8 @@
 
 import { describe, test, expect, beforeAll, afterAll } from "bun:test";
 import { db, seedDatabase } from "./db";
+import type { User as ApiUser } from "./db";
 import { app } from "./index";
-
-interface ApiUser {
-	name: string;
-	age: number;
-	status: string;
-	role: string;
-	verified: boolean;
-	premium: boolean;
-	email: string | null;
-}
 
 describe("Elysia E2E Tests", () => {
 	let server: ReturnType<typeof app.listen>;

@@ -675,7 +675,7 @@ function generateDateComparison(
 	operator: ComparisonOperator,
 	target: number,
 	state: GeneratorState,
-): FilterPredicate<Record<string, unknown>> {
+): FilterPredicate {
 	const accessor = state.fieldAccessor;
 	const get = accessor
 		? (item: Record<string, unknown>) => toEpoch(accessor(item, field))
@@ -711,7 +711,7 @@ function generateDateRange(
 	min: number,
 	max: number,
 	state: GeneratorState,
-): FilterPredicate<Record<string, unknown>> {
+): FilterPredicate {
 	const accessor = state.fieldAccessor;
 	const get = accessor
 		? (item: Record<string, unknown>) => toEpoch(accessor(item, field))

@@ -189,6 +189,22 @@ const CHAR_CLASS: Uint8Array = (() => {
 })();
 
 /**
+ * A calendar-validated ISO string is a fixed instant when it is
+ * date-only (UTC midnight per ISO 8601) or carries an explicit zone;
+ * naive datetimes depend on the runtime timezone
+ */
+function isUnambiguousInstant(value: string): boolean {
+	if (value.length === 10) {
+		return true;
+	}
+	if (value.endsWith("Z")) {
+		return true;
+	}
+	const sign = value.charAt(value.length - 6);
+	return sign === "+" || sign === "-";
+}
+
+/**
  * Lexer for tokenizing Filtron query strings
  */
 export class Lexer {
@@ -563,7 +579,14 @@ export class Lexer {
 				pos = this.scanChar(pos, C.Colon);
 				pos = this.scanDigits(pos, 2);
 
-				if (pos < length && input.charCodeAt(pos) === C.Dot) {
+				// Milliseconds need a digit after the dot, so a range's '..'
+				// is never mistaken for a fraction separator
+				if (
+					pos + 1 < length &&
+					input.charCodeAt(pos) === C.Dot &&
+					input.charCodeAt(pos + 1) >= C.Zero &&
+					input.charCodeAt(pos + 1) <= C.Nine
+				) {
 					pos = this.scanDigits(pos + 1, 1);
 					for (let i = 0; i < 2 && pos < length; i++) {
 						const digit = input.charCodeAt(pos);
@@ -576,9 +599,14 @@ export class Lexer {
 				if (zone === 90) {
 					pos++;
 				} else if (zone === C.Plus || zone === C.Minus) {
+					const zoneHourPos = pos + 1;
 					pos = this.scanDigits(pos + 1, 2);
 					pos = this.scanChar(pos, C.Colon);
+					const zoneMinutePos = pos;
 					pos = this.scanDigits(pos, 2);
+					if (this.digitsValue(zoneHourPos, 2) > 23 || this.digitsValue(zoneMinutePos, 2) > 59) {
+						throw new FiltronParseError(`Invalid date: ${input.slice(start, pos)}`, start);
+					}
 				}
 			}
 
@@ -626,14 +654,14 @@ export class Lexer {
 			const max = this.readTemporalPoint("after '..'");
 
 			// Ordering is only checked where it is timezone-independent:
-			// date-only bounds compare lexicographically. Bounds with times
-			// or now offsets are left to resolution
+			// date-only bounds (UTC midnight) and zoned datetimes are fixed
+			// instants. Naive datetimes and now offsets defer to resolution
 			if (
 				min.type === "date" &&
 				max.type === "date" &&
-				min.value.length === 10 &&
-				max.value.length === 10 &&
-				min.value > max.value
+				isUnambiguousInstant(min.value) &&
+				isUnambiguousInstant(max.value) &&
+				Date.parse(min.value) > Date.parse(max.value)
 			) {
 				throw new FiltronParseError(
 					`Range min (${min.value}) must not exceed max (${max.value})`,

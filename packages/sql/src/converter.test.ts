@@ -423,6 +423,16 @@ describe("SQL", () => {
 			expect(result.params).toEqual(["2024-06-01", "2024-06-30"]);
 		});
 
+		test("contains operator against a date throws", () => {
+			const ast: ASTNode = {
+				type: "comparison",
+				field: "created",
+				operator: "~",
+				value: { type: "date", value: "2024-06-01" },
+			};
+			expect(() => toSQL(ast)).toThrow("Temporal values cannot be used with the ~ operator");
+		});
+
 		test("unresolved now values throw", () => {
 			const point: ASTNode = {
 				type: "comparison",

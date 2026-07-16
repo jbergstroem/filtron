@@ -247,6 +247,10 @@ function generateComparison(node: ComparisonExpression, state: GeneratorState): 
 	}
 
 	if (node.value.type === "date") {
+		if (node.operator === "~") {
+			// The parser rejects this; guards hand-built ASTs like @filtron/js
+			throw new Error("Temporal values cannot be used with the ~ operator");
+		}
 		const param = addParameter(node.value.value, state);
 		return `${field} ${mapComparisonOperator(node.operator)} ${param}`;
 	}

@@ -412,6 +412,24 @@ describe("Lexer", () => {
 			);
 		});
 
+		test("invalid timezone offsets throw", () => {
+			expect(() => tokenize("@2024-06-01T12:00:00+99:99")).toThrow("Invalid date");
+			expect(() => tokenize("@2024-06-01T12:00:00+02:70")).toThrow("Invalid date");
+			expect(tokenize("@2024-06-01T12:00:00+23:59")[0].type).toBe("TEMPORAL");
+			expect(tokenize("@2024-06-01T12:00:00-05:00")[0].type).toBe("TEMPORAL");
+		});
+
+		test("inverted zoned datetime range throws", () => {
+			expect(() => tokenize("@2024-06-02T00:00:00Z..2024-06-01T00:00:00Z")).toThrow(
+				"Range min (2024-06-02T00:00:00Z) must not exceed max (2024-06-01T00:00:00Z)",
+			);
+			expect(() => tokenize("@2024-06-02T00:00:00+02:00..2024-06-01T00:00:00Z")).toThrow(
+				FiltronParseError,
+			);
+			// Naive datetimes are timezone-dependent, so ordering defers to resolution
+			expect(tokenize("@2024-06-02T00:00:00..2024-06-01T00:00:00")[0].type).toBe("TEMPORAL");
+		});
+
 		test("inverted absolute range throws", () => {
 			expect(() => tokenize("@2024-06-30..2024-06-01")).toThrow(
 				"Range min (2024-06-30) must not exceed max (2024-06-01)",

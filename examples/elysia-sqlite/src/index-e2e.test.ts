@@ -4,6 +4,7 @@
 
 import { describe, test, expect, beforeAll, afterAll } from "bun:test";
 import { db, seedDatabase } from "./db";
+import type { User as ApiUser } from "./db";
 import { app } from "./index";
 
 describe("Elysia E2E Tests", () => {
@@ -44,7 +45,7 @@ describe("Elysia E2E Tests", () => {
 		expect(response.status).toBe(200);
 		expect(data.success).toBe(true);
 		expect(data.count).toBe(353);
-		expect(data.data.every((u: any) => u.status === "active")).toBe(true);
+		expect(data.data.every((u: ApiUser) => u.status === "active")).toBe(true);
 	});
 
 	test("should filter with AND operator", async () => {
@@ -56,7 +57,7 @@ describe("Elysia E2E Tests", () => {
 		expect(response.status).toBe(200);
 		expect(data.success).toBe(true);
 		expect(data.count).toBe(234);
-		expect(data.data.every((u: any) => u.status === "active" && u.verified)).toBe(true);
+		expect(data.data.every((u: ApiUser) => u.status === "active" && u.verified)).toBe(true);
 	});
 
 	test("should filter with one-of operator", async () => {
@@ -68,7 +69,9 @@ describe("Elysia E2E Tests", () => {
 		expect(response.status).toBe(200);
 		expect(data.success).toBe(true);
 		expect(data.count).toBe(318);
-		expect(data.data.every((u: any) => u.role === "admin" || u.role === "moderator")).toBe(true);
+		expect(data.data.every((u: ApiUser) => u.role === "admin" || u.role === "moderator")).toBe(
+			true,
+		);
 	});
 
 	test("should filter with comparison operators", async () => {
@@ -77,12 +80,12 @@ describe("Elysia E2E Tests", () => {
 		);
 		const data1 = await response1.json();
 		expect(data1.count).toBe(375);
-		expect(data1.data.every((u: any) => u.age >= 30)).toBe(true);
+		expect(data1.data.every((u: ApiUser) => u.age >= 30)).toBe(true);
 
 		const response2 = await fetch(`${getBaseUrl()}/users?filter=${encodeURIComponent("age < 30")}`);
 		const data2 = await response2.json();
 		expect(data2.count).toBe(125);
-		expect(data2.data.every((u: any) => u.age < 30)).toBe(true);
+		expect(data2.data.every((u: ApiUser) => u.age < 30)).toBe(true);
 	});
 
 	test("should filter with range expression syntax", async () => {
@@ -94,7 +97,7 @@ describe("Elysia E2E Tests", () => {
 		expect(response.status).toBe(200);
 		expect(data.success).toBe(true);
 		expect(data.count).toBe(113);
-		expect(data.data.every((u: any) => u.age >= 30 && u.age <= 40)).toBe(true);
+		expect(data.data.every((u: ApiUser) => u.age >= 30 && u.age <= 40)).toBe(true);
 		expect(data.filter.sql).toContain("BETWEEN");
 	});
 
@@ -118,7 +121,7 @@ describe("Elysia E2E Tests", () => {
 		expect(response.status).toBe(200);
 		expect(data.success).toBe(true);
 		expect(data.count).toBe(162);
-		expect(data.data.every((u: any) => (u.age < 25 || u.age > 50) && u.verified)).toBe(true);
+		expect(data.data.every((u: ApiUser) => (u.age < 25 || u.age > 50) && u.verified)).toBe(true);
 	});
 
 	test("should handle invalid filter syntax", async () => {

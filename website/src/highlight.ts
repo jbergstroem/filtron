@@ -46,6 +46,7 @@ function tokenTypeToClass(type: TokenType): HighlightClass | null {
 			return "punctuation";
 		case "DOT":
 		case "EOF":
+		default:
 			return null;
 	}
 }

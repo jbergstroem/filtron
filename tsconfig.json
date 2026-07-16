@@ -1,8 +1,10 @@
 {
 	"extends": "./tsconfig.base.json",
 	"compilerOptions": {
+		"lib": ["ES2023", "DOM", "DOM.Iterable"],
 		"types": ["@types/bun"],
+		"allowImportingTsExtensions": true,
 		"noEmit": true
 	},
-	"include": ["scripts/*.ts"]
+	"exclude": ["**/dist", "**/node_modules"]
 }

@@ -18,7 +18,7 @@ function randomItem<T>(arr: readonly T[]): T {
 }
 
 function pickMultiple<T>(arr: readonly T[], count: number): T[] {
-	const shuffled = [...arr].sort(() => Math.random() - 0.5);
+	const shuffled = arr.toSorted(() => Math.random() - 0.5);
 	return shuffled.slice(0, count);
 }
 

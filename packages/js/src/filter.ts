@@ -129,7 +129,7 @@ export function toFilter<T extends Record<string, unknown> = Record<string, unkn
 		fieldMapping: options.fieldMapping,
 	};
 
-	return generateFilter(ast, state) as FilterPredicate<T>;
+	return generateFilter(ast, state);
 }
 
 /**
@@ -142,10 +142,7 @@ function resolveField(field: string, state: GeneratorState): string {
 /**
  * Recursively generates filter predicates from AST nodes
  */
-function generateFilter(
-	node: ASTNode,
-	state: GeneratorState,
-): FilterPredicate<Record<string, unknown>> {
+function generateFilter(node: ASTNode, state: GeneratorState): FilterPredicate {
 	switch (node.type) {
 		case "or":
 			return generateOr(node, state);
@@ -174,10 +171,7 @@ function generateFilter(
  * The parser guarantees flat chains of two or more children; common
  * arities compile to direct short-circuit chains
  */
-function generateOr(
-	node: OrExpression,
-	state: GeneratorState,
-): FilterPredicate<Record<string, unknown>> {
+function generateOr(node: OrExpression, state: GeneratorState): FilterPredicate {
 	const children = node.children;
 	const len = children.length;
 
@@ -214,10 +208,7 @@ function generateOr(
  * The parser guarantees flat chains of two or more children; common
  * arities compile to direct short-circuit chains
  */
-function generateAnd(
-	node: AndExpression,
-	state: GeneratorState,
-): FilterPredicate<Record<string, unknown>> {
+function generateAnd(node: AndExpression, state: GeneratorState): FilterPredicate {
 	const children = node.children;
 	const len = children.length;
 
@@ -252,10 +243,7 @@ function generateAnd(
 /**
  * Generates predicate for NOT expression
  */
-function generateNot(
-	node: NotExpression,
-	state: GeneratorState,
-): FilterPredicate<Record<string, unknown>> {
+function generateNot(node: NotExpression, state: GeneratorState): FilterPredicate {
 	const expr = generateFilter(node.expression, state);
 	return (item) => !expr(item);
 }
@@ -265,10 +253,7 @@ function generateNot(
  * Pre-computes case-insensitive values during compilation and emits
  * direct property access predicates when no custom accessor is set
  */
-function generateComparison(
-	node: ComparisonExpression,
-	state: GeneratorState,
-): FilterPredicate<Record<string, unknown>> {
+function generateComparison(node: ComparisonExpression, state: GeneratorState): FilterPredicate {
 	const field = resolveField(node.field, state);
 
 	if (node.value.type === "range") {
@@ -433,7 +418,7 @@ function generateMembership(
 	state: GeneratorState,
 	emptyResult: boolean,
 	negate: boolean,
-): FilterPredicate<Record<string, unknown>> {
+): FilterPredicate {
 	const values = rawValues.map((v: Value) => extractValue(v));
 	const accessor = state.fieldAccessor;
 
@@ -541,10 +526,7 @@ function generateMembership(
  * Generates predicate for membership expression (negated or not)
  * An empty list matches nothing, so its negation matches everything
  */
-function generateOneOf(
-	node: OneOfExpression,
-	state: GeneratorState,
-): FilterPredicate<Record<string, unknown>> {
+function generateOneOf(node: OneOfExpression, state: GeneratorState): FilterPredicate {
 	const field = resolveField(node.field, state);
 	return generateMembership(field, node.values, state, node.negated, node.negated);
 }
@@ -552,10 +534,7 @@ function generateOneOf(
 /**
  * Generates predicate for exists expression (negated or not)
  */
-function generateExists(
-	node: ExistsExpression,
-	state: GeneratorState,
-): FilterPredicate<Record<string, unknown>> {
+function generateExists(node: ExistsExpression, state: GeneratorState): FilterPredicate {
 	const field = resolveField(node.field, state);
 	const accessor = state.fieldAccessor;
 	if (node.negated) {
@@ -588,7 +567,7 @@ function generateExists(
 function generateBooleanField(
 	node: BooleanFieldExpression,
 	state: GeneratorState,
-): FilterPredicate<Record<string, unknown>> {
+): FilterPredicate {
 	const field = resolveField(node.field, state);
 	const accessor = state.fieldAccessor;
 	if (accessor) {
@@ -608,7 +587,7 @@ function generateRangeComparison(
 	min: number,
 	max: number,
 	state: GeneratorState,
-): FilterPredicate<Record<string, unknown>> {
+): FilterPredicate {
 	const accessor = state.fieldAccessor;
 	if (operator === "!=") {
 		if (accessor) {

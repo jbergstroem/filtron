@@ -882,7 +882,7 @@ describe("toFilter", () => {
 			type: "and" | "or",
 			leaves: ComparisonExpression[],
 		): AndExpression | OrExpression => {
-			return { type, children: leaves } as AndExpression;
+			return { type, children: leaves };
 		};
 
 		const leaves = (n: number) => Array.from({ length: n }, (_, i) => comparison(`f${i}`, i));

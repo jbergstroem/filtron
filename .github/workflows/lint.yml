@@ -48,7 +48,8 @@ jobs:
         with:
           bun-version-file: package.json
       - run: bun ci
-      - run: bun oxlint --type-aware
+      - run: bun run build
+      - run: bun oxlint --type-aware --type-check
 
   format:
     runs-on: ubuntu-slim

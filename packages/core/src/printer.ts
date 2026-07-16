@@ -109,14 +109,22 @@ function printValue(value: Value): string {
  * Prints a temporal point without its sigil
  */
 function printTemporalPoint(point: TemporalPoint): string {
-	if (point.type === "date") {
-		return point.value;
+	switch (point.type) {
+		case "date":
+			return point.value;
+		case "now": {
+			if (point.offset === null) {
+				return "now";
+			}
+			const { amount, unit } = point.offset;
+			return amount < 0 ? `now-${-amount}${unit}` : `now+${amount}${unit}`;
+		}
+		default: {
+			// TypeScript exhaustiveness check
+			const _exhaustive: never = point;
+			throw new Error(`Unknown temporal point type: ${(point as TemporalPoint).type}`);
+		}
 	}
-	if (point.offset === null) {
-		return "now";
-	}
-	const { amount, unit } = point.offset;
-	return amount < 0 ? `now-${-amount}${unit}` : `now+${amount}${unit}`;
 }
 
 /**

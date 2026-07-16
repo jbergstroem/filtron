@@ -90,5 +90,13 @@ describe("print()", () => {
 				value: { type: "bogus" },
 			} as never),
 		).toThrow("Unknown value type");
+		expect(() =>
+			print({
+				type: "comparison",
+				field: "a",
+				operator: "=",
+				value: { type: "range", kind: "temporal", min: { type: "bogus" }, max: { type: "now" } },
+			} as never),
+		).toThrow("Unknown temporal point type");
 	});
 });

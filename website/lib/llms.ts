@@ -44,7 +44,7 @@ async function extractExamples(): Promise<ExampleInfo[]> {
 	const exampleDirs = await readdir("../examples");
 
 	const results = await Promise.all(
-		exampleDirs.sort().map(async (dir) => {
+		exampleDirs.toSorted().map(async (dir) => {
 			const readmeFile = file(`../examples/${dir}/README.md`);
 			if (!(await readmeFile.exists())) return null;
 

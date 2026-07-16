@@ -15,6 +15,9 @@ export interface Particle {
 	targetAlpha: number;
 }
 
+// Random distribution - different each visit
+const random = (): number => Math.random();
+
 const SHAPES: readonly Shape[] = ["circle", "triangle", "square"];
 const COLORS: readonly Color[] = ["red", "blue", "green", "orange", "purple"];
 
@@ -128,9 +131,6 @@ export class ParticleGrid {
 		// Calculate particle count based on area, aiming for ~40px average spacing
 		const area = this.lastWidth * this.initialHeight;
 		const targetCount = Math.floor(area / (this.gridSpacing * this.gridSpacing));
-
-		// Random distribution - different each visit
-		const random = (): number => Math.random();
 
 		// Minimum distance between particle centers
 		const minDistance = 20;

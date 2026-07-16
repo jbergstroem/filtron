@@ -268,6 +268,8 @@ export function extractSubsection(content: string, subsectionName: string): stri
 	return collected.join("").trim();
 }
 
+const formatRow = (cells: string[]) => `| ${cells.join(" | ")} |`;
+
 export function extractTable(content: string): string | null {
 	const rows: string[][] = [];
 	let currentRow: string[] = [];
@@ -303,8 +305,6 @@ export function extractTable(content: string): string | null {
 	const header = rows[0];
 	const separator = header.map(() => "---");
 	const dataRows = rows.slice(1);
-
-	const formatRow = (cells: string[]) => `| ${cells.join(" | ")} |`;
 
 	const tableLines = [formatRow(header), formatRow(separator), ...dataRows.map(formatRow)];
 
@@ -342,7 +342,7 @@ export async function findDocs(): Promise<{ required: DocFile[]; optional: DocFi
 
 	const packages = await readdir(`${ROOT}/packages`);
 	const pkgDocs = await Promise.all(
-		packages.sort().map(async (pkgName) => {
+		packages.toSorted().map(async (pkgName) => {
 			const readmeFile = file(`${ROOT}/packages/${pkgName}/README.md`);
 			if (await readmeFile.exists()) {
 				const content = await readmeFile.text();
@@ -376,7 +376,7 @@ export async function findDocs(): Promise<{ required: DocFile[]; optional: DocFi
 	try {
 		const examples = await readdir(`${ROOT}/examples`);
 		const exampleDocs = await Promise.all(
-			examples.sort().map(async (example) => {
+			examples.toSorted().map(async (example) => {
 				const readmeFile = file(`${ROOT}/examples/${example}/README.md`);
 				if (await readmeFile.exists()) {
 					const content = await readmeFile.text();

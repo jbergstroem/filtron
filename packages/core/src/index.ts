@@ -19,6 +19,9 @@ export type { ParseOptions, ParseResult, ParseSuccess, ParseFailure } from "./pa
 // AST walker
 export { walk } from "./walker";
 
+// Canonical printing
+export { print } from "./printer";
+
 // AST field validation
 export { validateFields } from "./validate";
 

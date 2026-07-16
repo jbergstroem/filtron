@@ -303,15 +303,150 @@ describe("Lexer", () => {
 		});
 	});
 
+	describe("Temporal Literals", () => {
+		test("bare now", () => {
+			const tokens = tokenize("@now");
+			expect(tokens[0]).toEqual({
+				type: "TEMPORAL",
+				value: { type: "now", offset: null },
+				start: 0,
+				end: 4,
+			});
+		});
+
+		test("now with negative offset", () => {
+			const tokens = tokenize("@now-7d");
+			expect(tokens[0]).toEqual({
+				type: "TEMPORAL",
+				value: { type: "now", offset: { amount: -7, unit: "d" } },
+				start: 0,
+				end: 7,
+			});
+		});
+
+		test("now with positive offset", () => {
+			const tokens = tokenize("@now+2h");
+			expect(tokens[0]).toEqual({
+				type: "TEMPORAL",
+				value: { type: "now", offset: { amount: 2, unit: "h" } },
+				start: 0,
+				end: 7,
+			});
+		});
+
+		test.each(["s", "m", "h", "d", "w", "M", "y"])("duration unit %s", (unit) => {
+			const tokens = tokenize(`@now-1${unit}`);
+			expect(tokens[0]).toEqual({
+				type: "TEMPORAL",
+				value: { type: "now", offset: { amount: -1, unit } },
+				start: 0,
+				end: 7,
+			});
+		});
+
+		test("date only", () => {
+			const tokens = tokenize("@2024-06-01");
+			expect(tokens[0]).toEqual({
+				type: "TEMPORAL",
+				value: { type: "date", value: "2024-06-01" },
+				start: 0,
+				end: 11,
+			});
+		});
+
+		test("datetime with zone forms", () => {
+			expect(tokenize("@2024-06-01T14:30:00Z")[0].type).toBe("TEMPORAL");
+			expect(tokenize("@2024-06-01T14:30:00+02:00")[0].type).toBe("TEMPORAL");
+			expect(tokenize("@2024-06-01T14:30:00.123Z")[0].type).toBe("TEMPORAL");
+			expect(tokenize("@2024-06-01T14:30:00")[0].type).toBe("TEMPORAL");
+		});
+
+		test("temporal range with two dates", () => {
+			const tokens = tokenize("@2024-06-01..2024-06-30");
+			expect(tokens[0]).toEqual({
+				type: "TEMPORAL",
+				value: {
+					type: "range",
+					kind: "temporal",
+					min: { type: "date", value: "2024-06-01" },
+					max: { type: "date", value: "2024-06-30" },
+				},
+				start: 0,
+				end: 23,
+			});
+		});
+
+		test("temporal range mixing now and dates", () => {
+			const value = tokenize("@now-7d..now")[0];
+			expect(value).toEqual({
+				type: "TEMPORAL",
+				value: {
+					type: "range",
+					kind: "temporal",
+					min: { type: "now", offset: { amount: -7, unit: "d" } },
+					max: { type: "now", offset: null },
+				},
+				start: 0,
+				end: 12,
+			});
+			expect(tokenize("@2024-06-01..now")[0].type).toBe("TEMPORAL");
+		});
+
+		test("invalid calendar dates throw", () => {
+			expect(() => tokenize("@2024-02-30")).toThrow("Invalid date: 2024-02-30");
+			expect(() => tokenize("@2024-13-01")).toThrow("Invalid date: 2024-13-01");
+		});
+
+		test("malformed temporals throw", () => {
+			expect(() => tokenize("@")).toThrow("Expected a date or now after '@'");
+			expect(() => tokenize("@foo")).toThrow("Expected a date or now after '@'");
+			expect(() => tokenize("@2024-06")).toThrow("Invalid date in temporal value");
+			expect(() => tokenize("@now-")).toThrow("Expected a number after the offset sign");
+			expect(() => tokenize("@now-7x")).toThrow("Expected a duration unit");
+			expect(() => tokenize("@now-7")).toThrow("Expected a duration unit");
+			expect(() => tokenize("@2024-06-01x")).toThrow("Unexpected character in temporal value");
+			expect(() => tokenize("@now7")).toThrow("Unexpected character in temporal value");
+			expect(() => tokenize("@2024-06-01..")).toThrow("Expected a date or now after '..'");
+			expect(() => tokenize("@2024-06-01..@2024-06-30")).toThrow(
+				"Expected a date or now after '..'",
+			);
+		});
+
+		test("invalid timezone offsets throw", () => {
+			expect(() => tokenize("@2024-06-01T12:00:00+99:99")).toThrow("Invalid date");
+			expect(() => tokenize("@2024-06-01T12:00:00+02:70")).toThrow("Invalid date");
+			expect(tokenize("@2024-06-01T12:00:00+23:59")[0].type).toBe("TEMPORAL");
+			expect(tokenize("@2024-06-01T12:00:00-05:00")[0].type).toBe("TEMPORAL");
+		});
+
+		test("inverted zoned datetime range throws", () => {
+			expect(() => tokenize("@2024-06-02T00:00:00Z..2024-06-01T00:00:00Z")).toThrow(
+				"Range min (2024-06-02T00:00:00Z) must not exceed max (2024-06-01T00:00:00Z)",
+			);
+			expect(() => tokenize("@2024-06-02T00:00:00+02:00..2024-06-01T00:00:00Z")).toThrow(
+				FiltronParseError,
+			);
+			// Naive datetimes are timezone-dependent, so ordering defers to resolution
+			expect(tokenize("@2024-06-02T00:00:00..2024-06-01T00:00:00")[0].type).toBe("TEMPORAL");
+		});
+
+		test("inverted absolute range throws", () => {
+			expect(() => tokenize("@2024-06-30..2024-06-01")).toThrow(
+				"Range min (2024-06-30) must not exceed max (2024-06-01)",
+			);
+			expect(tokenize("@2024-06-01..2024-06-01")[0].type).toBe("TEMPORAL");
+		});
+	});
+
 	describe("Error Handling", () => {
 		test("unexpected character", () => {
-			const lexer = new Lexer("@");
+			const lexer = new Lexer("%");
 			expect(() => lexer.next()).toThrow(FiltronParseError);
-			expect(() => lexer.next()).toThrow("Unexpected character: '@'");
+			expect(() => lexer.next()).toThrow("Unexpected character: '%'");
 		});
 
 		test("error includes position", () => {
-			const lexer = new Lexer("valid @");
+			const lexer = new Lexer("valid %");
 			lexer.next(); // consume 'valid'
 			try {
 				lexer.next();

@@ -87,8 +87,10 @@ PrimaryExpression = '(' OrExpression ')' | '-' FieldName | FieldExpression
 FieldExpression = FieldName ('?' | EXISTS | ComparisonOp Value | OneOfOp '[' Values ']')?
 FieldName       = IDENT ('.' IDENT)*
 Values          = Value (',' Value)*
-Value           = STRING | NUMBER | BOOLEAN | DottedIdent | Range
+Value           = STRING | NUMBER | BOOLEAN | DottedIdent | Range | Temporal
 Range           = NUMBER '..' NUMBER
+Temporal        = '@' Point ('..' Point)?
+Point           = Date | 'now' (('+' | '-') NUMBER Unit)?
 ```
 
 ## Checklist: modifying parser

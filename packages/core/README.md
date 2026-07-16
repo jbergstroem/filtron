@@ -86,6 +86,7 @@ parse("user.profile.age >= 18");
 | `?`, `EXISTS`        | Field exists  | `email?`              |
 | `-`                  | Field missing | `-email`              |
 | `..`                 | Range value   | `age = 18..65`        |
+| `@`                  | Temporal      | `created > @now-7d`   |
 | `: [...]`            | One of        | `status : ["a", "b"]` |
 | `AND`, `OR`, `NOT`   | Boolean logic | `a AND (b OR c)`      |
 
@@ -226,7 +227,9 @@ import type { Token, TokenType, StringToken, NumberToken, BooleanToken } from "@
 | `booleanField` | `field`                      | `verified`            |
 | `oneOf`        | `field`, `values`, `negated` | `status : ["a", "b"]` |
 
-Ranges are values, not nodes: `age = 18..65` produces a comparison whose value is `{ type: "range", min: 18, max: 65 }`. Ranges work with `=`, `:` and `!=` (outside the interval) and are rejected inside arrays.
+Temporal literals start with `@` and are either a point or a range: `created > @2024-06-01`, `updated > @now-1h`, `deployed = @2024-06-01..2024-06-30`, `created = @now-7d..now`. Absolute dates produce `{ type: "date", value }`; `@now` with an optional signed offset (`s`, `m`, `h`, `d`, `w`, `M`, `y`) produces an inert `{ type: "now", offset }` that adapters reject until it is resolved to a date. Points work with every comparison operator except `~`; temporal ranges follow the same `=`, `:`, `!=` rule as numeric ranges.
+
+Ranges are values, not nodes, discriminated by `kind`: `age = 18..65` produces a comparison whose value is `{ type: "range", kind: "number", min: 18, max: 65 }`, and `deployed = @2024-06-01..2024-06-30` produces `{ type: "range", kind: "temporal", min: { type: "date", value: "2024-06-01" }, max: { type: "date", value: "2024-06-30" } }`. Hand-built range values must set `kind`. Ranges work with `=`, `:` and `!=` (outside the interval) and are rejected inside arrays.
 
 Chains of the same operator are flat: `a AND b AND c` produces a single `and` node with three children, never nested pairs.
 

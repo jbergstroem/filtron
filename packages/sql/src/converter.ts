@@ -8,6 +8,7 @@ import type {
 	ASTNode,
 	Value,
 	ComparisonOperator,
+	TemporalPoint,
 	OrExpression,
 	AndExpression,
 	NotExpression,
@@ -228,8 +229,14 @@ function generateComparison(node: ComparisonExpression, state: GeneratorState): 
 	const field = state.fieldMapper(node.field);
 
 	if (node.value.type === "range") {
-		const minParam = addParameter(node.value.min, state);
-		const maxParam = addParameter(node.value.max, state);
+		const minParam = addParameter(
+			node.value.kind === "temporal" ? temporalBoundParam(node.value.min) : node.value.min,
+			state,
+		);
+		const maxParam = addParameter(
+			node.value.kind === "temporal" ? temporalBoundParam(node.value.max) : node.value.max,
+			state,
+		);
 		if (node.operator === "=" || node.operator === ":") {
 			return `${field} BETWEEN ${minParam} AND ${maxParam}`;
 		}
@@ -237,6 +244,19 @@ function generateComparison(node: ComparisonExpression, state: GeneratorState): 
 			return `${field} NOT BETWEEN ${minParam} AND ${maxParam}`;
 		}
 		throw new Error(`Range values require the =, : or != operator, got ${node.operator}`);
+	}
+
+	if (node.value.type === "date") {
+		if (node.operator === "~") {
+			// The parser rejects this; guards hand-built ASTs like @filtron/js
+			throw new Error("Temporal values cannot be used with the ~ operator");
+		}
+		const param = addParameter(node.value.value, state);
+		return `${field} ${mapComparisonOperator(node.operator)} ${param}`;
+	}
+
+	if (node.value.type === "now") {
+		throw new Error(UNRESOLVED_NOW);
 	}
 
 	const operator = mapComparisonOperator(node.operator);
@@ -321,6 +341,20 @@ function mapComparisonOperator(operator: ComparisonOperator): string {
 	}
 }
 
+const UNRESOLVED_NOW =
+	"Unresolved relative time value: resolve now-relative values before generating SQL";
+
+/**
+ * Converts a temporal range bound to its parameter value; now-relative
+ * bounds must be resolved before generating SQL
+ */
+function temporalBoundParam(point: TemporalPoint): string {
+	if (point.type === "now") {
+		throw new Error(UNRESOLVED_NOW);
+	}
+	return point.value;
+}
+
 /**
  * Extracts the primitive value from a Filtron Value node
  */
@@ -329,6 +363,10 @@ function extractValue(value: Value): string | number | boolean {
 		case "range":
 			// The parser only produces ranges where callers handle them first
 			throw new Error("Range values cannot be used here");
+		case "date":
+		case "now":
+			// The parser rejects temporal values in arrays
+			throw new Error("Temporal values cannot be used here");
 		case "string":
 			return value.value;
 		case "number":

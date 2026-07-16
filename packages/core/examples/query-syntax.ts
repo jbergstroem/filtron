@@ -28,6 +28,11 @@ parseOrThrow('status !: ["deleted", "banned"]');
 parseOrThrow("age = 18..65");
 parseOrThrow("age != 18..65"); // outside the interval
 
+// Temporal values: absolute dates and now-relative points
+parseOrThrow("created > @2024-06-01");
+parseOrThrow("updated > @now-1h"); // resolve now-relative values before filtering
+parseOrThrow("deployed = @2024-06-01..2024-06-30");
+
 // Logical operators: AND, OR, NOT
 parseOrThrow('active AND role = "admin"');
 parseOrThrow('role = "admin" OR role = "moderator"');

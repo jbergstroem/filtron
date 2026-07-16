@@ -194,7 +194,7 @@ describe("toFilter", () => {
 				type: "comparison",
 				field: "age",
 				operator: "=",
-				value: { type: "range", min: 18, max: 65 },
+				value: { type: "range", kind: "number", min: 18, max: 65 },
 			};
 			const filter = toFilter(ast);
 			expect(filter({ age: 18 })).toBe(true);
@@ -211,7 +211,7 @@ describe("toFilter", () => {
 				type: "comparison",
 				field: "age",
 				operator: "!=",
-				value: { type: "range", min: 18, max: 65 },
+				value: { type: "range", kind: "number", min: 18, max: 65 },
 			};
 			const filter = toFilter(ast);
 			expect(filter({ age: 17 })).toBe(true);
@@ -226,7 +226,7 @@ describe("toFilter", () => {
 				type: "comparison",
 				field: "age",
 				operator: "!=",
-				value: { type: "range", min: 18, max: 65 },
+				value: { type: "range", kind: "number", min: 18, max: 65 },
 			};
 			const filter = toFilter(ast, { fieldAccessor: (obj, field) => obj[field] });
 			expect(filter({ age: 17 })).toBe(true);
@@ -238,7 +238,7 @@ describe("toFilter", () => {
 				type: "comparison",
 				field: "age",
 				operator: ":",
-				value: { type: "range", min: 18, max: 65 },
+				value: { type: "range", kind: "number", min: 18, max: 65 },
 			};
 			const filter = toFilter(ast);
 			expect(filter({ age: 30 })).toBe(true);
@@ -250,7 +250,7 @@ describe("toFilter", () => {
 				type: "comparison",
 				field: "age",
 				operator: ">",
-				value: { type: "range", min: 18, max: 65 },
+				value: { type: "range", kind: "number", min: 18, max: 65 },
 			};
 			expect(() => toFilter(ast)).toThrow("Range values require the =, : or != operator");
 		});
@@ -260,9 +260,179 @@ describe("toFilter", () => {
 				type: "oneOf",
 				field: "age",
 				negated: false,
-				values: [{ type: "range", min: 1, max: 2 }],
+				values: [{ type: "range", kind: "number", min: 1, max: 2 }],
 			};
 			expect(() => toFilter(ast)).toThrow("Range values cannot be used here");
+		});
+	});
+
+	describe("Temporal Values", () => {
+		const june = Date.parse("2024-06-01");
+
+		test("date comparisons accept Date, ISO string and epoch fields", () => {
+			const ast: ComparisonExpression = {
+				type: "comparison",
+				field: "created",
+				operator: ">",
+				value: { type: "date", value: "2024-06-01" },
+			};
+			const filter = toFilter(ast);
+			expect(filter({ created: new Date("2024-07-01") })).toBe(true);
+			expect(filter({ created: "2024-07-01" })).toBe(true);
+			expect(filter({ created: Date.parse("2024-07-01") })).toBe(true);
+			expect(filter({ created: "2024-05-01" })).toBe(false);
+			expect(filter({ created: "not a date" })).toBe(false);
+			expect(filter({ created: true })).toBe(false);
+			expect(filter({})).toBe(false);
+		});
+
+		test.each([
+			["=", june, true],
+			["=", Date.parse("2024-07-01"), false],
+			["!=", june, false],
+			["!=", Date.parse("2024-07-01"), true],
+			[">=", june, true],
+			["<", june, false],
+			["<=", june, true],
+		] as const)("date %s comparison", (operator, created, expected) => {
+			const ast: ComparisonExpression = {
+				type: "comparison",
+				field: "created",
+				operator,
+				value: { type: "date", value: "2024-06-01" },
+			};
+			expect(toFilter(ast)({ created })).toBe(expected);
+		});
+
+		test("!= treats non-dates as not equal", () => {
+			const ast: ComparisonExpression = {
+				type: "comparison",
+				field: "created",
+				operator: "!=",
+				value: { type: "date", value: "2024-06-01" },
+			};
+			expect(toFilter(ast)({ created: "not a date" })).toBe(true);
+		});
+
+		test("date comparison with custom accessor", () => {
+			const ast: ComparisonExpression = {
+				type: "comparison",
+				field: "created",
+				operator: ">",
+				value: { type: "date", value: "2024-06-01" },
+			};
+			const filter = toFilter(ast, { fieldAccessor: (obj, field) => obj[field] });
+			expect(filter({ created: "2024-07-01" })).toBe(true);
+			expect(filter({ created: "2024-05-01" })).toBe(false);
+		});
+
+		test("temporal range matches the inclusive interval", () => {
+			const ast: ComparisonExpression = {
+				type: "comparison",
+				field: "created",
+				operator: "=",
+				value: {
+					type: "range",
+					kind: "temporal",
+					min: { type: "date", value: "2024-06-01" },
+					max: { type: "date", value: "2024-06-30" },
+				},
+			};
+			const filter = toFilter(ast);
+			expect(filter({ created: "2024-06-15" })).toBe(true);
+			expect(filter({ created: "2024-06-01" })).toBe(true);
+			expect(filter({ created: "2024-07-01" })).toBe(false);
+			expect(filter({ created: "not a date" })).toBe(false);
+		});
+
+		test("negated temporal range matches outside, including non-dates", () => {
+			const ast: ComparisonExpression = {
+				type: "comparison",
+				field: "created",
+				operator: "!=",
+				value: {
+					type: "range",
+					kind: "temporal",
+					min: { type: "date", value: "2024-06-01" },
+					max: { type: "date", value: "2024-06-30" },
+				},
+			};
+			const filter = toFilter(ast);
+			expect(filter({ created: "2024-07-01" })).toBe(true);
+			expect(filter({ created: "2024-06-15" })).toBe(false);
+			expect(filter({ created: "not a date" })).toBe(true);
+		});
+
+		test("temporal range with custom accessor and ordering operator guard", () => {
+			const range: ComparisonExpression = {
+				type: "comparison",
+				field: "created",
+				operator: ":",
+				value: {
+					type: "range",
+					kind: "temporal",
+					min: { type: "date", value: "2024-06-01" },
+					max: { type: "date", value: "2024-06-30" },
+				},
+			};
+			const filter = toFilter(range, { fieldAccessor: (obj, field) => obj[field] });
+			expect(filter({ created: "2024-06-15" })).toBe(true);
+
+			const bad: ComparisonExpression = {
+				type: "comparison",
+				field: "created",
+				operator: ">",
+				value: {
+					type: "range",
+					kind: "temporal",
+					min: { type: "date", value: "2024-06-01" },
+					max: { type: "date", value: "2024-06-30" },
+				},
+			};
+			expect(() => toFilter(bad)).toThrow("Range values require the =, : or != operator");
+		});
+
+		test("unresolved now values throw", () => {
+			const point: ComparisonExpression = {
+				type: "comparison",
+				field: "created",
+				operator: ">",
+				value: { type: "now", offset: { amount: -7, unit: "d" } },
+			};
+			expect(() => toFilter(point)).toThrow("Unresolved relative time value");
+
+			const range: ComparisonExpression = {
+				type: "comparison",
+				field: "created",
+				operator: "=",
+				value: {
+					type: "range",
+					kind: "temporal",
+					min: { type: "now", offset: { amount: -7, unit: "d" } },
+					max: { type: "now", offset: null },
+				},
+			};
+			expect(() => toFilter(range)).toThrow("Unresolved relative time value");
+		});
+
+		test("temporal values in membership arrays throw", () => {
+			const ast: OneOfExpression = {
+				type: "oneOf",
+				field: "created",
+				negated: false,
+				values: [{ type: "date", value: "2024-06-01" }],
+			};
+			expect(() => toFilter(ast)).toThrow("Temporal values cannot be used here");
+		});
+
+		test("hand-built temporal value with contains operator throws", () => {
+			const ast: ComparisonExpression = {
+				type: "comparison",
+				field: "created",
+				operator: "~",
+				value: { type: "date", value: "2024-06-01" },
+			};
+			expect(() => toFilter(ast)).toThrow("Temporal values cannot be used with the ~ operator");
 		});
 	});
 
@@ -333,6 +503,20 @@ describe("toFilter", () => {
 			expect(filter({ email: null })).toBe(false);
 			expect(filter({ email: undefined })).toBe(false);
 			expect(filter({ name: "test" })).toBe(false);
+		});
+	});
+
+	describe("Negated Exists", () => {
+		test("matches null and missing, with and without accessor", () => {
+			const ast: ExistsExpression = { type: "exists", field: "email", negated: true };
+			const plain = toFilter(ast);
+			expect(plain({ email: null })).toBe(true);
+			expect(plain({})).toBe(true);
+			expect(plain({ email: "a@b.c" })).toBe(false);
+
+			const accessor = toFilter(ast, { fieldAccessor: (obj, field) => obj[field] });
+			expect(accessor({ email: null })).toBe(true);
+			expect(accessor({ email: "a@b.c" })).toBe(false);
 		});
 	});
 
@@ -454,7 +638,7 @@ describe("toFilter", () => {
 						type: "comparison",
 						field: "x",
 						operator: "=",
-						value: { type: "range", min: 0, max: 1 },
+						value: { type: "range", kind: "number", min: 0, max: 1 },
 					},
 					{ allowedFields: [] },
 				),
@@ -638,7 +822,7 @@ describe("toFilter", () => {
 				type: "comparison",
 				field: "user_age",
 				operator: "=",
-				value: { type: "range", min: 18, max: 65 },
+				value: { type: "range", kind: "number", min: 18, max: 65 },
 			};
 			const filter = toFilter(ast, {
 				fieldMapping: {
@@ -778,7 +962,7 @@ describe("toFilter", () => {
 				type: "comparison",
 				field: "age",
 				operator: "=",
-				value: { type: "range", min: 18, max: 65 },
+				value: { type: "range", kind: "number", min: 18, max: 65 },
 			};
 			const opts = { fieldAccessor: accessor };
 			expect(toFilter(exists, opts)({ email: "a@b.c" })).toBe(true);

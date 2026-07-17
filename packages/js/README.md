@@ -114,6 +114,16 @@ const filter = toFilter(ast, {
 // Query: "user/profile/age > 18"
 ```
 
+## Relative time values
+
+Queries with `@now` (such as `created > @now-7d`) parse into relative values that `toFilter` rejects with "Unresolved relative time value". Resolve them to absolute dates first with [@filtron/time-resolver](../time-resolver/README.md):
+
+```typescript
+import { resolveTemporal } from "@filtron/time-resolver";
+
+const filter = toFilter(resolveTemporal(ast));
+```
+
 ## Security
 
 When accepting user input, use `allowedFields` to prevent access to sensitive properties:

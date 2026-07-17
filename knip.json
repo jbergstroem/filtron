@@ -17,6 +17,10 @@
 			"entry": ["index.ts!", "overhead.ts!", "examples/*.ts!", "src/**/*.test.ts!"],
 			"project": ["**/*.ts"]
 		},
+		"packages/time-resolver": {
+			"entry": ["index.ts!", "src/**/*.test.ts!"],
+			"project": ["**/*.ts"]
+		},
 		"packages/benchmark": {
 			"entry": "*.bench.ts!",
 			"project": ["**/*.ts"]

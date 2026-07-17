@@ -116,6 +116,25 @@
         "typescript",
       ],
     },
+    "packages/time-resolver": {
+      "name": "@filtron/time-resolver",
+      "version": "3.0.0",
+      "dependencies": {
+        "@filtron/core": "workspace:*",
+      },
+      "devDependencies": {
+        "@filtron/js": "workspace:*",
+        "@filtron/sql": "workspace:*",
+        "@types/bun": "catalog:",
+        "typescript": "catalog:",
+      },
+      "peerDependencies": {
+        "typescript": "catalog:",
+      },
+      "optionalPeers": [
+        "typescript",
+      ],
+    },
     "website": {
       "name": "filtron-website",
       "version": "1.0.0",
@@ -228,6 +247,8 @@
     "@filtron/js": ["@filtron/js@workspace:packages/js"],
 
     "@filtron/sql": ["@filtron/sql@workspace:packages/sql"],
+
+    "@filtron/time-resolver": ["@filtron/time-resolver@workspace:packages/time-resolver"],
 
     "@gar/promisify": ["@gar/promisify@1.1.3", "", {}, "sha512-k2Ty1JcVojjJFwrg/ThKi2ujJ7XNLYaFGNB/bWT9wGR+oSMJHMa5w+CUq6p/pVrKeNNgA7pCqEcjSnHVoqJQFw=="],
 

@@ -145,6 +145,18 @@ const { sql, params } = toSQL(result.ast, { valueMapper: prefix });
 | `suffix`     | `"foo"` | `"%foo"`  | Ends with            |
 | `escapeLike` | `"a%b"` | `"a\\%b"` | Escape special chars |
 
+## Relative time values
+
+Queries with `@now` (such as `created > @now-7d`) parse into relative values that `toSQL` rejects with "Unresolved relative time value". Resolve them to absolute dates first with [@filtron/time-resolver](../time-resolver/README.md):
+
+```typescript
+import { resolveTemporal } from "@filtron/time-resolver";
+
+const { sql, params } = toSQL(resolveTemporal(ast));
+```
+
+Resolve per request, not at cache time: the resolved AST pins `now` to a single instant.
+
 ## Performance
 
 For APIs with repeated filter queries, cache parsed results to avoid redundant parsing:

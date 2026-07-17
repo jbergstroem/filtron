@@ -164,6 +164,17 @@ walk(ast, (node) => {
 // fields: ["age", "status"]
 ```
 
+### `print(node: ASTNode): string`
+
+Prints an AST as canonical Filtron query text. Parsing the output reproduces the AST, so `print` is suitable for canonicalizing queries (cache keys, logs) and roundtrip testing. Parentheses appear only where a child binds looser than its parent.
+
+```typescript
+import { parseOrThrow, print } from "@filtron/core";
+
+print(parseOrThrow("(a AND (b OR c))"));
+// "a AND (b OR c)"
+```
+
 ### `validateFields(node: ASTNode, allowedFields: readonly string[]): void`
 
 Validates that every field referenced in an AST is in the allowlist. Throws an `Error` on the first disallowed field. Consumers like @filtron/js and @filtron/sql use this for their `allowedFields` option.

@@ -85,8 +85,8 @@ describe("Lexer", () => {
 			expect(tokenTypes("AnD oR NoT")).toEqual(["AND", "OR", "NOT", "EOF"]);
 		});
 
-		test("exists keyword", () => {
-			expect(tokenTypes("exists EXISTS")).toEqual(["EXISTS", "EXISTS", "EOF"]);
+		test("exists is a plain identifier", () => {
+			expect(tokenTypes("exists EXISTS")).toEqual(["IDENT", "IDENT", "EOF"]);
 		});
 
 		test("boolean literals", () => {

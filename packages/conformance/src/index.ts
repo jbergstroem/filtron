@@ -267,13 +267,6 @@ export const cases: ConformanceCase[] = [
 		notes: "Empty string exists; null and missing keys do not.",
 	},
 	{
-		name: "exists-keyword",
-		query: "email EXISTS",
-		matches: [1, 4, 5, 6, 7, 8],
-		sql: "email IS NOT NULL",
-		params: [],
-	},
-	{
 		name: "negated-exists-minus",
 		query: "-email",
 		matches: [2, 3],

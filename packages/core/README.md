@@ -59,7 +59,6 @@ parse("(admin OR mod) AND active");
 
 // Field existence
 parse("email?");
-parse("profile EXISTS");
 
 // Contains (substring)
 parse('name ~ "john"');
@@ -83,7 +82,7 @@ parse("user.profile.age >= 18");
 | `!=`, `!:`           | Not equal     | `role != "guest"`     |
 | `>`, `>=`, `<`, `<=` | Comparison    | `age >= 18`           |
 | `~`                  | Contains      | `name ~ "john"`       |
-| `?`, `EXISTS`        | Field exists  | `email?`              |
+| `?`                  | Field exists  | `email?`              |
 | `-`                  | Field missing | `-email`              |
 | `..`                 | Range value   | `age = 18..65`        |
 | `@`                  | Temporal      | `created > @now-7d`   |

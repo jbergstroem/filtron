@@ -718,13 +718,6 @@ describe("SQL", () => {
 		});
 
 		test("unknown dialect throws instead of silently defaulting", () => {
-			const ast: ASTNode = {
-				type: "comparison",
-				field: "age",
-				operator: ">",
-				value: { type: "number", value: 18 },
-			};
-
 			expect(() => toSQL(ast, { dialect: "oracle" as never })).toThrow("Unknown dialect: oracle");
 			expect(() => toSQL(ast, { dialect: null as never })).toThrow("Unknown dialect: null");
 		});

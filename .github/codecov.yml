@@ -21,6 +21,10 @@ component_management:
       name: JavaScript Filter
       paths:
         - ^packages/js/.*
+    - component_id: time-resolver
+      name: Time Resolver
+      paths:
+        - ^packages/time-resolver/.*
     - component_id: elysia-example
       name: Elysia E2E Example
       paths:

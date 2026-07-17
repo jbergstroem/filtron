@@ -44,6 +44,7 @@ jobs:
       - run: bunx metafile-codecov-bundle -f packages/core/metafile.json -n @filtron/core --output-dir packages/core/dist --upload
       - run: bunx metafile-codecov-bundle -f packages/js/metafile.json -n @filtron/js --output-dir packages/js/dist --upload
       - run: bunx metafile-codecov-bundle -f packages/sql/metafile.json -n @filtron/sql --output-dir packages/sql/dist --upload
+      - run: bunx metafile-codecov-bundle -f packages/time-resolver/metafile.json -n @filtron/time-resolver --output-dir packages/time-resolver/dist --upload
       - run: bun test --reporter=junit --reporter-outfile=junit.xml --coverage --coverage-reporter=lcov --coverage-dir=coverage
       - uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         if: ${{ !cancelled() }}

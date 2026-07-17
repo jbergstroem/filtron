@@ -9,7 +9,7 @@
  *   AndExpression     = NotExpression (AND NotExpression)*
  *   NotExpression     = NOT NotExpression | PrimaryExpression
  *   PrimaryExpression = '(' OrExpression ')' | '-' FieldName | FieldExpression
- *   FieldExpression   = FieldName ('?' | EXISTS | ComparisonOp Value | OneOfOp '[' Values ']')?
+ *   FieldExpression   = FieldName ('?' | ComparisonOp Value | OneOfOp '[' Values ']')?
  *   FieldName         = IDENT ('.' IDENT)*
  *   Value             = STRING | NUMBER | BOOLEAN | DottedIdent | Range | Temporal
  *   Values            = Value (',' Value)*        (ranges and temporals are rejected)
@@ -223,14 +223,14 @@ class Parser {
 
 	/**
 	 * Parse field expression
-	 * FieldExpression = FieldName ('?' | EXISTS | ComparisonOp Value | OneOfOp '[' Values ']')?
+	 * FieldExpression = FieldName ('?' | ComparisonOp Value | OneOfOp '[' Values ']')?
 	 */
 	private parseFieldExpression(): ASTNode {
 		const field = this.parseFieldName();
 		const t = this.current.type;
 
-		// Exists check with ? or EXISTS
-		if (t === "QUESTION" || t === "EXISTS") {
+		// Exists check
+		if (t === "QUESTION") {
 			this.advance();
 			return { type: "exists", field, negated: false };
 		}

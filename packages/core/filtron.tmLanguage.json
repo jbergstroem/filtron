@@ -23,7 +23,7 @@
 	],
 	"repository": {
 		"keywords": {
-			"match": "\\b(AND|OR|NOT|EXISTS|TRUE|FALSE)\\b",
+			"match": "\\b(AND|OR|NOT|TRUE|FALSE)\\b",
 			"name": "keyword.control.filtron"
 		},
 		"operators": {

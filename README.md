@@ -179,7 +179,7 @@ Check if a field is present:
 
 ```
 email?
-profile EXISTS
+profile?
 ```
 
 ### Contains (substring matching)
@@ -220,7 +220,7 @@ order.shipping.address.country = "PT"
 | `!=`, `!:`           | Not equal     | `role != "guest"`                   |
 | `>`, `>=`, `<`, `<=` | Comparison    | `age >= 18`                         |
 | `~`                  | Contains      | `name ~ "john"`                     |
-| `?`, `EXISTS`        | Field exists  | `email?`                            |
+| `?`                  | Field exists  | `email?`                            |
 | `..`                 | Range         | `age = 18..65`                      |
 | `: [...]`            | One of        | `status : ["pending", "active"]`    |
 | `AND`, `OR`, `NOT`   | Boolean logic | `verified AND (admin OR moderator)` |

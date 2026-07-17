@@ -21,7 +21,6 @@ export type TokenType =
 	| "AND"
 	| "OR"
 	| "NOT"
-	| "EXISTS"
 	| "TRUE"
 	| "FALSE"
 	| "EQ"
@@ -66,7 +65,6 @@ export interface SymbolToken extends TokenBase {
 		| "AND"
 		| "OR"
 		| "NOT"
-		| "EXISTS"
 		| "EQ"
 		| "NEQ"
 		| "GT"
@@ -385,7 +383,7 @@ export class Lexer {
 		const len = pos - start;
 
 		// Keyword detection based on length and first char
-		if (len >= 2 && len <= 6) {
+		if (len >= 2 && len <= 5) {
 			const firstCode = input.charCodeAt(start) | 0x20; // lowercase
 
 			if (len === 2) {
@@ -435,20 +433,6 @@ export class Lexer {
 						(input.charCodeAt(start + 4) | 0x20) === 101
 					) {
 						return { type: "FALSE", value: false, start, end: pos };
-					}
-				}
-			} else if (len === 6) {
-				// "exists"
-				if (firstCode === 101) {
-					// 'e'
-					if (
-						(input.charCodeAt(start + 1) | 0x20) === 120 &&
-						(input.charCodeAt(start + 2) | 0x20) === 105 &&
-						(input.charCodeAt(start + 3) | 0x20) === 115 &&
-						(input.charCodeAt(start + 4) | 0x20) === 116 &&
-						(input.charCodeAt(start + 5) | 0x20) === 115
-					) {
-						return { type: "EXISTS", start, end: pos };
 					}
 				}
 			}

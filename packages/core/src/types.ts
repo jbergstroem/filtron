@@ -87,7 +87,7 @@ export interface OneOfExpression {
 
 /**
  * Exists expression - checks whether a field exists (is not null/undefined)
- * Example: email?, email EXISTS, -email (negated)
+ * Example: email?, -email (negated)
  */
 export interface ExistsExpression {
 	type: "exists";

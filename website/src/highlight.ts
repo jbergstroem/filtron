@@ -15,7 +15,6 @@ function tokenTypeToClass(type: TokenType): HighlightClass | null {
 		case "AND":
 		case "OR":
 		case "NOT":
-		case "EXISTS":
 		case "TRUE":
 		case "FALSE":
 			return "keyword";

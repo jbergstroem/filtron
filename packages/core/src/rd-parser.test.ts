@@ -31,10 +31,14 @@ describe("RD Parser", () => {
 			expect(ast.field).toBe("email");
 		});
 
-		test("field existence with EXISTS keyword", () => {
-			const ast = parseQuery("email EXISTS") as ExistsExpression;
-			expect(ast.type).toBe("exists");
-			expect(ast.field).toBe("email");
+		test("the removed EXISTS keyword no longer parses", () => {
+			expect(() => parseQuery("email EXISTS")).toThrow("Unexpected token: IDENT");
+		});
+
+		test("exists works as an ordinary field name", () => {
+			const ast = parseQuery("exists = true") as ComparisonExpression;
+			expect(ast.field).toBe("exists");
+			expect((parseQuery("exists?") as ExistsExpression).type).toBe("exists");
 		});
 
 		test("boolean field shorthand", () => {

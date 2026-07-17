@@ -69,7 +69,6 @@ describe("print()", () => {
 		expect(print(parseOrThrow("((a)) AND (b AND c)"))).toBe("a AND b AND c");
 		expect(print(parseOrThrow("a OR (b AND c)"))).toBe("a OR b AND c");
 		expect(print(parseOrThrow('status="active"AND age>18'))).toBe('status = "active" AND age > 18');
-		expect(print(parseOrThrow("email EXISTS"))).toBe("email?");
 		expect(print(parseOrThrow("NOT NOT a"))).toBe("NOT NOT a");
 	});
 

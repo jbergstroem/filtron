@@ -46,14 +46,17 @@ interface SQLResult {
 
 #### Options
 
-| Option           | Type                          | Default      | Description                                   |
-| ---------------- | ----------------------------- | ------------ | --------------------------------------------- |
-| `parameterStyle` | `"numbered"` \| `"question"`  | `"numbered"` | Placeholder format                            |
-| `fieldMapper`    | `(field: string) => string`   | `undefined`  | Transform field names to column names         |
-| `valueMapper`    | `(value: unknown) => unknown` | `undefined`  | Custom transform for `~` values (see below)   |
-| `likeMode`       | `"contains"` \| `"raw"`       | `"contains"` | How `~` builds its LIKE parameter (see below) |
-| `startIndex`     | `number`                      | `1`          | Starting index for numbered placeholders      |
-| `allowedFields`  | `string[]`                    | `undefined`  | Allowlist of field names (throws otherwise)   |
+| Option           | Type                                    | Default      | Description                                   |
+| ---------------- | --------------------------------------- | ------------ | --------------------------------------------- |
+| `dialect`        | `"postgres"` \| `"mysql"` \| `"sqlite"` | `undefined`  | Preset for dialect-specific defaults          |
+| `parameterStyle` | `"numbered"` \| `"question"`            | `"numbered"` | Placeholder format                            |
+| `fieldMapper`    | `(field: string) => string`             | `undefined`  | Transform field names to column names         |
+| `valueMapper`    | `(value: unknown) => unknown`           | `undefined`  | Custom transform for `~` values (see below)   |
+| `likeMode`       | `"contains"` \| `"raw"`                 | `"contains"` | How `~` builds its LIKE parameter (see below) |
+| `startIndex`     | `number`                                | `1`          | Starting index for numbered placeholders      |
+| `allowedFields`  | `string[]`                              | `undefined`  | Allowlist of field names (throws otherwise)   |
+
+A `dialect` sets the parameter style (`postgres` uses `numbered`; `mysql` and `sqlite` use `question`); explicitly supplied options override the preset.
 
 #### Parameter styles
 

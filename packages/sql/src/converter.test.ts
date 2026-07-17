@@ -697,6 +697,50 @@ describe("SQL", () => {
 		});
 	});
 
+	describe("Dialect Presets", () => {
+		const ast: ASTNode = {
+			type: "comparison",
+			field: "age",
+			operator: ">",
+			value: { type: "number", value: 18 },
+		};
+
+		test("postgres uses numbered parameters", () => {
+			const result = toSQL(ast, { dialect: "postgres" });
+			expect(result.sql).toBe("age > $1");
+			expect(result.params).toEqual([18]);
+		});
+
+		test("mysql uses question mark parameters", () => {
+			const result = toSQL(ast, { dialect: "mysql" });
+			expect(result.sql).toBe("age > ?");
+			expect(result.params).toEqual([18]);
+		});
+
+		test("unknown dialect throws instead of silently defaulting", () => {
+			expect(() => toSQL(ast, { dialect: "oracle" as never })).toThrow("Unknown dialect: oracle");
+			expect(() => toSQL(ast, { dialect: null as never })).toThrow("Unknown dialect: null");
+		});
+
+		test("sqlite uses question mark parameters", () => {
+			const result = toSQL(ast, { dialect: "sqlite" });
+			expect(result.sql).toBe("age > ?");
+			expect(result.params).toEqual([18]);
+		});
+
+		test("explicit parameterStyle overrides the dialect preset", () => {
+			const result = toSQL(ast, { dialect: "mysql", parameterStyle: "numbered" });
+			expect(result.sql).toBe("age > $1");
+			expect(result.params).toEqual([18]);
+		});
+
+		test("no dialect keeps the numbered default", () => {
+			const result = toSQL(ast, {});
+			expect(result.sql).toBe("age > $1");
+			expect(result.params).toEqual([18]);
+		});
+	});
+
 	describe("Field Mapping", () => {
 		test("custom field mapper", () => {
 			const ast: ASTNode = {

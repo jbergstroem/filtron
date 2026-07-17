@@ -32,6 +32,17 @@ export interface SQLResult {
  */
 export interface SQLOptions {
 	/**
+	 * Dialect preset that sets defaults for other options
+	 * - 'postgres': parameterStyle 'numbered'
+	 * - 'mysql': parameterStyle 'question'
+	 * - 'sqlite': parameterStyle 'question'
+	 *
+	 * Explicitly supplied options always override the preset.
+	 * @default undefined
+	 */
+	dialect?: "postgres" | "mysql" | "sqlite";
+
+	/**
 	 * Parameter placeholder style
 	 * - 'numbered': PostgreSQL/CockroachDB style ($1, $2, $3)
 	 * - 'question': MySQL/SQLite/DuckDB style (?, ?, ?)
@@ -116,6 +127,20 @@ const identityValue = (value: string | number | boolean): string | number | bool
 const NUMBERED_PLACEHOLDERS: string[] = Array.from({ length: 65 }, (_, i) => `$${i}`);
 
 /**
+ * Per-dialect option defaults, consulted only when the corresponding option
+ * is not supplied explicitly. Future dialect-specific defaults (identifier
+ * quoting, LIKE escape clauses) slot in here without API changes.
+ */
+const DIALECT_PRESETS: Record<
+	NonNullable<SQLOptions["dialect"]>,
+	{ parameterStyle: NonNullable<SQLOptions["parameterStyle"]> }
+> = {
+	postgres: { parameterStyle: "numbered" },
+	mysql: { parameterStyle: "question" },
+	sqlite: { parameterStyle: "question" },
+};
+
+/**
  * Converts a Filtron AST to a parameterized SQL WHERE clause
  *
  * @param ast - The Filtron AST node to convert
@@ -140,9 +165,17 @@ export function toSQL(ast: ASTNode, options: SQLOptions = {}): SQLResult {
 		validateFields(ast, options.allowedFields);
 	}
 
+	// Explicit parameterStyle wins, then the dialect preset, then 'numbered'
+	const preset = options.dialect === undefined ? undefined : DIALECT_PRESETS[options.dialect];
+	if (options.dialect !== undefined && preset === undefined) {
+		// Guards untyped callers: a typo must not silently fall back
+		throw new Error(`Unknown dialect: ${options.dialect}`);
+	}
+	const parameterStyle = options.parameterStyle ?? preset?.parameterStyle;
+
 	const state: GeneratorState = {
 		params: [],
-		numbered: options.parameterStyle !== "question",
+		numbered: parameterStyle !== "question",
 		fieldMapper: options.fieldMapper ?? identityField,
 		likeValue: options.valueMapper ?? (options.likeMode === "raw" ? identityValue : contains),
 		paramIndex: options.startIndex ?? 1,

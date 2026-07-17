@@ -166,9 +166,12 @@ export function toSQL(ast: ASTNode, options: SQLOptions = {}): SQLResult {
 	}
 
 	// Explicit parameterStyle wins, then the dialect preset, then 'numbered'
-	const parameterStyle =
-		options.parameterStyle ??
-		(options.dialect === undefined ? undefined : DIALECT_PRESETS[options.dialect].parameterStyle);
+	const preset = options.dialect === undefined ? undefined : DIALECT_PRESETS[options.dialect];
+	if (options.dialect !== undefined && preset === undefined) {
+		// Guards untyped callers: a typo must not silently fall back
+		throw new Error(`Unknown dialect: ${String(options.dialect)}`);
+	}
+	const parameterStyle = options.parameterStyle ?? preset?.parameterStyle;
 
 	const state: GeneratorState = {
 		params: [],

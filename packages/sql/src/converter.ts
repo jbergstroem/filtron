@@ -169,7 +169,7 @@ export function toSQL(ast: ASTNode, options: SQLOptions = {}): SQLResult {
 	const preset = options.dialect === undefined ? undefined : DIALECT_PRESETS[options.dialect];
 	if (options.dialect !== undefined && preset === undefined) {
 		// Guards untyped callers: a typo must not silently fall back
-		throw new Error(`Unknown dialect: ${String(options.dialect)}`);
+		throw new Error(`Unknown dialect: ${options.dialect}`);
 	}
 	const parameterStyle = options.parameterStyle ?? preset?.parameterStyle;
 

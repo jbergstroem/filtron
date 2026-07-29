@@ -15,7 +15,7 @@
 		"@iconscout/unicons": "4.2.0",
 		"@types/bun": "catalog:",
 		"shiki": "4.3.1",
-		"wrangler": "4.110.0"
+		"wrangler": "4.112.0"
 	},
 	"engines": {
 		"bun": ">=1.2.19"

@@ -46,13 +46,13 @@ jobs:
       - run: bunx metafile-codecov-bundle -f packages/sql/metafile.json -n @filtron/sql --output-dir packages/sql/dist --upload
       - run: bunx metafile-codecov-bundle -f packages/time-resolver/metafile.json -n @filtron/time-resolver --output-dir packages/time-resolver/dist --upload
       - run: bun test --reporter=junit --reporter-outfile=junit.xml --coverage --coverage-reporter=lcov --coverage-dir=coverage
-      - uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+      - uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         if: ${{ !cancelled() }}
         with:
           use_oidc: true
           files: ./coverage/lcov.info
           disable_search: true
-      - uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
+      - uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         if: ${{ !cancelled() }}
         with:
           use_oidc: true

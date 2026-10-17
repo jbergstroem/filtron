@@ -18,8 +18,8 @@ npm install @filtron/time-resolver
 
 ```typescript
 import { parseOrThrow } from "@filtron/core";
-import { resolveTemporal } from "@filtron/time-resolver";
 import { toSQL } from "@filtron/sql";
+import { resolveTemporal } from "@filtron/time-resolver";
 
 const ast = resolveTemporal(parseOrThrow("created > @now-7d"));
 const { sql, params } = toSQL(ast);

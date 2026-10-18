@@ -42,7 +42,7 @@ jobs:
           node-version: 24
       - uses: CodSpeedHQ/action@821a40cd6c80e3cfe387caf55668287addd808da # v5.5.0
         with:
-          mode: simulation
+          mode: walltime
           run: cd packages/benchmark && bun run bench:cpu
       - uses: CodSpeedHQ/action@821a40cd6c80e3cfe387caf55668287addd808da # v5.5.0
         with:

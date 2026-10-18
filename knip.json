@@ -18,7 +18,7 @@
 			"project": ["**/*.ts"]
 		},
 		"packages/time-resolver": {
-			"entry": ["index.ts!", "src/**/*.test.ts!"],
+			"entry": ["src/**/*.test.ts!"],
 			"project": ["**/*.ts"]
 		},
 		"packages/benchmark": {
@@ -35,6 +35,5 @@
 			"ignoreDependencies": ["@iconscout/unicons"]
 		}
 	},
-	"ignoreBinaries": ["tsc"],
 	"ignoreExportsUsedInFile": true
 }

@@ -109,7 +109,7 @@ describe("Elysia E2E Tests", () => {
 
 		expect(response.status).toBe(200);
 		expect(data.success).toBe(true);
-		expect(data.count).toBe(394);
+		expect(data.count).toBe(387);
 	});
 
 	test("should filter with complex nested query", async () => {

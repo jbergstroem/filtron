@@ -49,12 +49,12 @@
 		"mitata": "1.0.34"
 	},
 	"devDependencies": {
-		"@codspeed/tinybench-plugin": "5.7.1",
+		"@codspeed/tinybench-plugin": "6.1.0",
 		"@filtron/core": "workspace:*",
 		"@filtron/js": "workspace:*",
 		"@filtron/sql": "workspace:*",
 		"@types/bun": "catalog:",
-		"tinybench": "5.1.0"
+		"tinybench": "6.2.2"
 	},
 	"peerDependencies": {
 		"typescript": "catalog:"

@@ -6,15 +6,15 @@
 			"project": "scripts/*.ts"
 		},
 		"packages/core": {
-			"entry": ["examples/*.ts!", "src/**/*.test.ts!"],
+			"entry": ["index.ts!", "examples/*.ts!", "src/**/*.test.ts!"],
 			"project": ["**/*.ts"]
 		},
 		"packages/js": {
-			"entry": ["examples/*.ts!", "src/**/*.test.ts!"],
+			"entry": ["index.ts!", "examples/*.ts!", "src/**/*.test.ts!"],
 			"project": ["**/*.ts"]
 		},
 		"packages/sql": {
-			"entry": ["overhead.ts!", "examples/*.ts!", "src/**/*.test.ts!"],
+			"entry": ["index.ts!", "overhead.ts!", "examples/*.ts!", "src/**/*.test.ts!"],
 			"project": ["**/*.ts"]
 		},
 		"packages/time-resolver": {

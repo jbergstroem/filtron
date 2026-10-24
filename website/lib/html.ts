@@ -1,28 +1,10 @@
-import filtronGrammar from "@filtron/core/filtron.tmLanguage.json";
+import { codeToHtml, isSupportedLanguage } from "@pierre/highlights";
+import { cssVariables } from "@pierre/highlights/themes";
 import { build, file } from "bun";
-import { createHighlighter, type Highlighter } from "shiki";
-import { createCssVariablesTheme } from "shiki/core";
+import { toHtml } from "../src/highlight.ts";
 
 const ICONS_DIR = "node_modules/@iconscout/unicons/svg/line";
-
-const cssVarsTheme = createCssVariablesTheme({
-	name: "css-variables",
-	variablePrefix: "--shiki-",
-	variableDefaults: {},
-	fontStyle: true,
-});
-
-let highlighter: Highlighter;
-
-async function getHighlighter(): Promise<Highlighter> {
-	if (!highlighter) {
-		highlighter = await createHighlighter({
-			themes: [cssVarsTheme],
-			langs: ["typescript", "bash", Object.assign({}, filtronGrammar, { name: "filtron" })],
-		});
-	}
-	return highlighter;
-}
+const decoder = new TextDecoder();
 
 async function getIcon(name: string): Promise<string> {
 	const svg = await file(`${ICONS_DIR}/${name}.svg`).text();
@@ -33,16 +15,15 @@ function decodeHtmlEntities(text: string): string {
 	return text.replace(/&gt;/g, ">").replace(/&lt;/g, "<").replace(/&amp;/g, "&");
 }
 
-function highlight(hl: Highlighter, code: string, lang: string): string {
-	return hl.codeToHtml(code.trim(), {
-		lang,
-		theme: "css-variables",
-	});
+function highlight(code: string, lang: string): string {
+	if (!isSupportedLanguage(lang)) {
+		throw new Error(`Unsupported code block language: ${lang}`);
+	}
+	// The highlighter returns bytes in shared memory; decode before the next call
+	return decoder.decode(codeToHtml(code.trim(), { lang, theme: cssVariables }));
 }
 
 export async function processHtml(html: string): Promise<string> {
-	const hl = await getHighlighter();
-
 	// Inline icons
 	const iconMatches = [...html.matchAll(/<i data-icon="([^"]+)"><\/i>/g)];
 	const iconReplacements = await Promise.all(
@@ -57,7 +38,7 @@ export async function processHtml(html: string): Promise<string> {
 		/<div class="code-block">\s*<pre><code class="language-(\w+)">([\s\S]*?)<\/code><\/pre>\s*<\/div>/g,
 		(_, lang, code) => {
 			const decoded = decodeHtmlEntities(code);
-			return `<div class="code-block">${highlight(hl, decoded, lang)}</div>`;
+			return `<div class="code-block">${highlight(decoded, lang)}</div>`;
 		},
 	);
 
@@ -68,10 +49,7 @@ export async function processHtml(html: string): Promise<string> {
 			.map((line: string) => {
 				const trimmed = line.trim();
 				if (!trimmed) return "";
-				const decoded = decodeHtmlEntities(trimmed);
-				const result = highlight(hl, decoded, "filtron");
-				const match = result.match(/<code[^>]*>([\s\S]*?)<\/code>/);
-				return match ? match[1] : trimmed;
+				return toHtml(decodeHtmlEntities(trimmed));
 			})
 			.join("\n");
 		return `<code class="syntax-example">${highlighted}</code>`;
@@ -81,13 +59,18 @@ export async function processHtml(html: string): Promise<string> {
 }
 
 export function minifyHtml(html: string): string {
+	// Whitespace is significant in code; set those blocks aside while minifying
+	const blocks: string[] = [];
 	return html
-		.replace(/(<pre[^>]*>[\s\S]*?<\/pre>)/g, (match) => match.replace(/\n/g, "&#10;"))
+		.replace(
+			/<pre[^>]*>[\s\S]*?<\/pre>|<code class="syntax-example">[\s\S]*?<\/code>/g,
+			(match) => `__CODE_${blocks.push(match) - 1}__`,
+		)
 		.replace(/>\s+</g, "><")
 		.replace(/\s{2,}/g, " ")
 		.replace(/<!--(?!\[).*?-->/g, "")
 		.replace(/^\s+/gm, "")
-		.replace(/&#10;/g, "\n")
+		.replace(/__CODE_(\d+)__/g, (_, i) => blocks[Number(i)])
 		.trim();
 }
 

@@ -62,7 +62,7 @@ via `--type-aware --type-check` flags in the lint command.
 - No `any` types
 - No classes—use functions (except Lexer/Parser which use classes for state)
 - Prefer `switch` with exhaustiveness checks over `if/else` chains
-- Indentation is tabs, enforced by oxfmt; never convert to spaces
+- Indentation is tabs, enforced by `bun fmt`; never convert to spaces
 
 ## Parser architecture
 

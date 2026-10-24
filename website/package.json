@@ -5,7 +5,8 @@
 	"type": "module",
 	"scripts": {
 		"build": "bun run build.ts",
-		"dev": "wrangler dev"
+		"dev": "bun --watch dev.ts",
+		"preview": "wrangler dev"
 	},
 	"dependencies": {
 		"@filtron/core": "workspace:*",

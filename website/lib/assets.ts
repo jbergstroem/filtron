@@ -12,5 +12,5 @@ export async function copyStaticAssets(): Promise<void> {
 }
 
 export async function cleanBuildArtifacts(): Promise<void> {
-	await Promise.all([file("dist/main.js").unlink(), file("dist/styles.css").unlink()]);
+	await file("dist/main.js").unlink();
 }

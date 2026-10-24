@@ -146,6 +146,7 @@
       "devDependencies": {
         "@iconscout/unicons": "4.2.0",
         "@types/bun": "catalog:",
+        "typescript": "catalog:",
         "wrangler": "4.151.1",
       },
     },

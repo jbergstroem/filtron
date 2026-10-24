@@ -15,7 +15,7 @@ function decodeHtmlEntities(text: string): string {
 	return text.replace(/&gt;/g, ">").replace(/&lt;/g, "<").replace(/&amp;/g, "&");
 }
 
-function highlight(code: string, lang: string): string {
+export function highlight(code: string, lang: string): string {
 	if (!isSupportedLanguage(lang)) {
 		throw new Error(`Unsupported code block language: ${lang}`);
 	}
@@ -74,6 +74,11 @@ export function minifyHtml(html: string): string {
 		.trim();
 }
 
+export async function buildCss(): Promise<string> {
+	const result = await build({ entrypoints: ["styles.css"], minify: true });
+	return await result.outputs[0].text();
+}
+
 export async function inlineAssets(html: string): Promise<string> {
 	const jsResult = await build({
 		entrypoints: ["src/main.ts"],
@@ -83,12 +88,7 @@ export async function inlineAssets(html: string): Promise<string> {
 	});
 	const js = await jsResult.outputs[0].text();
 
-	const cssResult = await build({
-		entrypoints: ["styles.css"],
-		minify: true,
-		outdir: "dist",
-	});
-	const css = await cssResult.outputs[0].text();
+	const css = await buildCss();
 
 	html = html.replace(/<link rel="stylesheet" href="styles.css" ?\/>/, `<style>${css}</style>`);
 	html = html.replace(

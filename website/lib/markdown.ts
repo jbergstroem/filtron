@@ -363,6 +363,13 @@ export async function findDocs(): Promise<{ required: DocFile[]; optional: DocFi
 	required.push(...validPkgDocs.filter((doc) => !doc.isOptional));
 	optional.push(...validPkgDocs.filter((doc) => doc.isOptional));
 
+	required.push({
+		name: "API reference",
+		path: "api.txt",
+		url: `${BASE_URL}/llms/api.txt`,
+		description: "Generated reference for every exported function, type and class",
+	});
+
 	const contributing = file(`${ROOT}/CONTRIBUTING.md`);
 	if (await contributing.exists()) {
 		optional.push({

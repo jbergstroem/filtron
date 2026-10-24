@@ -754,6 +754,90 @@
 	.lifecycle-legend-color.lifecycle-db {
 		background: var(--syntax-string);
 	}
+
+	.api-nav {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-2) var(--space-5);
+		padding: var(--space-4) var(--space-5);
+		background: var(--color-section);
+		border-block-end: 1px solid var(--color-border);
+		font-size: 0.8125rem;
+
+		& a {
+			color: var(--color-text-muted);
+			text-decoration: none;
+			transition: color var(--transition-base);
+
+			&:hover {
+				color: var(--color-text);
+			}
+		}
+
+		& a:first-child {
+			color: var(--color-text);
+			margin-inline-end: auto;
+		}
+	}
+
+	.api-index {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-2) var(--space-4);
+		list-style: none;
+		margin-block-end: var(--space-6);
+		font-size: 0.8125rem;
+
+		& a {
+			color: var(--color-text-muted);
+			text-decoration: none;
+
+			&:hover {
+				color: var(--color-text);
+			}
+		}
+
+		& code {
+			font-family: var(--font-mono);
+		}
+	}
+
+	.api-entry {
+		margin-block-start: var(--space-6);
+		padding-block-start: var(--space-6);
+		border-block-start: 1px solid var(--color-border);
+
+		& h3 {
+			margin-block-start: 0;
+			color: var(--color-text);
+
+			& a {
+				color: inherit;
+				text-decoration: none;
+			}
+
+			& code {
+				font-family: var(--font-mono);
+			}
+		}
+	}
+
+	.api-kind {
+		margin-inline-start: var(--space-2);
+		font-size: 0.75rem;
+		font-weight: 400;
+		color: var(--color-text-muted);
+	}
+
+	.api-label {
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: var(--color-text);
+	}
+
+	.api-params {
+		margin-block-end: var(--space-5);
+	}
 }
 
 @layer utilities {

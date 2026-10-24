@@ -1,4 +1,5 @@
 import { file, write } from "bun";
+import { generateApiDocs } from "./lib/api-docs.ts";
 import { cleanBuildArtifacts, cleanDist, copyStaticAssets } from "./lib/assets.ts";
 import { inlineAssets, minifyHtml, processHtml } from "./lib/html.ts";
 import { copyLlmsDocs, generateLlmsTxt } from "./lib/llms.ts";
@@ -21,6 +22,7 @@ export async function buildSite(): Promise<void> {
 	// Copy assets
 	await copyStaticAssets();
 	await copyLlmsDocs();
+	await generateApiDocs();
 	await cleanBuildArtifacts();
 
 	console.log(`Build complete in ${(performance.now() - start).toFixed(0)}ms`);

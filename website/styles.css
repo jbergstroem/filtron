@@ -579,6 +579,12 @@
 		}
 	}
 
+	.tab-radio:focus-visible + .tab-label {
+		outline: 2px solid var(--syntax-field);
+		outline-offset: -2px;
+		z-index: 2;
+	}
+
 	#tab-core:checked ~ #panel-core,
 	#tab-sql:checked ~ #panel-sql,
 	#tab-js:checked ~ #panel-js {
@@ -855,13 +861,26 @@
 		z-index: 100;
 	}
 
-	.tooltip:hover:not(:focus)::after {
+	.tooltip:hover:not(:focus)::after,
+	.tooltip:focus-visible::after {
 		opacity: 1;
 	}
 }
 
 .tab-short {
 	display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	html {
+		scroll-behavior: auto;
+	}
+
+	*,
+	*::before,
+	*::after {
+		transition-duration: 0s !important;
+	}
 }
 
 @media (width <= 600px) {

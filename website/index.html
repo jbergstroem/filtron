@@ -39,11 +39,13 @@
 							autocomplete="off"
 							autocorrect="off"
 							autocapitalize="off"
+							aria-describedby="error-live"
 							placeholder='Try: color = "blue" OR size > 3'
 						>
 shape = "circle" AND size > 2</textarea>
 						<div id="filter-highlighted" class="filter-highlighted" aria-hidden="true"></div>
 						<div id="error-tooltip" class="error-tooltip" aria-hidden="true"></div>
+						<div id="error-live" class="visually-hidden" role="status"></div>
 						<span
 							id="filter-stats"
 							class="filter-stats tooltip"
@@ -184,7 +186,7 @@ NOT suspended
 					<h3>Field existence</h3>
 					<div class="code-block">
 						<pre><code class="syntax-example">email?
-profile?</code></pre>
+-profile</code></pre>
 					</div>
 
 					<h3>Contains and one-of</h3>
@@ -198,6 +200,23 @@ status : ["pending", "approved", "rejected"]</code></pre>
 						<pre><code class="syntax-example">age = 18..65
 temperature = -10..10</code></pre>
 					</div>
+
+					<h3>Nested fields</h3>
+					<div class="code-block">
+						<pre><code class="syntax-example">user.profile.age &gt;= 18
+order.shipping.address.country = "PT"</code></pre>
+					</div>
+
+					<h3>Dates</h3>
+					<div class="code-block">
+						<pre><code class="syntax-example">created &gt; @2024-06-01
+updated &gt;= @now-7d
+created = @2024-06-01..2024-06-30</code></pre>
+					</div>
+					<p>
+						Relative values such as <code>@now-7d</code> are resolved to absolute dates with
+						<code>@filtron/time-resolver</code> before you pass the AST to an adapter.
+					</p>
 				</div>
 			</section>
 
@@ -238,9 +257,14 @@ temperature = -10..10</code></pre>
 								<td><code class="syntax-example">name ~ "john"</code></td>
 							</tr>
 							<tr>
-								<td><code>?</code></td>
-								<td>Field exists</td>
+								<td><code>?</code>&nbsp;<code>-</code></td>
+								<td>Field exists, missing</td>
 								<td><code class="syntax-example">email?</code></td>
+							</tr>
+							<tr>
+								<td><code>@</code></td>
+								<td>Date or relative time</td>
+								<td><code class="syntax-example">created &gt; @now-7d</code></td>
 							</tr>
 							<tr>
 								<td><code>..</code></td>
@@ -366,15 +390,16 @@ temperature = -10..10</code></pre>
 				</div>
 			</section>
 
-			<section class="content-section alt">
+			<section class="content-section">
 				<div class="section-inner">
 					<h2>Installation</h2>
 					<div class="code-block">
 						<pre><code class="language-bash">npm install @filtron/core
 
 # Optional helpers
-npm install @filtron/sql   # SQL WHERE clauses
-npm install @filtron/js    # Array filtering</code></pre>
+npm install @filtron/sql           # SQL WHERE clauses
+npm install @filtron/js            # Array filtering
+npm install @filtron/time-resolver # Resolve @now-relative dates</code></pre>
 					</div>
 				</div>
 			</section>

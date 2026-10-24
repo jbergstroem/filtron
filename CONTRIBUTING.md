@@ -20,7 +20,7 @@ bun test # Test all packages
 
 ### Code style and correctness
 
-Filtron uses oxlint (including the experimental tsgolint) and oxfmt. Run it all in one go:
+Filtron uses `bun check` for types, oxlint for lint rules (type-aware via tsgolint) and `bun fmt` for formatting. Run it all in one go:
 
 ```bash
 bun run lint

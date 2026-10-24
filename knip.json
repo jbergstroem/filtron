@@ -35,5 +35,6 @@
 			"ignoreDependencies": ["@iconscout/unicons"]
 		}
 	},
+	"ignoreBinaries": ["check", "fmt"],
 	"ignoreExportsUsedInFile": true
 }

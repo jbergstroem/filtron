@@ -42,18 +42,35 @@
 		--syntax-number: #0050a8;
 		--syntax-field: #5e35a8;
 
-		/* Shiki CSS variables theme */
-		--shiki-foreground: #2a2a2a;
-		--shiki-background: transparent;
-		--shiki-token-constant: #0050a8;
-		--shiki-token-string: #1a6b2e;
-		--shiki-token-string-expression: #1a6b2e;
-		--shiki-token-comment: #4a4a4a;
-		--shiki-token-keyword: #b8212f;
-		--shiki-token-parameter: #2a2a2a;
-		--shiki-token-function: #5e35a8;
-		--shiki-token-punctuation: #2a2a2a;
-		--shiki-token-link: #0050a8;
+		--hls-foreground: var(--color-text);
+		--hls-background: transparent;
+		--hls-variable: var(--color-text);
+		--hls-variable-parameter: var(--color-text);
+		--hls-property: var(--color-text);
+		--hls-punctuation: var(--color-text);
+		--hls-punctuation-bracket: var(--color-text);
+		--hls-punctuation-delimiter: var(--color-text);
+		--hls-punctuation-special: var(--color-text);
+		--hls-keyword: var(--syntax-keyword);
+		--hls-keyword-control: var(--syntax-keyword);
+		--hls-keyword-declaration: var(--syntax-keyword);
+		--hls-keyword-import: var(--syntax-keyword);
+		--hls-keyword-operator: var(--syntax-keyword);
+		--hls-operator: var(--syntax-keyword);
+		--hls-string: var(--syntax-string);
+		--hls-string-escape: var(--syntax-string);
+		--hls-string-special: var(--syntax-string);
+		--hls-number: var(--syntax-number);
+		--hls-boolean: var(--syntax-number);
+		--hls-constant: var(--syntax-number);
+		--hls-constant-builtin: var(--syntax-number);
+		--hls-type: var(--syntax-number);
+		--hls-type-builtin: var(--syntax-number);
+		--hls-function: var(--syntax-field);
+		--hls-function-method: var(--syntax-field);
+		--hls-function-definition: var(--syntax-field);
+		--hls-comment: var(--color-text-muted);
+		--hls-comment-doc: var(--color-text-muted);
 
 		--particle-red: #c45b4d;
 		--particle-blue: #4a7c8c;
@@ -97,19 +114,6 @@
 			--syntax-string: #7ee787;
 			--syntax-number: #79c0ff;
 			--syntax-field: #d2a8ff;
-
-			/* Shiki CSS variables theme */
-			--shiki-foreground: #e5e5e5;
-			--shiki-background: transparent;
-			--shiki-token-constant: #79c0ff;
-			--shiki-token-string: #7ee787;
-			--shiki-token-string-expression: #7ee787;
-			--shiki-token-comment: #ababab;
-			--shiki-token-keyword: #ff7b8a;
-			--shiki-token-parameter: #e5e5e5;
-			--shiki-token-function: #d2a8ff;
-			--shiki-token-punctuation: #e5e5e5;
-			--shiki-token-link: #79c0ff;
 
 			--particle-red: #e07060;
 			--particle-blue: #5a9cac;

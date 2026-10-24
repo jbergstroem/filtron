@@ -9,12 +9,12 @@
 	},
 	"dependencies": {
 		"@filtron/core": "workspace:*",
-		"@filtron/js": "workspace:*"
+		"@filtron/js": "workspace:*",
+		"@pierre/highlights": "0.2.0"
 	},
 	"devDependencies": {
 		"@iconscout/unicons": "4.2.0",
 		"@types/bun": "catalog:",
-		"shiki": "4.5.0",
 		"wrangler": "4.151.1"
 	},
 	"engines": {

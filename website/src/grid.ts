@@ -51,6 +51,7 @@ export class ParticleGrid {
 	private currentFilter: ((item: Record<string, unknown>) => boolean) | null = null;
 	private lastWidth = 0;
 	private initialHeight = 0;
+	private reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 	constructor(canvas: HTMLCanvasElement) {
 		this.canvas = canvas;
@@ -221,6 +222,14 @@ export class ParticleGrid {
 	}
 
 	private startAnimation(): void {
+		if (this.reducedMotion.matches) {
+			// Skip the fade: jump straight to the target state
+			for (const p of this.particles) {
+				p.currentAlpha = p.targetAlpha;
+			}
+			this.render();
+			return;
+		}
 		if (this.isAnimating || document.hidden) return;
 		this.isAnimating = true;
 		this.lastTime = performance.now();

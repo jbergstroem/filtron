@@ -109,6 +109,7 @@ function init(): void {
 	const filterHighlighted = document.getElementById("filter-highlighted") as HTMLDivElement;
 	const filterStats = document.getElementById("filter-stats") as HTMLDivElement;
 	const errorTooltip = document.getElementById("error-tooltip") as HTMLDivElement;
+	const errorLive = document.getElementById("error-live") as HTMLDivElement;
 	const randomizeBtn = document.getElementById("randomize-btn") as HTMLButtonElement;
 	const filterWrapper = filterInput?.parentElement;
 
@@ -118,6 +119,7 @@ function init(): void {
 		!filterHighlighted ||
 		!filterStats ||
 		!errorTooltip ||
+		!errorLive ||
 		!filterWrapper ||
 		!randomizeBtn
 	) {
@@ -136,10 +138,22 @@ function init(): void {
 	let updatePending = false;
 	let pendingValue = "";
 
+	// Browsers without field-sizing need the textarea height set by hand
+	const fieldSizing = CSS.supports("field-sizing", "content");
+	function autosize(): void {
+		if (fieldSizing) return;
+		filterInput.style.height = "auto";
+		filterInput.style.height = `${filterInput.scrollHeight}px`;
+	}
+
 	function updateFilter(expression: string): void {
+		autosize();
+
 		// Clear tooltip and highlighted content
 		errorTooltip.textContent = "";
 		errorTooltip.hidden = true;
+		errorLive.textContent = "";
+		filterInput.removeAttribute("aria-invalid");
 		filterHighlighted.innerHTML = "";
 
 		if (!expression.trim()) {
@@ -165,6 +179,8 @@ function init(): void {
 				filterHighlighted.innerHTML = toHtmlWithError(expression, result.position);
 				errorTooltip.textContent = result.message;
 				errorTooltip.hidden = false;
+				errorLive.textContent = result.message;
+				filterInput.setAttribute("aria-invalid", "true");
 			}
 			grid.applyFilter(null);
 			filterStats.textContent = "";

@@ -23,7 +23,7 @@
 | JS filter                | `packages/js/src/filter.ts`      |
 | SQL generator            | `packages/sql/src/converter.ts`  |
 | CI benchmarks            | `packages/benchmark/*.bench.ts`  |
-| Local benchmarks         | `packages/*/bench.ts`            |
+| Local benchmarks         | `packages/*/benchmark.ts`        |
 
 ## Commands
 
@@ -36,11 +36,11 @@ packages to run tests, lint, or benchmarks.
 | Run benchmarks  | `bun run bench`    |
 | Lint/format     | `bun run lint`     |
 | Fix lint/format | `bun run lint:fix` |
-| Type check      | `bun run lint`     |
+| Type check      | `bun check`        |
 | Check for cruft | `bun run knip`     |
 
-Note: There is no separate `typecheck` script. Type checking is handled by oxlint
-via `--type-aware --type-check` flags in the lint command.
+Note: `bun run lint` runs `bun check` (types), `oxlint --type-aware` (lint rules)
+and `bun fmt --check` (formatting), in that order, and stops at the first failure.
 
 ## Performance requirements
 
@@ -68,9 +68,9 @@ via `--type-aware --type-check` flags in the lint command.
 
 Filtron uses a hand-written recursive descent parser for performance:
 
-1. **Lexer** (`packages/core/lexer.ts`) - Tokenizes input into tokens (STRING, NUMBER, IDENT, operators, etc.)
-2. **Parser** (`packages/core/rd-parser.ts`) - Recursive descent parser that builds AST during parsing
-3. **API** (`packages/core/parser.ts`) - Public `parse()` and `parseOrThrow()` functions
+1. **Lexer** (`packages/core/src/lexer.ts`) - Tokenizes input into tokens (STRING, NUMBER, IDENT, operators, etc.)
+2. **Parser** (`packages/core/src/rd-parser.ts`) - Recursive descent parser that builds AST during parsing
+3. **API** (`packages/core/src/parser.ts`) - Public `parse()` and `parseOrThrow()` functions
 
 ## Dependencies
 

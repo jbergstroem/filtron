@@ -16,7 +16,7 @@
 	"devDependencies": {
 		"@iconscout/unicons": "4.2.0",
 		"@types/bun": "catalog:",
-		"wrangler": "4.151.1"
+		"wrangler": "4.152.0"
 	},
 	"engines": {
 		"bun": ">=1.2.19"

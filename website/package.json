@@ -11,7 +11,7 @@
 	"dependencies": {
 		"@filtron/core": "workspace:*",
 		"@filtron/js": "workspace:*",
-		"@pierre/highlights": "0.2.0"
+		"@pierre/highlights": "0.3.0"
 	},
 	"devDependencies": {
 		"@iconscout/unicons": "4.2.0",
